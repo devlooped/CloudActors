@@ -17,12 +17,12 @@ public class ActorCommandGenerator : IIncrementalGenerator
             {
                 if (x.Left is not INamedTypeSymbol command ||
                     !IsPartial(command) ||
-                    command.GetAttributes().FirstOrDefault(IsActor) is not AttributeData attr || 
-                    attr.ApplicationSyntaxReference?.GetSyntax() is not SyntaxNode syntax || 
-                    x.Right.GetSemanticModel(syntax.SyntaxTree).GetOperation(syntax) is not IAttributeOperation operation || 
+                    command.GetAttributes().FirstOrDefault(IsActor) is not AttributeData attr ||
+                    attr.ApplicationSyntaxReference?.GetSyntax() is not SyntaxNode syntax ||
+                    x.Right.GetSemanticModel(syntax.SyntaxTree).GetOperation(syntax) is not IAttributeOperation operation ||
                     operation.Operation.Type is not INamedTypeSymbol type)
                     return default;
-                
+
                 return new { Command = command, Attribute = type };
             });
 

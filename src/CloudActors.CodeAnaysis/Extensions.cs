@@ -5,7 +5,7 @@ namespace Devlooped.CloudActors;
 
 static class Extensions
 {
-    public static IEnumerable<ITypeSymbol> GetAllTypes(this IAssemblySymbol assembly) 
+    public static IEnumerable<ITypeSymbol> GetAllTypes(this IAssemblySymbol assembly)
         => GetAllTypes(assembly.GlobalNamespace);
 
     static IEnumerable<ITypeSymbol> GetAllTypes(INamespaceSymbol namespaceSymbol)

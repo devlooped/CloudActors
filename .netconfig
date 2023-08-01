@@ -14,9 +14,7 @@
     skip
 [file "Directory.Build.rsp"]
 	url = https://github.com/devlooped/oss/blob/main/Directory.Build.rsp
-	sha = ae25fae9d7daf0cb47d537ba870914aa3052f0c9
-	etag = 6a6c6e1d3895df953abf14c82b0899e3eea75cdcd679f6212dcfea15183d73d6
-	weak
+    skip
 [file ".editorconfig"]
 	url = https://github.com/devlooped/oss/blob/main/.editorconfig
 	sha = c779d3d4e468358106dea03e93ba2cd35bb01ecb
