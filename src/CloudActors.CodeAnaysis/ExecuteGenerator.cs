@@ -6,7 +6,7 @@ using static Devlooped.CloudActors.Diagnostics;
 
 namespace Devlooped.CloudActors;
 
-//[Generator]
+[Generator]
 public class ExecuteGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
