@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Devlooped.CloudActors;
+using Moq;
 using Xunit.Abstractions;
 
 namespace Tests;
@@ -20,7 +21,7 @@ public class TestAccounts(ITestOutputHelper output)
     [Fact]
     public async Task Execute()
     {
-        IActorBus bus = null!;
+        IActorBus bus = Mock.Of<IActorBus>();
 
         await bus.ExecuteAsync("asdf", new Deposit(100));
 
