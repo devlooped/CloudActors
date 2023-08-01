@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>Devlooped.CloudActors.CodeAnalysis</AssemblyName>
+    <TargetFramework>netstandard2.0</TargetFramework>
+
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <NoWarn>RS1036</NoWarn>
+
+    <PackFolder>analyzers/dotnet/roslyn4.5/cs</PackFolder>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NuGetizer" Version="1.0.5" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Pack="false" Version="4.5.0" />
+    <PackageReference Include="PolySharp" PrivateAssets="All" Version="1.13.2" />
+
+    <PackageReference Include="Scriban" Version="5.7.0" Pack="false" IncludeAssets="build" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
+  </ItemGroup>
+
+</Project>
