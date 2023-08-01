@@ -1,0 +1,10 @@
+<Project>
+
+  <PropertyGroup>
+    <LangVersion>Preview</LangVersion>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <RootNamespace>Devlooped.CloudActors</RootNamespace>
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
+
+</Project>
