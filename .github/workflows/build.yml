@@ -93,6 +93,11 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
+      - uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+          dotnet-quality: 'preview'
+
       - name: ✓ ensure format
         run: |
           dotnet format whitespace --verify-no-changes -v:diag --exclude ~/.nuget
