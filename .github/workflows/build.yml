@@ -20,27 +20,7 @@ env:
   VersionPrefix: 42.42.${{ github.run_number }}
   VersionLabel: ${{ github.ref }}
 
-defaults:
-  run:
-    shell: bash
-
 jobs:
-  os-matrix:
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.lookup.outputs.matrix }}
-    steps:
-      - name: 🤘 checkout
-        uses: actions/checkout@v2
-        
-      - name: 🔎 lookup
-        id: lookup
-        shell: pwsh
-        run: |
-          $path = './.github/workflows/os-matrix.json'
-          $os = if (test-path $path) { cat $path } else { '["ubuntu-latest"]' }
-          echo "matrix=$os" >> $env:GITHUB_OUTPUT
-
   build:
     runs-on: ubuntu-latest
     steps:
