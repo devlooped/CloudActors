@@ -46,10 +46,10 @@ public class ClusterFixture : IDisposable
 
         public MemoryStorage()
         {
-                
+
         }
 
-        public Task ClearStateAsync<T>(string stateName, GrainId grainId, IGrainState<T> grainState) 
+        public Task ClearStateAsync<T>(string stateName, GrainId grainId, IGrainState<T> grainState)
             => memory.TryRemove(grainId, out _) ? Task.CompletedTask : Task.CompletedTask;
 
         public Task ReadStateAsync<T>(string stateName, GrainId grainId, IGrainState<T> grainState)

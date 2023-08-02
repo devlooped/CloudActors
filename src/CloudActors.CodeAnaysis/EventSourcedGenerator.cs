@@ -14,13 +14,13 @@ public class EventSourcedGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var source = context.CompilationProvider.SelectMany((x, _) => x.Assembly.GetAllTypes())
-            .Where(x => x is INamedTypeSymbol named && x.GetAttributes().Any(IsActor) && 
+            .Where(x => x is INamedTypeSymbol named && x.GetAttributes().Any(IsActor) &&
                 // Only those actors that are event-sourced
-                named.AllInterfaces.Any(i => i.ToDisplayString(FullName) == "Devlooped.CloudActors.IEventSourced") && 
+                named.AllInterfaces.Any(i => i.ToDisplayString(FullName) == "Devlooped.CloudActors.IEventSourced") &&
                 // Only if users haven't already overriden the given method (unlikely)
-                !named.GetMembers("Apply").OfType<IMethodSymbol>().Any(a => 
-                    a.IsOverride && 
-                    a.Parameters.Length == 1 && 
+                !named.GetMembers("Apply").OfType<IMethodSymbol>().Any(a =>
+                    a.IsOverride &&
+                    a.Parameters.Length == 1 &&
                     a.Parameters[0].Type.SpecialType == SpecialType.System_Object));
 
         context.RegisterSourceOutput(source, (ctx, actor) =>

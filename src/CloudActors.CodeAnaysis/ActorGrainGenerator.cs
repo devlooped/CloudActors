@@ -33,8 +33,8 @@ public class ActorGrainGenerator : IIncrementalGenerator
     }
 
     static GrainOperation ToOperation(IMethodSymbol method) => new(
-        method.Name, 
-        method.Parameters[0].Type.ToDisplayString(FullName), 
+        method.Name,
+        method.Parameters[0].Type.ToDisplayString(FullName),
         method.ReturnType.ToDisplayString(FullName).StartsWith("System.Threading.Tasks.Task"));
 
     static bool IsQuery(IMethodSymbol method) => method.Parameters.Length == 1 && method.Parameters[0].Type.GetAttributes().Any(IsActorQuery);
@@ -43,7 +43,7 @@ public class ActorGrainGenerator : IIncrementalGenerator
 
     record GrainOperation(string Name, string Type, bool IsAsync);
 
-    record GrainModel(string Namespace, string Name, string Version, 
+    record GrainModel(string Namespace, string Name, string Version,
         IEnumerable<GrainOperation> Queries, IEnumerable<GrainOperation> Commands, IEnumerable<GrainOperation> VoidCommands)
     {
         public bool QueryAsync => Queries.Any(x => x.IsAsync);
