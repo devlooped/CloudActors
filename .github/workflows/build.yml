@@ -42,12 +42,7 @@ jobs:
           echo "matrix=$os" >> $env:GITHUB_OUTPUT
 
   build:
-    needs: os-matrix
-    name: build-${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: ${{ fromJSON(needs.os-matrix.outputs.matrix) }}
+    runs-on: ubuntu-latest
     steps:
       - name: 🤘 checkout
         uses: actions/checkout@v2
@@ -63,11 +58,10 @@ jobs:
       - name: 🙏 build
         run: dotnet build -m:1
 
-      - name: ⚙ GNU grep
-        if: matrix.os == 'macOS-latest'
+      - name: ⚙ azurite
         run: |
-          brew install grep
-          echo 'export PATH="/usr/local/opt/grep/libexec/gnubin:$PATH"' >> .bash_profile
+          npm install azurite@3.20.1
+          npx azurite &
 
       - name: 🧪 test
         uses: ./.github/workflows/test
