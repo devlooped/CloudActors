@@ -5,6 +5,7 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <RootNamespace>Devlooped.CloudActors</RootNamespace>
     <SignAssembly>false</SignAssembly>
+    <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
   </PropertyGroup>
 
 </Project>

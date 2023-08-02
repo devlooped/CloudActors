@@ -34,7 +34,7 @@ public class PartialAnalyzer : DiagnosticAnalyzer
             return;
 
         // Only require this for actor command types, denoted by the ActorCommandAttribute.
-        if (!symbol.GetAttributes().Any(IsActor))
+        if (!symbol.GetAttributes().Any(IsActorOperation))
             return;
 
         context.ReportDiagnostic(Diagnostic.Create(MustBePartial, typeDeclaration.Identifier.GetLocation()));

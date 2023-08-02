@@ -26,8 +26,12 @@ public abstract class EventSourced : IEventSourced
 
     void IEventSourced.AcceptEvents()
     {
+        if (events is null)
+            return;
+
         history ??= new List<object>();
-        history.AddRange(events ??= new List<object>());
+        history.AddRange(events);
+        version += events.Count;
         events.Clear();
     }
 
@@ -49,7 +53,7 @@ public abstract class EventSourced : IEventSourced
     {
         // By default, we do dynamic dispatch to the generic Apply<T> method
         // but codegen will generate a direct call to the specific Apply method 
-        // in both cases to avoid this dynamic dispatch.
+        // in both cases to avoid it.
         dynamic e = @event;
         Apply(e);
     }

@@ -2,7 +2,8 @@
   <PropertyGroup>
     <PackageId>Devlooped.CloudActors</PackageId>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Description>Cloud Actors</Description>
+    <Description>Cloud Native Actors</Description>
+    <PackageTags>dotnet orleans actor</PackageTags>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="NuGetizer" Version="1.0.5" />

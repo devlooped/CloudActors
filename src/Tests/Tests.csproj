@@ -8,16 +8,18 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.3" />
+    <PackageReference Include="Microsoft.Orleans.TestingHost" Version="7.2.1" />
     <PackageReference Include="Moq" Version="4.18.4" />
     <PackageReference Include="xunit" Version="2.5.0" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.0" />
     <PackageReference Include="coverlet.collector" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Orleans.Client" Version="7.2.1" />
+    <PackageReference Include="Microsoft.Orleans.Server" Version="7.2.1" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CloudActors.Orleans\CloudActors.Orleans.csproj" />
+    <ProjectReference Include="..\CloudActors.Streamstone\CloudActors.Streamstone.csproj" />
     <ProjectReference Include="..\CloudActors\CloudActors.csproj" />
     <ProjectReference Include="..\CloudActors.CodeAnaysis\CloudActors.CodeAnaysis.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\CloudActors.CodeFix\CloudActors.CodeFix.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />

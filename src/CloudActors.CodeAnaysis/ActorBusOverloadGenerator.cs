@@ -6,7 +6,7 @@ using static Devlooped.CloudActors.Diagnostics;
 namespace Devlooped.CloudActors;
 
 [Generator(LanguageNames.CSharp)]
-public class ActorCommandGenerator : IIncrementalGenerator
+public class ActorBusOverloadGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -34,15 +34,18 @@ public class ActorCommandGenerator : IIncrementalGenerator
             if (item.Attribute.IsGenericType)
             {
                 var result = item.Attribute.TypeArguments[0];
-                var flavor = item.Attribute.Name == "ActorQueryAttribute" ? "Query" : "Command";
+                var flavor = item.Attribute.Name == "ActorQueryAttribute" ? "Query" : "Execute";
+                var arg = flavor == "Query" ? "query" : "command";
 
                 ctx.AddSource($"{item.Operation.ToFileName()}.g.cs",
                     $$"""
+                    using System.Threading.Tasks;
                     using Devlooped.CloudActors;
 
-                    namespace {{item.Operation.ContainingNamespace.ToDisplayString(FullName)}}
+                    static partial class ActorBusExtensions
                     {
-                        partial record {{item.Operation.Name}} : IActor{{flavor}}<{{result.ToDisplayString(FullName)}}>;
+                        public static Task<{{result.ToDisplayString(FullName)}}> {{flavor}}Async(this IActorBus bus, string id, {{item.Operation.ToDisplayString(FullName)}} {{arg}})
+                            => bus.{{flavor}}Async<{{result.ToDisplayString(FullName)}}>(id, {{arg}});
                     }
                     """);
             }
@@ -50,11 +53,13 @@ public class ActorCommandGenerator : IIncrementalGenerator
             {
                 ctx.AddSource($"{item.Operation.ToFileName()}.g.cs",
                     $$"""
+                    using System.Threading.Tasks;
                     using Devlooped.CloudActors;
-
-                    namespace {{item.Operation.ContainingNamespace.ToDisplayString(FullName)}}
+                                        
+                    static partial class ActorBusExtensions
                     {
-                        partial record {{item.Operation.Name}} : IActorCommand;
+                        public static Task ExecuteAsync(this IActorBus bus, string id, {{item.Operation.ToDisplayString(FullName)}} command)
+                            => bus.ExecuteAsync(id, (IActorCommand)command);
                     }
                     """);
             }

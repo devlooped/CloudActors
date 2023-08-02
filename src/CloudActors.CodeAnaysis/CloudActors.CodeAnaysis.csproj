@@ -8,7 +8,14 @@
     <NoWarn>RS1036</NoWarn>
 
     <PackFolder>analyzers/dotnet/roslyn4.5/cs</PackFolder>
+    <!-- See https://github.com/scriban/scriban#source-embedding -->
+    <PackageScribanIncludeSource>true</PackageScribanIncludeSource>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="EventSourced.sbntxt" />
+    <None Remove="SiloBuilder.sbntxt" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="NuGetizer" Version="1.0.5" />
@@ -18,6 +25,23 @@
     <PackageReference Include="Scriban" Version="5.7.0" Pack="false" IncludeAssets="build" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
+    <PackageReference Include="ThisAssembly.AssemblyInfo" Version="1.3.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="ThisAssembly.Resources" Version="1.3.1" PrivateAssets="all" Pack="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="@(None -&gt; WithMetadataValue('Extension', '.sbntxt'))" Kind="text" />
+    <EmbeddedResource Include="EventSourced.sbntxt">
+      <Generator></Generator>
+      <Kind>text</Kind>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SiloBuilder.sbntxt">
+      <Generator></Generator>
+      <Kind>text</Kind>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>

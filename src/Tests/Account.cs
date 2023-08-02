@@ -1,84 +1,110 @@
 ﻿using System;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 using Devlooped.CloudActors;
+using Microsoft.Azure.Cosmos.Table;
 using Moq;
+using Orleans;
+using Orleans.Concurrency;
+using Orleans.Runtime;
+using Orleans.TestingHost;
 using Xunit.Abstractions;
 
 namespace Tests;
 
-public class TestAccounts(ITestOutputHelper output)
+[Collection(ClusterCollection.Name)]
+public class TestAccounts(ITestOutputHelper output, ClusterFixture fixture)
 {
     [Fact]
-    public void Apply()
+    public async Task HostedGrain()
     {
-        var account = new Account("asdf");
-        ((IEventSourced)account).LoadEvents(new[] { new Deposited(100) });
+        await CloudStorageAccount.DevelopmentStorageAccount
+            .CreateCloudTableClient()
+            .GetTableReference("account")
+            .DeleteIfExistsAsync();
 
-        account.Execute(new Deposit(100));
-    }
+        IActorBus bus = new OrleansActorBus(fixture.Cluster.GrainFactory);
 
-    [Fact]
-    public async Task Execute()
-    {
-        IActorBus bus = Mock.Of<IActorBus>();
+        await bus.ExecuteAsync("account/1", new Deposit(100));
+        await bus.ExecuteAsync("account/1", new Withdraw(50));
 
-        await bus.ExecuteAsync("asdf", new Deposit(100));
+        Assert.Equal(50, await bus.QueryAsync("account/1", new GetBalance()));
 
-        var cmd = new Withdraw(100);
-        await bus.ExecuteAsync("asdf", cmd);
-
-        var balance = await bus.ExecuteAsync("asdf", new GetBalance());
+        Assert.Equal(50, await bus.ExecuteAsync("account/1", new Close()));
+        Assert.Equal(0, await bus.QueryAsync("account/1", new GetBalance()));
     }
 }
 
+[GenerateSerializer]
 [ActorCommand]
 public partial record Deposit(decimal Amount);
 
 public partial record Deposited(decimal Amount);
 
+[GenerateSerializer]
 [ActorCommand]
 public partial record Withdraw(decimal Amount);
 
 public partial record Withdrawn(decimal Amount);
 
+[GenerateSerializer]
 [ActorCommand<decimal>]
+public partial record Close();
+
+public partial record Closed(decimal Balance);
+
+[GenerateSerializer]
+[ActorQuery<decimal>]
 public partial record GetBalance();
 
+[Actor]
 public partial class Account : EventSourced
 {
-    public string Id { get; }
-    public decimal Balance { get; }
+    public Account() : this("") { }
 
     public Account(string id) => Id = id;
 
-    public void Execute(Deposit command)
+    public string Id { get; }
+
+    public decimal Balance { get; private set; }
+
+    // Showcases that operation can also be just Execute overloads 
+    //public void Execute(Deposit command)
+    //{
+    //    // validate command
+    //    Raise(new Deposited(command.Amount));
+    //}
+
+    // Showcases that operations can have a name that's not Execute
+    public Task DepositAsync(Deposit command)
     {
         // validate command
-        // raise event
         Raise(new Deposited(command.Amount));
-        //Apply(new AccountOpened(command.AccountId, command.Name));
+        return Task.CompletedTask;
     }
 
-    void Apply(Deposited @event)
+    // Showcases that operations don't have to be async
+    public void Execute(Withdraw command)
     {
+        // validate command
+        Raise(new Withdrawn(command.Amount));
     }
 
-    void Apply(Withdrawn @event)
+    // Showcases value-returning async operation with custom name.
+    public Task<decimal> CloseAsync(Close _)
     {
+        var balance = Balance;
+        Raise(new Closed(Balance));
+        return Task.FromResult(balance);
     }
 
-    protected override void Apply(object @event)
-    {
-        switch (@event)
-        {
-            case Deposited e:
-                Apply(e);
-                break;
-            case Withdrawn e:
-                Apply(e);
-                break;
-            default:
-                throw new NotSupportedException();
-        }
-    }
+    // Showcases a query that doesn't change state, which becomes a [ReadOnly] grain operation.
+    public decimal Query(GetBalance _) => Balance;
+
+    void Apply(Deposited @event) => Balance += @event.Amount;
+
+    void Apply(Withdrawn @event) => Balance -= @event.Amount;
+
+    void Apply(Closed @event) => Balance = 0;
 }
+
