@@ -3,12 +3,9 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using CloudNative.CloudEvents;
 using Microsoft.Azure.Cosmos.Table;
-using Microsoft.Azure.Documents;
 using Orleans;
 using Orleans.Runtime;
-using Orleans.Serialization;
 using Orleans.Storage;
 using Streamstone;
 
@@ -16,8 +13,8 @@ namespace Devlooped.CloudActors;
 
 public class StreamstoneStorage(CloudStorageAccount storage) : IGrainStorage
 {
-    static readonly JsonSerializerOptions options = new() 
-    { 
+    static readonly JsonSerializerOptions options = new()
+    {
         PreferredObjectCreationHandling = System.Text.Json.Serialization.JsonObjectCreationHandling.Populate
     };
 
@@ -28,7 +25,7 @@ public class StreamstoneStorage(CloudStorageAccount storage) : IGrainStorage
         var table = await GetTable<T>(storage, grainId);
         await table.ExecuteAsync(TableOperation.Delete(new TableEntity(table.Name, grainId.Key.ToString()!)));
     }
-    
+
     public async Task ReadStateAsync<T>(string stateName, GrainId grainId, IGrainState<T> grainState)
     {
         var table = await GetTable<T>(storage, grainId);
@@ -65,6 +62,8 @@ public class StreamstoneStorage(CloudStorageAccount storage) : IGrainStorage
     {
         var table = await GetTable<T>(storage, grainId);
         var rowId = grainId.Key.ToString();
+        var type = typeof(T);
+        var asm = typeof(T).Assembly.GetName();
 
         if (grainState.State is IEventSourced state)
         {
@@ -81,7 +80,8 @@ public class StreamstoneStorage(CloudStorageAccount storage) : IGrainStorage
                 PartitionKey = table.Name,
                 RowKey = typeof(T).FullName,
                 Data = JsonSerializer.Serialize(grainState.State, options),
-                Type = $"{typeof(T).FullName}, {typeof(T).Assembly.GetName().Name}",
+                DataVersion = new Version(asm.Version?.Major ?? 0, asm.Version?.Minor ?? 0).ToString(),
+                Type = $"{type.FullName}, {asm.Name}",
                 Version = stream.Version + state.Events.Count,
             };
 
@@ -98,7 +98,8 @@ public class StreamstoneStorage(CloudStorageAccount storage) : IGrainStorage
                 PartitionKey = table.Name,
                 RowKey = rowId,
                 Data = JsonSerializer.Serialize(grainState.State, options),
-                Type = $"{typeof(T).FullName}, {typeof(T).Assembly.GetName().Name}",
+                DataVersion = new Version(asm.Version?.Major ?? 0, asm.Version?.Minor ?? 0).ToString(),
+                Type = $"{type.FullName}, {asm.Name}",
             }));
         }
     }
@@ -120,8 +121,9 @@ public class StreamstoneStorage(CloudStorageAccount storage) : IGrainStorage
 
     class EventEntity : TableEntity
     {
-        public string? Type { get; set; }
         public string? Data { get; set; }
+        public string? DataVersion { get; set; }
+        public string? Type { get; set; }
         public int? Version { get; set; }
     }
 
@@ -132,18 +134,23 @@ public class StreamstoneStorage(CloudStorageAccount storage) : IGrainStorage
         if (entity.Type == null || Type.GetType(entity.Type) is not Type type)
             throw new InvalidOperationException();
 
+        // TODO: handle version mismatch between type and entity.DataVersion
+
         return JsonSerializer.Deserialize(entity.Data, type, options)!;
     }
 
     static EventData ToEventData(object e, int version, params ITableEntity[] includes)
     {
+        var type = e.GetType();
+        var asm = type.Assembly.GetName();
         // Properties are turned into columns in the table, which can be 
         // convenient for quickly glancing at the data.
         var properties = new
         {
+            Data = JsonSerializer.Serialize(e, options),
+            DataVersion = new Version(asm.Version?.Major ?? 0, asm.Version?.Minor ?? 0).ToString(),
             // Visualizing the event id in the table as a column is useful for querying
             Type = $"{e.GetType().FullName}, {e.GetType().Assembly.GetName().Name}",
-            Data = JsonSerializer.Serialize(e, options),
             Version = version,
         };
 
