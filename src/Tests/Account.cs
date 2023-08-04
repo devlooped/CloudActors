@@ -12,8 +12,7 @@ using Xunit.Abstractions;
 
 namespace Tests;
 
-[Collection(ClusterCollection.Name)]
-public class TestAccounts(ITestOutputHelper output, ClusterFixture fixture)
+public class TestAccounts(ITestOutputHelper output)
 {
     [Fact]
     public async Task HostedGrain()
@@ -23,15 +22,25 @@ public class TestAccounts(ITestOutputHelper output, ClusterFixture fixture)
             .GetTableReference("account")
             .DeleteIfExistsAsync();
 
-        IActorBus bus = new OrleansActorBus(fixture.Cluster.GrainFactory);
+        using (var cluster = ClusterFixture.CreateCluster())
+        {
+            IActorBus bus = new OrleansActorBus(cluster.GrainFactory);
 
-        await bus.ExecuteAsync("account/1", new Deposit(100));
-        await bus.ExecuteAsync("account/1", new Withdraw(50));
+            await bus.ExecuteAsync("account/1", new Deposit(100));
+            await bus.ExecuteAsync("account/1", new Withdraw(50));
 
-        Assert.Equal(50, await bus.QueryAsync("account/1", new GetBalance()));
+            Assert.Equal(50, await bus.QueryAsync("account/1", new GetBalance()));
 
-        Assert.Equal(50, await bus.ExecuteAsync("account/1", new Close()));
-        Assert.Equal(0, await bus.QueryAsync("account/1", new GetBalance()));
+            Assert.Equal(50, await bus.ExecuteAsync("account/1", new Close()));
+            Assert.Equal(0, await bus.QueryAsync("account/1", new GetBalance()));
+        }
+
+        // Force re-activation of grain.
+        using (var cluster = ClusterFixture.CreateCluster())
+        {
+            IActorBus bus = new OrleansActorBus(cluster.GrainFactory);
+            Assert.Equal(0, await bus.QueryAsync("account/1", new GetBalance()));
+        }
     }
 }
 

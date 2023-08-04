@@ -47,6 +47,8 @@ public class StreamstoneStorage(CloudStorageAccount storage) : IGrainStorage
 
             var events = entities.Events.Select(ToDomainEvent).ToList();
             state.LoadEvents(events);
+            grainState.ETag = stream.Stream.ETag;
+            grainState.RecordExists = true;
         }
         else
         {

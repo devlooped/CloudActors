@@ -1,3 +1,4 @@
+using Orleans;
 using Orleans.Runtime;
 
 namespace Tests;
