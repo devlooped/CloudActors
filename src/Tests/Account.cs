@@ -72,12 +72,11 @@ public partial record GetBalance() : IActorQuery<decimal>;
 public partial class Account : IEventSourced
 {
     public Account() : this("") { }
-
     public Account(string id) => Id = id;
 
     public string Id { get; }
-
     public decimal Balance { get; private set; }
+    public bool IsClosed { get; private set; }
 
     // Showcases that operation can also be just Execute overloads 
     //public void Execute(Deposit command)
@@ -85,36 +84,47 @@ public partial class Account : IEventSourced
     //    // validate command
     //    Raise(new Deposited(command.Amount));
     //}
+    //public void Execute(Withdraw command)
+    //{
+    //    // validate command
+    //    Raise(new Withdraw(command.Amount));
+    //}
 
     // Showcases that operations can have a name that's not Execute
-    public Task DepositAsync(Deposit command)
+    public void Deposit(Deposit command)
     {
+        if (IsClosed)
+            throw new InvalidOperationException("Account is closed.");
+
         // validate command
         Raise(new Deposited(command.Amount));
-        return Task.CompletedTask;
     }
 
     // Showcases that operations don't have to be async
-    public void Execute(Withdraw command)
+    public void Withdraw(Withdraw command)
     {
-        // validate command
+        if (IsClosed)
+            throw new InvalidOperationException("Account is closed.");
+
+        if (command.Amount > Balance)
+            throw new InvalidOperationException("Insufficient funds.");
+
         Raise(new Withdrawn(command.Amount));
     }
 
     // Showcases value-returning async operation with custom name.
-    public Task<decimal> CloseAsync(Close _)
+    public decimal Close(Close _)
     {
-        var balance = Balance;
+        var final = Balance;
         Raise(new Closed(Balance));
-        return Task.FromResult(balance);
+        IsClosed = true;
+        return final;
     }
 
     // Showcases a query that doesn't change state, which becomes a [ReadOnly] grain operation.
     public decimal Query(GetBalance _) => Balance;
 
     void Apply(Deposited @event) => Balance += @event.Amount;
-
     void Apply(Withdrawn @event) => Balance -= @event.Amount;
-
     void Apply(Closed @event) => Balance = 0;
 }
