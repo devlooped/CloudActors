@@ -13,8 +13,9 @@ public class ActorGrainGenerator : IIncrementalGenerator
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var source = context.CompilationProvider.SelectMany((x, _) => x.Assembly.GetAllTypes())
-            .Where(x => x is INamedTypeSymbol && x.GetAttributes().Any(IsActor));
+        var source = context.CompilationProvider
+            .SelectMany((x, _) => x.Assembly.GetAllTypes().OfType<INamedTypeSymbol>())
+            .Where(x => x.GetAttributes().Any(IsActor));
 
         context.RegisterSourceOutput(source, (ctx, actor) =>
         {
@@ -37,9 +38,9 @@ public class ActorGrainGenerator : IIncrementalGenerator
         method.Parameters[0].Type.ToDisplayString(FullName),
         method.ReturnType.ToDisplayString(FullName).StartsWith("System.Threading.Tasks.Task"));
 
-    static bool IsQuery(IMethodSymbol method) => method.Parameters.Length == 1 && method.Parameters[0].Type.GetAttributes().Any(IsActorQuery);
-    static bool IsCommand(IMethodSymbol method) => method.Parameters.Length == 1 && method.Parameters[0].Type.GetAttributes().Any(IsActorCommand);
-    static bool IsVoidCommand(IMethodSymbol method) => method.Parameters.Length == 1 && method.Parameters[0].Type.GetAttributes().Any(IsActorVoidCommand);
+    static bool IsQuery(IMethodSymbol method) => method.Parameters.Length == 1 && method.Parameters[0].Type.IsActorQuery();
+    static bool IsCommand(IMethodSymbol method) => method.Parameters.Length == 1 && method.Parameters[0].Type.IsActorCommand();
+    static bool IsVoidCommand(IMethodSymbol method) => method.Parameters.Length == 1 && method.Parameters[0].Type.IsActorVoidCommand();
 
     record GrainOperation(string Name, string Type, bool IsAsync);
 

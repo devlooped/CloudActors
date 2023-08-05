@@ -13,17 +13,18 @@ public class EventSourcedGenerator : IIncrementalGenerator
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var source = context.CompilationProvider.SelectMany((x, _) => x.Assembly.GetAllTypes())
-            .Where(x => x is INamedTypeSymbol named && x.GetAttributes().Any(IsActor) &&
-                // Only those actors that are event-sourced
-                named.AllInterfaces.Any(i => i.ToDisplayString(FullName) == "Devlooped.CloudActors.IEventSourced") &&
-                // Only if users haven't already overriden the given method (unlikely)
-                !named.GetMembers("Apply").OfType<IMethodSymbol>().Any(a =>
-                    a.IsOverride &&
-                    a.Parameters.Length == 1 &&
-                    a.Parameters[0].Type.SpecialType == SpecialType.System_Object));
+        var actors = context.CompilationProvider.SelectMany((x, _) => x.Assembly.GetAllTypes().OfType<INamedTypeSymbol>())
+            .Where(x => x.GetAttributes().Any(IsActor) && x.AllInterfaces.Any(i => i.ToDisplayString(FullName) == "Devlooped.CloudActors.IEventSourced"))
+            .Combine(context.CompilationProvider.Select((c, _) => c.GetTypeByMetadataName("Devlooped.CloudActors.IEventSourced")))
+            .Where(x => x.Right != null && !x.Right
+                // Only if users haven't already implemented *any* members of the interface
+                .GetMembers()
+                .Select(es => x.Left.FindImplementationForInterfaceMember(es))
+                .Where(x => x != null)
+                .Any())
+            .Select((x, _) => x.Left);
 
-        context.RegisterSourceOutput(source, (ctx, actor) =>
+        context.RegisterSourceOutput(actors, (ctx, actor) =>
         {
             var model = new EventSourcedModel(
                 Namespace: actor.ContainingNamespace.ToDisplayString(),

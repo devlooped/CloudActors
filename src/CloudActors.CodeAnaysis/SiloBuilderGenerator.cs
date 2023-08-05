@@ -13,8 +13,8 @@ public class SiloBuilderGenerator : IIncrementalGenerator
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var source = context.CompilationProvider.SelectMany((x, _) => x.Assembly.GetAllTypes())
-            .Where(x => x is INamedTypeSymbol && x.GetAttributes().Any(IsActor))
+        var source = context.CompilationProvider.SelectMany((x, _) => x.Assembly.GetAllTypes().OfType<INamedTypeSymbol>())
+            .Where(x => x.GetAttributes().Any(IsActor))
             .Collect();
 
         context.RegisterSourceOutput(source, (ctx, item) =>

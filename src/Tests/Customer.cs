@@ -10,7 +10,6 @@ using Xunit.Abstractions;
 
 namespace Tests;
 
-
 [Collection(ClusterCollection.Name)]
 public class TestCustomers(ITestOutputHelper output, ClusterFixture fixture)
 {
@@ -38,12 +37,10 @@ public class TestCustomers(ITestOutputHelper output, ClusterFixture fixture)
 public record Address(string Street, string City, string State, string Zip);
 
 [GenerateSerializer]
-[ActorCommand]
-public partial record SetAddress(Address Address);
+public partial record SetAddress(Address Address) : IActorCommand;
 
 [GenerateSerializer]
-[ActorQuery<Address>]
-public partial record GetAddress();
+public partial record GetAddress(): IActorQuery<Address>;
 
 [Actor]
 public partial class Customer

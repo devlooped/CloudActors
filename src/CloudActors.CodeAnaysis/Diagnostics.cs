@@ -11,24 +11,17 @@ public static class Diagnostics
 
     public static string ToFileName(this ITypeSymbol type) => type.ToDisplayString(FullName).Replace('+', '.');
 
-    public static bool IsActorOperation(ITypeSymbol type) => type.AllInterfaces.Any(x =>
-        x.ToDisplayString(FullName).StartsWith("Devlooped.CloudActors.IActorCommand") ||
-        x.ToDisplayString(FullName).StartsWith("Devlooped.CloudActors.IActorQuery")) ||
-        type.GetAttributes().Any(IsActorOperation);
+    public static bool IsActorMessage(ITypeSymbol type) => type.AllInterfaces.Any(x =>
+        x.ToDisplayString(FullName).Equals("Devlooped.CloudActors.IActorMessage"));
 
-    public static bool IsActorOperation(AttributeData attr) =>
-        IsActorCommand(attr) || IsActorVoidCommand(attr) || IsActorQuery(attr);
+    public static bool IsActorCommand(this ITypeSymbol type) => type.AllInterfaces.Any(x =>
+        x.ToDisplayString(FullName).StartsWith("Devlooped.CloudActors.IActorCommand") && x.IsGenericType);
 
-    public static bool IsActorCommand(AttributeData attr) =>
-        attr.AttributeClass?.ToDisplayString(FullName) == "Devlooped.CloudActors.ActorCommandAttribute" &&
-        attr.AttributeClass?.IsGenericType == true;
+    public static bool IsActorVoidCommand(this ITypeSymbol type) => type.AllInterfaces.Any(x =>
+        x.ToDisplayString(FullName).StartsWith("Devlooped.CloudActors.IActorCommand") && !x.IsGenericType);
 
-    public static bool IsActorVoidCommand(AttributeData attr) =>
-        attr.AttributeClass?.ToDisplayString(FullName) == "Devlooped.CloudActors.ActorCommandAttribute" &&
-        attr.AttributeClass?.IsGenericType == false;
-
-    public static bool IsActorQuery(AttributeData attr) =>
-        attr.AttributeClass?.ToDisplayString(FullName) == "Devlooped.CloudActors.ActorQueryAttribute";
+    public static bool IsActorQuery(this ITypeSymbol type) => type.AllInterfaces.Any(x =>
+        x.ToDisplayString(FullName).StartsWith("Devlooped.CloudActors.IActorQuery") && x.IsGenericType);
 
     public static bool IsActor(AttributeData attr) =>
         attr.AttributeClass?.ToDisplayString(FullName) == "Devlooped.CloudActors.ActorAttribute";
@@ -46,8 +39,8 @@ public static class Diagnostics
     /// </summary>
     public static DiagnosticDescriptor MustBePartial { get; } = new(
         "DCA001",
-        "Actor command must be a partial class or record",
-        "Cloud Actors require commands to be partial.",
+        "Actors must be partial",
+        "Cloud Actors require partial actor types.",
         "Build",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);

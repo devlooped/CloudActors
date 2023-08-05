@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Operations;
 using static Devlooped.CloudActors.Diagnostics;
 
 namespace Devlooped.CloudActors;
@@ -10,56 +9,63 @@ public class ActorBusOverloadGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var source = context.CompilationProvider.SelectMany((x, _) => x.Assembly.GetAllTypes())
-            .Where(x => x.GetAttributes().Any(IsActorOperation))
-            .Combine(context.CompilationProvider)
-            .Select((x, _) =>
+        var source = context.CompilationProvider.SelectMany((x, _) => x.Assembly.GetAllTypes().OfType<INamedTypeSymbol>())
+            .Where(IsActorMessage)
+            //.Where(IsPartial)
+            .Combine(context.CompilationProvider
+            .Select((c, _) => new
             {
-                if (x.Left is not INamedTypeSymbol command ||
-                    !IsPartial(command) ||
-                    command.GetAttributes().FirstOrDefault(IsActorOperation) is not AttributeData attr ||
-                    attr.ApplicationSyntaxReference?.GetSyntax() is not SyntaxNode syntax ||
-                    x.Right.GetSemanticModel(syntax.SyntaxTree).GetOperation(syntax) is not IAttributeOperation operation ||
-                    operation.Operation.Type is not INamedTypeSymbol type)
-                    return default;
-
-                return new { Operation = command, Attribute = type };
-            });
+                VoidCommand = c.GetTypeByMetadataName("Devlooped.CloudActors.IActorCommand"),
+                Command = c.GetTypeByMetadataName("Devlooped.CloudActors.IActorCommand`1"),
+                Query = c.GetTypeByMetadataName("Devlooped.CloudActors.IActorQuery`1"),
+            }));
 
         context.RegisterSourceOutput(source, (ctx, item) =>
         {
-            if (item is null)
+            if (item.Right.VoidCommand is null || item.Right.Command is null || item.Right.Query is null)
                 return;
 
-            if (item.Attribute.IsGenericType)
-            {
-                var result = item.Attribute.TypeArguments[0];
-                var flavor = item.Attribute.Name == "ActorQueryAttribute" ? "Query" : "Execute";
-                var arg = flavor == "Query" ? "query" : "command";
+            var file = $"{item.Left.ToFileName()}.g.cs";
 
-                ctx.AddSource($"{item.Operation.ToFileName()}.g.cs",
-                    $$"""
-                    using System.Threading.Tasks;
-                    using Devlooped.CloudActors;
-
-                    static partial class ActorBusExtensions
-                    {
-                        public static Task<{{result.ToDisplayString(FullName)}}> {{flavor}}Async(this IActorBus bus, string id, {{item.Operation.ToDisplayString(FullName)}} {{arg}})
-                            => bus.{{flavor}}Async<{{result.ToDisplayString(FullName)}}>(id, {{arg}});
-                    }
-                    """);
-            }
-            else
+            if (item.Left.AllInterfaces.Contains(item.Right.VoidCommand, SymbolEqualityComparer.Default))
             {
-                ctx.AddSource($"{item.Operation.ToFileName()}.g.cs",
+                ctx.AddSource(file,
                     $$"""
                     using System.Threading.Tasks;
                     using Devlooped.CloudActors;
                                         
                     static partial class ActorBusExtensions
                     {
-                        public static Task ExecuteAsync(this IActorBus bus, string id, {{item.Operation.ToDisplayString(FullName)}} command)
+                        public static Task ExecuteAsync(this IActorBus bus, string id, {{item.Left.ToDisplayString(FullName)}} command)
                             => bus.ExecuteAsync(id, (IActorCommand)command);
+                    }
+                    """);
+            }
+            else if (item.Left.AllInterfaces.FirstOrDefault(x => x.IsGenericType && x.ConstructedFrom.Equals(item.Right.Command, SymbolEqualityComparer.Default)) is INamedTypeSymbol command)
+            {
+                ctx.AddSource(file,
+                    $$"""
+                    using System.Threading.Tasks;
+                    using Devlooped.CloudActors;
+
+                    static partial class ActorBusExtensions
+                    {
+                        public static Task<{{command.TypeArguments[0].ToDisplayString(FullName)}}> ExecuteAsync(this IActorBus bus, string id, {{item.Left.ToDisplayString(FullName)}} command)
+                            => bus.ExecuteAsync<{{command.TypeArguments[0].ToDisplayString(FullName)}}>(id, command);
+                    }
+                    """);
+            }
+            else if (item.Left.AllInterfaces.FirstOrDefault(x => x.IsGenericType && x.ConstructedFrom.Equals(item.Right.Query, SymbolEqualityComparer.Default)) is INamedTypeSymbol query)
+            {
+                ctx.AddSource(file,
+                    $$"""
+                    using System.Threading.Tasks;
+                    using Devlooped.CloudActors;
+
+                    static partial class ActorBusExtensions
+                    {
+                        public static Task<{{query.TypeArguments[0].ToDisplayString(FullName)}}> QueryAsync(this IActorBus bus, string id, {{item.Left.ToDisplayString(FullName)}} query)
+                            => bus.QueryAsync<{{query.TypeArguments[0].ToDisplayString(FullName)}}>(id, query);
                     }
                     """);
             }

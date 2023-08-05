@@ -38,6 +38,7 @@ public class StreamstoneStorage(CloudStorageAccount storage) : IGrainStorage
             if (!stream.Found)
             {
                 state.LoadEvents(Enumerable.Empty<object>());
+                grainState.ETag = "0";
                 return;
             }
 
@@ -47,7 +48,7 @@ public class StreamstoneStorage(CloudStorageAccount storage) : IGrainStorage
 
             var events = entities.Events.Select(ToDomainEvent).ToList();
             state.LoadEvents(events);
-            grainState.ETag = stream.Stream.ETag;
+            grainState.ETag = stream.Stream.Version.ToString();
             grainState.RecordExists = true;
         }
         else
@@ -57,6 +58,8 @@ public class StreamstoneStorage(CloudStorageAccount storage) : IGrainStorage
                 return;
 
             grainState.State = (T)result.Result;
+            grainState.ETag = result.Etag;
+            grainState.RecordExists = true;
         }
     }
 
@@ -88,21 +91,34 @@ public class StreamstoneStorage(CloudStorageAccount storage) : IGrainStorage
             };
 
             // Atomically write events + header
-            await Stream.WriteAsync(partition, state.Version, state.Events.Select((e, i) =>
-                ToEventData(e, stream.Version + i, header)).ToArray());
+            try
+            {
+                await Stream.WriteAsync(partition, int.Parse(grainState.ETag), state.Events.Select((e, i) =>
+                    ToEventData(e, stream.Version + i, header)).ToArray());
 
-            state.AcceptEvents();
+                state.AcceptEvents();
+                grainState.ETag = header.Version.ToString();
+                grainState.RecordExists = true;
+            }
+            catch (ConcurrencyConflictException ce)
+            {
+                throw new InconsistentStateException(ce.Message);
+            }
         }
         else
         {
-            await table.ExecuteAsync(TableOperation.InsertOrReplace(new EventEntity
+            var result = await table.ExecuteAsync(TableOperation.InsertOrReplace(new EventEntity
             {
                 PartitionKey = table.Name,
                 RowKey = rowId,
+                ETag = grainState.ETag,
                 Data = JsonSerializer.Serialize(grainState.State, options),
                 DataVersion = new Version(asm.Version?.Major ?? 0, asm.Version?.Minor ?? 0).ToString(),
                 Type = $"{type.FullName}, {asm.Name}",
             }));
+
+            grainState.ETag = result.Etag;
+            grainState.RecordExists = true;
         }
     }
 

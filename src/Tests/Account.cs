@@ -3,9 +3,11 @@ using System.Threading.Tasks;
 using System.Xml.Serialization;
 using Devlooped.CloudActors;
 using Microsoft.Azure.Cosmos.Table;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Orleans;
 using Orleans.Concurrency;
+using Orleans.Hosting;
 using Orleans.Runtime;
 using Orleans.TestingHost;
 using Xunit.Abstractions;
@@ -24,12 +26,13 @@ public class TestAccounts(ITestOutputHelper output)
 
         using (var cluster = ClusterFixture.CreateCluster())
         {
-            IActorBus bus = new OrleansActorBus(cluster.GrainFactory);
+            var bus = new OrleansActorBus(cluster.GrainFactory);
 
             await bus.ExecuteAsync("account/1", new Deposit(100));
             await bus.ExecuteAsync("account/1", new Withdraw(50));
 
-            Assert.Equal(50, await bus.QueryAsync("account/1", new GetBalance()));
+            var balance = await bus.QueryAsync("account/1", new GetBalance());
+            Assert.Equal(50, balance);
 
             Assert.Equal(50, await bus.ExecuteAsync("account/1", new Close()));
             Assert.Equal(0, await bus.QueryAsync("account/1", new GetBalance()));
@@ -38,36 +41,32 @@ public class TestAccounts(ITestOutputHelper output)
         // Force re-activation of grain.
         using (var cluster = ClusterFixture.CreateCluster())
         {
-            IActorBus bus = new OrleansActorBus(cluster.GrainFactory);
+            var bus = new OrleansActorBus(cluster.GrainFactory);
             Assert.Equal(0, await bus.QueryAsync("account/1", new GetBalance()));
         }
     }
 }
 
 [GenerateSerializer]
-[ActorCommand]
-public partial record Deposit(decimal Amount);
+public partial record Deposit(decimal Amount) : IActorCommand;
 
 public partial record Deposited(decimal Amount);
 
 [GenerateSerializer]
-[ActorCommand]
-public partial record Withdraw(decimal Amount);
+public partial record Withdraw(decimal Amount) : IActorCommand;
 
 public partial record Withdrawn(decimal Amount);
 
 [GenerateSerializer]
-[ActorCommand<decimal>]
-public partial record Close();
+public partial record Close() : IActorCommand<decimal>;
 
 public partial record Closed(decimal Balance);
 
 [GenerateSerializer]
-[ActorQuery<decimal>]
-public partial record GetBalance();
+public partial record GetBalance() : IActorQuery<decimal>;
 
 [Actor]
-public partial class Account : EventSourced
+public partial class Account : IEventSourced
 {
     public Account() : this("") { }
 
