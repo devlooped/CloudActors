@@ -13,14 +13,26 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Orleans;
 using Orleans.Concurrency;
+using Orleans.Runtime;
 using Devlooped.CloudActors;
 
 namespace {{ Namespace }}
 {
     [GeneratedCode("Devlooped.CloudActors", "{{ Version }}")]
     [CompilerGenerated]
-    public partial class {{ Name }}Grain : Grain<{{ Name }}>, IActorGrain
+    public partial class {{ Name }}Grain : Grain, IActorGrain
     {
+        readonly IPersistentState<{{ Name }}> storage;
+
+        {{~ if StorageName ~}}
+        public {{ Name }}Grain([PersistentState("{{ StateName }}", "{{ StorageName }}")] IPersistentState<{{ Name }}> storage)
+        {{~ else if StateName ~}}
+        public {{ Name }}Grain([PersistentState("{{ StateName }}")] IPersistentState<{{ Name }}> storage)
+        {{~ else ~}}
+        public {{ Name }}Grain([PersistentState(nameof({{ Name }}))] IPersistentState<{{ Name }}> storage)
+        {{~ end ~}}
+            => this.storage = storage;
+
         [ReadOnly]
         public {{ QueryAsync ? "async " : "" }}Task<TResult> QueryAsync<TResult>(IActorQuery<TResult> command)
         {
@@ -29,11 +41,11 @@ namespace {{ Namespace }}
                 {{~ for query in Queries ~}}
                 case {{ query.Type }} query:
                     {{~ if query.IsAsync ~}}
-                    return (TResult)(object)await State.{{ query.Name }}(query)));
+                    return (TResult)(object)await storage.State.{{ query.Name }}(query)));
                     {{~ else if QueryAsync ~}}
-                    return (TResult)(object)State.{{ query.Name }}(query);
+                    return (TResult)(object)storage.State.{{ query.Name }}(query);
                     {{~ else ~}}
-                    return Task.FromResult((TResult)(object)State.{{ query.Name }}(query));
+                    return Task.FromResult((TResult)(object)storage.State.{{ query.Name }}(query));
                     {{~ end ~}}
                 {{~ end ~}}
                 default:
@@ -48,11 +60,11 @@ namespace {{ Namespace }}
                 {{~ for command in Commands ~}}
                 case {{ command.Type }} cmd:
                     {{~ if command.IsAsync ~}}
-                    var result = await State.{{ command.Name }}(cmd);
+                    var result = await storage.State.{{ command.Name }}(cmd);
                     {{~ else ~}}
-                    var result = State.{{ command.Name }}(cmd);
+                    var result = storage.State.{{ command.Name }}(cmd);
                     {{~ end ~}}
-                    await base.WriteStateAsync();
+                    await storage.WriteStateAsync();
                     return (TResult)(object)result;
                 {{~ end ~}}
                 default:
@@ -67,11 +79,11 @@ namespace {{ Namespace }}
                 {{~ for command in VoidCommands ~}}
                 case {{ command.Type }} cmd:
                     {{~ if command.IsAsync ~}}
-                    await State.{{ command.Name }}(cmd);
+                    await storage.State.{{ command.Name }}(cmd);
                     {{~ else ~}}
-                    State.{{ command.Name }}(cmd);
+                    storage.State.{{ command.Name }}(cmd);
                     {{~ end ~}}
-                    await base.WriteStateAsync();
+                    await storage.WriteStateAsync();
                     break;
                 {{~ end ~}}
                 default:

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.CodeAnalysis;
 using Scriban;
 using static Devlooped.CloudActors.Diagnostics;
@@ -19,9 +20,19 @@ public class ActorGrainGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput(source, (ctx, actor) =>
         {
+            var attribute = actor.GetAttributes().First(IsActor);
+            var state = default(string);
+            var storage = default(string);
+            if (attribute.ConstructorArguments.Length >= 1)
+                state = attribute.ConstructorArguments[0].Value?.ToString() ?? null;
+            if (attribute.ConstructorArguments.Length == 2)
+                storage = attribute.ConstructorArguments[1].Value?.ToString() ?? null;
+
             var model = new GrainModel(
                 Namespace: actor.ContainingNamespace.ToDisplayString(),
                 Name: actor.Name,
+                StateName: state,
+                StorageName: storage,
                 Version: ThisAssembly.Info.InformationalVersion,
                 Queries: actor.GetMembers().OfType<IMethodSymbol>().Where(IsQuery).Select(ToOperation),
                 Commands: actor.GetMembers().OfType<IMethodSymbol>().Where(IsCommand).Select(ToOperation),
@@ -44,7 +55,7 @@ public class ActorGrainGenerator : IIncrementalGenerator
 
     record GrainOperation(string Name, string Type, bool IsAsync);
 
-    record GrainModel(string Namespace, string Name, string Version,
+    record GrainModel(string Namespace, string Name, string? StateName, string? StorageName, string Version,
         IEnumerable<GrainOperation> Queries, IEnumerable<GrainOperation> Commands, IEnumerable<GrainOperation> VoidCommands)
     {
         public bool QueryAsync => Queries.Any(x => x.IsAsync);
