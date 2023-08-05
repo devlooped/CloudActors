@@ -29,7 +29,7 @@ public class TestAccounts(ITestOutputHelper output)
 
         using (var cluster = ClusterFixture.CreateCluster())
         {
-            var bus = new OrleansActorBus(cluster.GrainFactory);
+            var bus = cluster.ServiceProvider.GetRequiredService<IActorBus>();
 
             await bus.ExecuteAsync("account/1", new Deposit(100));
             await bus.ExecuteAsync("account/1", new Withdraw(50));
@@ -44,7 +44,7 @@ public class TestAccounts(ITestOutputHelper output)
         // Force re-activation of grain.
         using (var cluster = ClusterFixture.CreateCluster())
         {
-            var bus = new OrleansActorBus(cluster.GrainFactory);
+            var bus = cluster.ServiceProvider.GetRequiredService<IActorBus>();
             Assert.Equal(0, await bus.QueryAsync("account/1", new GetBalance()));
         }
     }

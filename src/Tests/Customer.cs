@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Devlooped.CloudActors;
 using Microsoft.Azure.Cosmos.Table;
+using Microsoft.Extensions.DependencyInjection;
 using Orleans;
 using Xunit.Abstractions;
 
@@ -21,7 +22,8 @@ public class TestCustomers(ITestOutputHelper output, ClusterFixture fixture)
             .GetTableReference("customer")
             .DeleteIfExistsAsync();
 
-        IActorBus bus = new OrleansActorBus(fixture.Cluster.GrainFactory);
+        var bus = fixture.Cluster.ServiceProvider.GetRequiredService<IActorBus>();
+
         var address = new Address("One Redmond Way", "Redmond", "WA", "98052");
 
         await bus.ExecuteAsync("customer/asdf", new SetAddress(address));
