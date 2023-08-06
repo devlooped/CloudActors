@@ -1,12 +1,17 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Devlooped.CloudActors;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Orleans;
+using Orleans.Core;
 using Orleans.Hosting;
 using Orleans.Providers;
 using Orleans.Runtime;
@@ -19,8 +24,12 @@ public class ClusterFixture : IDisposable
     {
         var builder = new TestClusterBuilder();
         builder.AddSiloBuilderConfigurator<TestSiloConfigurations>();
-        builder.AddSiloBuilderConfigurator<ActorBusConfigurator>();
         builder.AddClientBuilderConfigurator<ActorBusConfigurator>();
+
+        // Cloud actor (instantiation) is only needed on the silo-side.
+        // The UseCloudActors already configures the actor bug, so we don't need 
+        // that on the silo side.
+        builder.AddSiloBuilderConfigurator<UseCloudActorsConfigurator>();
 
         var cluster = builder.Build();
         cluster.Deploy();
@@ -33,12 +42,21 @@ public class ClusterFixture : IDisposable
 
     public TestCluster Cluster { get; }
 
+    class UseCloudActorsConfigurator : IHostConfigurator
+    {
+        public void Configure(IHostBuilder builder) => builder.ConfigureServices(services =>
+        {
+            services.UseCloudActors();
+        });
+    }
+
     class ActorBusConfigurator : IHostConfigurator
     {
         // Adds IActorBus default implementation
-        public void Configure(IHostBuilder builder)
-            => builder.ConfigureServices(services =>
-                services.AddSingleton<IActorBus>(sp => new OrleansActorBus(sp.GetRequiredService<IGrainFactory>())));
+        public void Configure(IHostBuilder builder) => builder.ConfigureServices(services =>
+        {
+            services.AddSingleton<IActorBus>(sp => new OrleansActorBus(sp.GetRequiredService<IGrainFactory>()));
+        });
     }
 
     class TestSiloConfigurations : ISiloConfigurator

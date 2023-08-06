@@ -1,18 +1,25 @@
 ﻿using System;
-using System.CodeDom.Compiler;
-using System.Runtime.CompilerServices;
+using System.Buffers;
+using System.Collections.Generic;
+using System.Diagnostics.Metrics;
+using System.Linq;
+using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Serialization;
 using Devlooped.CloudActors;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using Orleans;
-using Orleans.Concurrency;
+using Orleans.Configuration;
+using Orleans.Core;
 using Orleans.Hosting;
 using Orleans.Providers;
 using Orleans.Runtime;
-using Orleans.TestingHost;
+using Orleans.Runtime.Development;
+using Orleans.Storage;
 using Xunit.Abstractions;
 
 namespace Tests;
@@ -48,6 +55,56 @@ public class TestAccounts(ITestOutputHelper output)
             Assert.Equal(0, await bus.QueryAsync("account/1", new GetBalance()));
         }
     }
+
+    [Fact]
+    public async Task WebAppHosting()
+    {
+        var siloPort = 11111;
+        int gatewayPort = 30000;
+        var siloAddress = IPAddress.Loopback;
+
+        var host = Host
+            .CreateDefaultBuilder()
+            .UseOrleans((ctx, builder) => builder
+                .Configure<ClusterOptions>(options => options.ClusterId = "TEST")
+                .UseDevelopmentClustering(options => options.PrimarySiloEndpoint = new IPEndPoint(siloAddress, siloPort))
+                .ConfigureEndpoints(siloAddress, siloPort, gatewayPort)
+                .AddCloudActors()
+            )
+            .ConfigureServices(services =>
+            {
+                services.AddSingleton(CloudStorageAccount.DevelopmentStorageAccount);
+                services.AddSingleton<IGrainStorage>(sp => sp.GetServiceByName<IGrainStorage>(ProviderConstants.DEFAULT_STORAGE_PROVIDER_NAME));
+                services.AddSingletonNamedService<IGrainStorage, StreamstoneStorage>(ProviderConstants.DEFAULT_STORAGE_PROVIDER_NAME);
+                
+                services.UseCloudActors();
+            }).Build();
+
+        //builder.Host.UseOrleans(silo =>
+        //{
+        //    silo.UseDevelopmentClustering(new IPEndPoint(IPAddress.Loopback, 1234))
+        //    .ConfigureEndpoints(IPAddress.Loopback, 1234, 30000);
+        //    silo.AddCloudActors();
+        //});
+
+        host.Start();
+
+        //var app = builder.Build();
+        //var task = Task.Run(app.Run);
+
+        var bus = host.Services.GetRequiredService<IActorBus>();
+
+        await bus.ExecuteAsync("account/1", new Deposit(100));
+        await bus.ExecuteAsync("account/1", new Withdraw(50));
+
+        var balance = await bus.QueryAsync("account/1", new GetBalance());
+        Assert.Equal(50, balance);
+
+        Assert.Equal(50, await bus.ExecuteAsync("account/1", new Close()));
+        Assert.Equal(0, await bus.QueryAsync("account/1", new GetBalance()));
+        
+        await host.StopAsync();
+    }
 }
 
 [GenerateSerializer]
@@ -71,7 +128,6 @@ public partial record GetBalance() : IActorQuery<decimal>;
 [Actor]
 public partial class Account : IEventSourced
 {
-    public Account() : this("") { }
     public Account(string id) => Id = id;
 
     public string Id { get; }

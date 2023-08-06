@@ -54,10 +54,14 @@ public class StreamstoneStorage(CloudStorageAccount storage) : IGrainStorage
         else
         {
             var result = await table.ExecuteAsync(TableOperation.Retrieve<EventEntity>(table.Name, rowId));
-            if (result.HttpStatusCode == 404)
+            if (result.HttpStatusCode == 404 || 
+                result.Result is not EventEntity entity || 
+                entity.Data is null ||
+                // TODO: we could check for entity.DataVersion and see if it's compatible with T
+                JsonSerializer.Deserialize<T>(entity.Data, options) is not T data)
                 return;
 
-            grainState.State = (T)result.Result;
+            grainState.State = data;
             grainState.ETag = result.Etag;
             grainState.RecordExists = true;
         }
@@ -93,7 +97,9 @@ public class StreamstoneStorage(CloudStorageAccount storage) : IGrainStorage
             // Atomically write events + header
             try
             {
-                await Stream.WriteAsync(partition, int.Parse(grainState.ETag), state.Events.Select((e, i) =>
+                await Stream.WriteAsync(partition,
+                    int.TryParse(grainState.ETag, out var version) ? version : 0,
+                    state.Events.Select((e, i) =>
                     ToEventData(e, stream.Version + i, header)).ToArray());
 
                 state.AcceptEvents();

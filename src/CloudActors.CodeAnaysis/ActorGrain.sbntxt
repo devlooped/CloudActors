@@ -10,6 +10,7 @@
 using System;
 using System.CodeDom.Compiler;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using Orleans;
 using Orleans.Concurrency;
@@ -90,5 +91,10 @@ namespace {{ Namespace }}
                     throw new NotSupportedException();
             }
         }
+
+        /// <summary>
+        /// Just like the JournaledGrain, upon activation, we read the state from storage.
+        /// </summary>
+        public override Task OnActivateAsync(CancellationToken cancellationToken) => storage.ReadStateAsync();
     }
 }

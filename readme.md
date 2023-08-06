@@ -32,16 +32,16 @@ Actors receive messages to process, which are typically plain records such as:
 
 ```csharp
 [GenerateSerializer]
-public partial record Deposit(decimal Amount) : IActorCommand;
+public partial record Deposit(decimal Amount) : IActorCommand;  // 👈 marker interface for void commands
 
 [GenerateSerializer]
 public partial record Withdraw(decimal Amount) : IActorCommand;
 
 [GenerateSerializer]
-public partial record Close() : IActorCommand<decimal>;
+public partial record Close() : IActorCommand<decimal>;         // 👈 marker interface for value-returning commands
 
 [GenerateSerializer]
-public partial record GetBalance() : IActorQuery<decimal>;
+public partial record GetBalance() : IActorQuery<decimal>;      // 👈 marker interface for queries (a.k.a. readonly methods)
 ```
 
 We can see that the only thing that distinguishes a regular Orleans parameter 
@@ -59,24 +59,22 @@ The actor, for its part, only needs the `[Actor]` attribute to be recognized as 
 
 ```csharp
 [Actor]
-public class Account
+public class Account    // 👈 no need to inherit or implement anything by default
 {
-    public Account() : this("") { }
-    public Account(string id) => Id = id;
+    public Account(string id) => Id = id;       // 👈 no need for parameterless constructor
 
     public string Id { get; }
     public decimal Balance { get; private set; }
     public bool IsClosed { get; private set; }
 
-    // Showcases that operation can also be just Execute overloads 
-    //public void Execute(Deposit command)
+    //public void Execute(Deposit command)      // 👈 methods can be overloads of message types
     //{
     //    // validate command
     //    // decrease balance
     //}
 
     // Showcases that operations can have a name that's not Execute
-    public Task DepositAsync(Deposit command)
+    public Task DepositAsync(Deposit command)   // 👈 but can also use any name you like
     {
         // validate command
         Balance +-= command.Amount;
@@ -84,13 +82,13 @@ public class Account
     }
 
     // Showcases that operations don't have to be async
-    public void Execute(Withdraw command)
+    public void Execute(Withdraw command)       // 👈 methods can be sync too
     {
         // validate command
         Balance -= command.Amount;
     }
 
-    // Showcases value-returning async operation with custom name.
+    // Showcases value-returning operation with custom name.
     // In this case, closing the account returns the final balance.
     // As above, this can be async or not.
     public decimal Close(Close _)
@@ -101,8 +99,8 @@ public class Account
         return balance;
     }
 
-    // Showcases a query that doesn't change state, which becomes a [ReadOnly] grain operation.
-    public decimal Query(GetBalance _) => Balance;
+    // Showcases a query that doesn't change state
+    public decimal Query(GetBalance _) => Balance;  // 👈 becomes [ReadOnly] grain operation
 }
 ```
 
@@ -116,14 +114,14 @@ builder.Host.UseOrleans(silo =>
 {
     silo.UseLocalhostClustering();
     silo.AddMemoryGrainStorageAsDefault();
-    silo.AddCloudActors(); // 👈 registers generated grains
+    silo.AddCloudActors();  // 👈 registers generated grains
 });
 ```
 
-Finally, you register as a service the default implementation of the `IActorBus` interface:
+Finally, you need to hook up the `IActorBus` service and related functionality with:
 
 ```csharp
-builder.Services.AddSingleton<IActorBus>(sp => new OrleansActorBus(sp.GetRequiredService<IGrainFactory>()));
+builder.Services.UseCloudActors();  // 👈 registers bus and activation features
 ```
 
 ## How it works
@@ -137,9 +135,10 @@ For the above actor, the generated grain looks like this:
 ```csharp
 public partial class AccountGrain : Grain, IActorGrain
 {
-    readonly IPersistentState<Account> storage;
+    readonly IPersistentState<Account> storage; // 👈 uses recommended injected state approach
 
-    public AccountGrain([PersistentState("chota")] IPersistentState<Account> storage)
+    // 👇 use [Actor("stateName", "storageName")] on actor to customize this
+    public AccountGrain([PersistentState] IPersistentState<Account> storage) 
         => this.storage = storage;
 
     [ReadOnly]
@@ -211,6 +210,7 @@ namespace Orleans.Runtime
         {
             builder.Configure<GrainTypeOptions>(options => 
             {
+                // 👇 registers each generated grain type
                 options.Classes.Add(typeof(Tests.AccountGrain));
             });
 
@@ -261,9 +261,8 @@ look like this:
 
 ```csharp
 [Actor]
-public partial class Account : IEventSourced
+public partial class Account : IEventSourced  // 👈 interface is *not* implemented by user!
 {
-    public Account() : this("") { }
     public Account(string id) => Id = id;
 
     public string Id { get; }
@@ -275,6 +274,7 @@ public partial class Account : IEventSourced
         if (IsClosed)
             throw new InvalidOperationException("Account is closed");
 
+        // 👇 Raise<T> is generated when IEventSourced is inherited
         Raise(new Deposited(command.Amount));
     }
 
@@ -286,7 +286,7 @@ public partial class Account : IEventSourced
         Raise(new Withdrawn(command.Amount));
     }
 
-    public decimal Close(Close _)
+    public decimal Execute(Close _)
     {
         if (IsClosed)
             throw new InvalidOperationException("Account is closed");
@@ -297,6 +297,8 @@ public partial class Account : IEventSourced
     }
 
     public decimal Query(GetBalance _) => Balance;
+
+    // 👇 generated generic Apply dispatches to each based on event type
 
     void Apply(Deposited @event) => Balance += @event.Amount;
 
@@ -312,7 +314,6 @@ public partial class Account : IEventSourced
 
 Note how the interface has no implementation in the actor itself. The implementation 
 provided by the generator looks like the following:
-
 
 ```csharp
 partial class Account
@@ -370,4 +371,4 @@ partial class Account
 }
 ```
 
-Note how there's no dynamic dispatch here either.
+Note how there's no dynamic dispatch here either 💯.
