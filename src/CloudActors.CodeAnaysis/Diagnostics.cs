@@ -7,6 +7,39 @@ namespace Devlooped.CloudActors;
 
 public static class Diagnostics
 {
+    /// <summary>
+    /// DCA001: Actor must be a partial class or record.
+    /// </summary>
+    public static DiagnosticDescriptor MustBePartial { get; } = new(
+        "DCA001",
+        "Actors must be partial",
+        "Cloud Actors require partial actor types.",
+        "Build",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+    /// <summary>
+    /// DCA002: Actor messages must be serializable.
+    /// </summary>
+    public static DiagnosticDescriptor MustBeSerializable { get; } = new(
+        "DCA002",
+        "Actor messages must be serializable",
+        "Annotate '{0}' with [GenerateSerializer] attribute as required by Orleans.",
+        "Build",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+    /// <summary>
+    /// DCA003: Actor messages must be serializable.
+    /// </summary>
+    public static DiagnosticDescriptor SingleInterfaceRequired { get; } = new(
+        "DCA003",
+        "Actor messages can only implement a single message interface",
+        "'{0}' can only implement one of 'IActorCommand', 'IActorCommand<TResult> or 'IActorQuery<TResult>'.",
+        "Build",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
     public static SymbolDisplayFormat FullName { get; } = new(SymbolDisplayGlobalNamespaceStyle.Omitted, SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces);
 
     public static string ToFileName(this ITypeSymbol type) => type.ToDisplayString(FullName).Replace('+', '.');
@@ -33,16 +66,4 @@ public static class Diagnostics
         node.DeclaringSyntaxReferences.Any(r =>
         r.GetSyntax() is RecordDeclarationSyntax { Modifiers: { } modifiers } &&
         modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword)));
-
-    /// <summary>
-    /// DCA001: Actor command must be a partial class or record.
-    /// </summary>
-    public static DiagnosticDescriptor MustBePartial { get; } = new(
-        "DCA001",
-        "Actors must be partial",
-        "Cloud Actors require partial actor types.",
-        "Build",
-        DiagnosticSeverity.Error,
-        isEnabledByDefault: true);
-
 }
