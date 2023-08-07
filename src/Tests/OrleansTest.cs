@@ -29,7 +29,7 @@ public class ClusterFixture : IDisposable
         // Cloud actor (instantiation) is only needed on the silo-side.
         // The UseCloudActors already configures the actor bug, so we don't need 
         // that on the silo side.
-        builder.AddSiloBuilderConfigurator<UseCloudActorsConfigurator>();
+        builder.AddSiloBuilderConfigurator<AddCloudActorsConfigurator>();
 
         var cluster = builder.Build();
         cluster.Deploy();
@@ -42,11 +42,11 @@ public class ClusterFixture : IDisposable
 
     public TestCluster Cluster { get; }
 
-    class UseCloudActorsConfigurator : IHostConfigurator
+    class AddCloudActorsConfigurator : IHostConfigurator
     {
         public void Configure(IHostBuilder builder) => builder.ConfigureServices(services =>
         {
-            services.UseCloudActors();
+            services.AddCloudActors();
         });
     }
 
