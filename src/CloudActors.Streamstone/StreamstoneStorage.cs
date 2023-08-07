@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos.Table;
 using Orleans;
@@ -11,11 +12,14 @@ using Streamstone;
 
 namespace Devlooped.CloudActors;
 
-public class StreamstoneStorage(CloudStorageAccount storage) : IGrainStorage
+public class StreamstoneStorage(CloudStorageAccount storage, JsonSerializerOptions? jsonOptions = default) : IGrainStorage
 {
-    static readonly JsonSerializerOptions options = new()
+    static readonly JsonSerializerOptions defaultOptions = new()
     {
-        PreferredObjectCreationHandling = System.Text.Json.Serialization.JsonObjectCreationHandling.Populate
+        AllowTrailingCommas = true,
+        Converters = { new JsonStringEnumConverter() },
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        WriteIndented = true,
     };
 
     ConcurrentDictionary<string, Task<CloudTable>> tables = new();
@@ -58,7 +62,7 @@ public class StreamstoneStorage(CloudStorageAccount storage) : IGrainStorage
                 result.Result is not EventEntity entity || 
                 entity.Data is null ||
                 // TODO: we could check for entity.DataVersion and see if it's compatible with T
-                JsonSerializer.Deserialize<T>(entity.Data, options) is not T data)
+                JsonSerializer.Deserialize<T>(entity.Data, jsonOptions ?? defaultOptions) is not T data)
                 return;
 
             grainState.State = data;
@@ -88,7 +92,7 @@ public class StreamstoneStorage(CloudStorageAccount storage) : IGrainStorage
             {
                 PartitionKey = table.Name,
                 RowKey = typeof(T).FullName,
-                Data = JsonSerializer.Serialize(grainState.State, options),
+                Data = JsonSerializer.Serialize(grainState.State, jsonOptions ?? defaultOptions),
                 DataVersion = new Version(asm.Version?.Major ?? 0, asm.Version?.Minor ?? 0).ToString(),
                 Type = $"{type.FullName}, {asm.Name}",
                 Version = stream.Version + state.Events.Count,
@@ -118,7 +122,7 @@ public class StreamstoneStorage(CloudStorageAccount storage) : IGrainStorage
                 PartitionKey = table.Name,
                 RowKey = rowId,
                 ETag = grainState.ETag,
-                Data = JsonSerializer.Serialize(grainState.State, options),
+                Data = JsonSerializer.Serialize(grainState.State, jsonOptions ?? defaultOptions),
                 DataVersion = new Version(asm.Version?.Major ?? 0, asm.Version?.Minor ?? 0).ToString(),
                 Type = $"{type.FullName}, {asm.Name}",
             }));
@@ -149,7 +153,7 @@ public class StreamstoneStorage(CloudStorageAccount storage) : IGrainStorage
         public int? Version { get; set; }
     }
 
-    static object ToDomainEvent(EventEntity entity)
+    object ToDomainEvent(EventEntity entity)
     {
         if (entity.Data == null)
             throw new InvalidOperationException();
@@ -158,10 +162,10 @@ public class StreamstoneStorage(CloudStorageAccount storage) : IGrainStorage
 
         // TODO: handle version mismatch between type and entity.DataVersion
 
-        return JsonSerializer.Deserialize(entity.Data, type, options)!;
+        return JsonSerializer.Deserialize(entity.Data, type, jsonOptions ?? defaultOptions)!;
     }
 
-    static EventData ToEventData(object e, int version, params ITableEntity[] includes)
+    EventData ToEventData(object e, int version, params ITableEntity[] includes)
     {
         var type = e.GetType();
         var asm = type.Assembly.GetName();
@@ -169,7 +173,7 @@ public class StreamstoneStorage(CloudStorageAccount storage) : IGrainStorage
         // convenient for quickly glancing at the data.
         var properties = new
         {
-            Data = JsonSerializer.Serialize(e, options),
+            Data = JsonSerializer.Serialize(e, jsonOptions ?? defaultOptions),
             DataVersion = new Version(asm.Version?.Major ?? 0, asm.Version?.Minor ?? 0).ToString(),
             // Visualizing the event id in the table as a column is useful for querying
             Type = $"{e.GetType().FullName}, {e.GetType().Assembly.GetName().Name}",
