@@ -71,7 +71,6 @@ namespace {{ Namespace }}
                     }
                     catch 
                     {
-                        // Restore previous state if we can'tt persist for whatever reason
                         await storage.ReadStateAsync();
                         throw;
                     }
@@ -99,7 +98,6 @@ namespace {{ Namespace }}
                     }
                     catch 
                     {
-                        // Restore previous state if we can'tt persist for whatever reason
                         await storage.ReadStateAsync();
                         throw;
                     }

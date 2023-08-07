@@ -159,7 +159,15 @@ public partial class AccountGrain : Grain, IActorGrain
         {
             case Tests.Close cmd:
                 var result = await storage.State.CloseAsync(cmd);
-                await storage.WriteStateAsync();
+                try
+                {
+                    await storage.WriteStateAsync();
+                }
+                catch 
+                {
+                    await storage.ReadStateAsync(); // 👈 rollback state on failure
+                    throw;
+                }
                 return (TResult)(object)result;
             default:
                 throw new NotSupportedException();
@@ -172,15 +180,39 @@ public partial class AccountGrain : Grain, IActorGrain
         {
             case Tests.Deposit cmd:
                 await storage.State.DepositAsync(cmd);
-                await storage.WriteStateAsync();
+                try
+                {
+                    await storage.WriteStateAsync();
+                }
+                catch 
+                {
+                    await storage.ReadStateAsync(); // 👈 rollback state on failure
+                    throw;
+                }
                 break;
             case Tests.Withdraw cmd:
                 storage.State.Execute(cmd);
-                await storage.WriteStateAsync();
+                try
+                {
+                    await storage.WriteStateAsync();
+                }
+                catch 
+                {
+                    await storage.ReadStateAsync(); // 👈 rollback state on failure
+                    throw;
+                }
                 break;
             case Tests.Close cmd:
                 await storage.State.CloseAsync(cmd);
-                await storage.WriteStateAsync();
+                try
+                {
+                    await storage.WriteStateAsync();
+                }
+                catch 
+                {
+                    await storage.ReadStateAsync(); // 👈 rollback state on failure
+                    throw;
+                }
                 break;
             default:
                 throw new NotSupportedException();
