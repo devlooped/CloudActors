@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <PackageId>Devlooped.CloudActors.Streamstone</PackageId>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Description>Cloud Native Actors: Streamstone storage for Azure Tables</Description>
     <PackageTags>dotnet orleans actor azure table</PackageTags>
   </PropertyGroup>

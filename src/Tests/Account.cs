@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Net;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Devlooped.CloudActors;
@@ -12,6 +13,7 @@ using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Newtonsoft.Json;
 using Orleans;
 using Orleans.Configuration;
 using Orleans.Core;
@@ -22,18 +24,26 @@ using Orleans.Runtime.Development;
 using Orleans.Storage;
 using Xunit.Abstractions;
 
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
+
 namespace Tests;
 
-public class TestAccounts(ITestOutputHelper output)
+public class TestAccounts : IAsyncDisposable
 {
+    public TestAccounts() => CloudStorageAccount.DevelopmentStorageAccount
+        .CreateCloudTableClient()
+        .GetTableReference(nameof(Account))
+        .DeleteIfExistsAsync()
+        .Wait();
+
+    public async ValueTask DisposeAsync() => await CloudStorageAccount.DevelopmentStorageAccount
+        .CreateCloudTableClient()
+        .GetTableReference(nameof(Account))
+        .DeleteIfExistsAsync();
+
     [Fact]
     public async Task HostedGrain()
     {
-        await CloudStorageAccount.DevelopmentStorageAccount
-            .CreateCloudTableClient()
-            .GetTableReference("account")
-            .DeleteIfExistsAsync();
-
         using (var cluster = ClusterFixture.CreateCluster())
         {
             var bus = cluster.ServiceProvider.GetRequiredService<IActorBus>();
@@ -125,13 +135,25 @@ public partial record Closed(decimal Balance);
 [GenerateSerializer]
 public partial record GetBalance() : IActorQuery<decimal>;
 
+partial class Account
+{
+    protected Account(string id, decimal balance, bool isClosed)
+        => (Id, Balance, IsClosed) = (id, balance, isClosed);
+}
+
 [Actor]
 public partial class Account : IEventSourced
 {
     public Account(string id) => Id = id;
 
     public string Id { get; }
+
+    [JsonInclude]
+    [JsonProperty]
     public decimal Balance { get; private set; }
+
+    [JsonInclude]
+    [JsonProperty]
     public bool IsClosed { get; private set; }
 
     // Showcases that operation can also be just Execute overloads 
