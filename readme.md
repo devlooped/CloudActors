@@ -1,16 +1,37 @@
 ﻿# Cloud Native Actors
 
 <p align="center">
-  <image src="https://raw.githubusercontent.com/dotnet/orleans/gh-pages/assets/logo_full.png" alt="Orleans logo" width="600px">
+  <image src="https://raw.githubusercontent.com/devlooped/CloudActors/main/assets/img/banner.png" alt="Orleans logo" width="600px">
 </p>
 
 An opinionated, simplified and uniform Cloud Native actors' library that integrates with Microsoft Orleans.
+
+[![Version](https://img.shields.io/nuget/v/Devlooped.CloudActors.svg?color=royalblue)](https://www.nuget.org/packages/Devlooped.CloudActors) 
+[![Downloads](https://img.shields.io/nuget/dt/Devlooped.CloudActors.svg?color=green)](https://www.nuget.org/packages/Devlooped.CloudActors) 
+[![License](https://img.shields.io/github/license/devlooped/CloudActors.svg?color=blue)](https://github.com/devlooped/CloudActors/blob/main/license.txt) 
+[![Build](https://github.com/devlooped/CloudActors/workflows/build/badge.svg?branch=main)](https://github.com/devlooped/CloudActors/actions)
 
 ## Motivation
 
 Watch the [Orleans Virtual Meetup 7](https://www.youtube.com/watch?v=FKL-PS8Q9ac) where Yevhen 
 (of [Streamstone](https://github.com/yevhen/Streamstone) fame) makes the case for using message
 passing style with actors instead of the more common RPC style offered by Orleans.
+
+<!-- #content -->
+## Overview
+
+Rather than the RPC-style programming offered (and encouraged) out of the 
+box by Orleans, Cloud Actors offers a message-passing style of programming 
+with a uniform API to access actors: Execute and Query. 
+
+These uniform operations receive a message (a.k.a. command or query) and 
+optionally return a result. Consumers always use the same API to invoke 
+operations on actors, and the combination of the actor id and the message 
+consitute enough information to route the message to the right actor.
+
+Actors can be implemented as plain CLR objects, with no need to inherit 
+from any base class or implement any interface. The Orleans plumbing of 
+grains and their activation is completely hidden from the developer.
 
 ## Features
 
@@ -408,3 +429,6 @@ partial class Account
 ```
 
 Note how there's no dynamic dispatch here either 💯.
+
+<!-- #sponsors -->
+<!-- include https://github.com/devlooped/sponsors/raw/main/footer.md -->
