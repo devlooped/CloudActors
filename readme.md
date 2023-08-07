@@ -1,5 +1,9 @@
 ﻿# Cloud Native Actors
 
+<p align="center">
+  <image src="https://raw.githubusercontent.com/dotnet/orleans/gh-pages/assets/logo_full.png" alt="Orleans logo" width="600px">
+</p>
+
 An opinionated, simplified and uniform Cloud Native actors' library that integrates with Microsoft Orleans.
 
 ## Motivation
