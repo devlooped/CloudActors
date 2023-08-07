@@ -86,7 +86,7 @@ public class TestAccounts : IAsyncDisposable
                 services.AddSingleton(CloudStorageAccount.DevelopmentStorageAccount);
                 services.AddSingleton<IGrainStorage>(sp => sp.GetServiceByName<IGrainStorage>(ProviderConstants.DEFAULT_STORAGE_PROVIDER_NAME));
                 services.AddSingletonNamedService<IGrainStorage, StreamstoneStorage>(ProviderConstants.DEFAULT_STORAGE_PROVIDER_NAME);
-                
+
                 services.AddCloudActors();
             }).Build();
 
@@ -98,7 +98,7 @@ public class TestAccounts : IAsyncDisposable
         //});
 
         host.Start();
-        
+
         //var app = builder.Build();
         //var task = Task.Run(app.Run);
 
