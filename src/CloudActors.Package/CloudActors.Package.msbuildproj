@@ -12,5 +12,6 @@
     <ProjectReference Include="..\CloudActors.CodeAnaysis\CloudActors.CodeAnaysis.csproj" />
     <ProjectReference Include="..\CloudActors.CodeFix\CloudActors.CodeFix.csproj" />
     <ProjectReference Include="..\CloudActors\CloudActors.csproj" />
+    <ProjectReference Include="..\CloudActors.Orleans\CloudActors.Orleans.csproj" />
   </ItemGroup>
 </Project>

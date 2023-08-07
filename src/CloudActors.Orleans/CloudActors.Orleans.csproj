@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="NuGetizer" Version="1.0.5" />
     <PackageReference Include="Microsoft.Orleans.Server" Version="7.2.1" />
   </ItemGroup>
 
