@@ -65,7 +65,16 @@ namespace {{ Namespace }}
                     {{~ else ~}}
                     var result = storage.State.{{ command.Name }}(cmd);
                     {{~ end ~}}
-                    await storage.WriteStateAsync();
+                    try
+                    {
+                        await storage.WriteStateAsync();
+                    }
+                    catch 
+                    {
+                        // Restore previous state if we can'tt persist for whatever reason
+                        await storage.ReadStateAsync();
+                        throw;
+                    }
                     return (TResult)(object)result;
                 {{~ end ~}}
                 default:
@@ -84,7 +93,16 @@ namespace {{ Namespace }}
                     {{~ else ~}}
                     storage.State.{{ command.Name }}(cmd);
                     {{~ end ~}}
-                    await storage.WriteStateAsync();
+                    try
+                    {
+                        await storage.WriteStateAsync();
+                    }
+                    catch 
+                    {
+                        // Restore previous state if we can'tt persist for whatever reason
+                        await storage.ReadStateAsync();
+                        throw;
+                    }
                     break;
                 {{~ end ~}}
                 default:
