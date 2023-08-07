@@ -13,7 +13,10 @@ using Orleans.Runtime;
 [EditorBrowsable(EditorBrowsableState.Never)]
 public static class CloudActorsExtensions
 {
-    public static IServiceCollection UseCloudActors(this IServiceCollection services)
+    /// <summary>
+    /// Adds the <see cref="IActorBus"/> service and custom actor activation logic.
+    /// </summary>
+    public static IServiceCollection AddCloudActors(this IServiceCollection services)
     {
         services.TryAddSingleton<IActorBus>(sp => new OrleansActorBus(sp.GetRequiredService<IGrainFactory>()));
 

@@ -146,7 +146,7 @@ builder.Host.UseOrleans(silo =>
 Finally, you need to hook up the `IActorBus` service and related functionality with:
 
 ```csharp
-builder.Services.UseCloudActors();  // 👈 registers bus and activation features
+builder.Services.AddCloudActors();  // 👈 registers bus and activation features
 ```
 
 ## How it works
