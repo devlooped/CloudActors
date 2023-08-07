@@ -281,9 +281,9 @@ Finally, in order to improve discoverability for consumers of the `IActorBus` in
 extension method overloads will be generated that surface the available actor messages 
 as non-generic overloads, such as:
 
-![execute overloads](https://github.com/devlooped/CloudActors/blob/main/assets/img/command-overloads.png?raw=true)
+![execute overloads](https://raw.githubusercontent.com/devlooped/CloudActors/main/assets/img/command-overloads.png?raw=true)
 
-![query overloads](https://github.com/devlooped/CloudActors/blob/main/assets/img/query-overloads.png?raw=true)
+![query overloads](https://raw.githubusercontent.com/devlooped/CloudActors/main/assets/img/query-overloads.png?raw=true)
 
 ## Event Sourcing
 

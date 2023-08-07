@@ -4,7 +4,6 @@ An opinionated, simplified and uniform Cloud Native actors' library that integra
 [![GitHub](https://img.shields.io/badge/-source-181717.svg?logo=GitHub)](https://github.com/devlooped/nugetizer)
 
 <!-- include ../../readme.md#content -->
-<!-- include ../../readme.md#sponsors -->
 
 <!-- Exclude from auto-expansion by devlooped/actions-include GH action -->
 <!-- exclude -->
