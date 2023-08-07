@@ -46,7 +46,7 @@ public class ActorMessageAnalyzer : DiagnosticAnalyzer
             context.ReportDiagnostic(Diagnostic.Create(SingleInterfaceRequired, typeDeclaration.Identifier.GetLocation(), symbol.Name));
         }
 
-        if (context.Compilation.GetTypeByMetadataName("Orleans.GenerateSerializerAttribute") is INamedTypeSymbol generateAttr && 
+        if (context.Compilation.GetTypeByMetadataName("Orleans.GenerateSerializerAttribute") is INamedTypeSymbol generateAttr &&
             !symbol.GetAttributes().Any(a => generateAttr.Equals(a.AttributeClass, SymbolEqualityComparer.Default)))
         {
             context.ReportDiagnostic(Diagnostic.Create(MustBeSerializable, typeDeclaration.Identifier.GetLocation(), symbol.Name));

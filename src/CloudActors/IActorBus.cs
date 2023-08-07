@@ -21,7 +21,7 @@ public interface IActorBus
     /// <param name="id">The actor identifier, such as <c>account/1</c>.</param>
     /// <param name="command">The command to execute.</param>
     Task<TResult> ExecuteAsync<TResult>(string id, IActorCommand<TResult> command);
-    
+
     /// <summary>
     /// Invokes a read-only query on an actor.
     /// </summary>

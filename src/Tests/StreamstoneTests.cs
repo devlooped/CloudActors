@@ -54,14 +54,14 @@ static class GrainState
 
 class GrainState<T>(T state) : IGrainState<T>
 {
-    public T State 
+    public T State
     {
-        get => state; 
-        set => state = value; 
+        get => state;
+        set => state = value;
     }
 
     public string ETag { get; set; } = "";
-    
+
     public bool RecordExists { get; set; }
 }
 

@@ -86,7 +86,7 @@ public class TestAccounts : IAsyncDisposable
                 services.AddSingleton(CloudStorageAccount.DevelopmentStorageAccount);
                 services.AddSingleton<IGrainStorage>(sp => sp.GetServiceByName<IGrainStorage>(ProviderConstants.DEFAULT_STORAGE_PROVIDER_NAME));
                 services.AddSingletonNamedService<IGrainStorage, StreamstoneStorage>(ProviderConstants.DEFAULT_STORAGE_PROVIDER_NAME);
-                
+
                 services.UseCloudActors();
             }).Build();
 
@@ -112,7 +112,7 @@ public class TestAccounts : IAsyncDisposable
 
         Assert.Equal(50, await bus.ExecuteAsync("account/1", new Close()));
         Assert.Equal(0, await bus.QueryAsync("account/1", new GetBalance()));
-        
+
         await host.StopAsync();
     }
 }

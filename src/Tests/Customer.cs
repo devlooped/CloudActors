@@ -42,7 +42,7 @@ public record Address(string Street, string City, string State, string Zip);
 public partial record SetAddress(Address Address) : IActorCommand;
 
 [GenerateSerializer]
-public partial record GetAddress(): IActorQuery<Address>;
+public partial record GetAddress() : IActorQuery<Address>;
 
 [Actor]
 public partial class Customer
