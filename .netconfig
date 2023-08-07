@@ -27,8 +27,8 @@
 	weak
 [file ".github/dependabot.yml"]
 	url = https://github.com/devlooped/oss/blob/main/.github/dependabot.yml
-	sha = 4f070a477b4162a280f02722ae666376ae4fcc71
-	etag = 35f2134fff3b0235ff8dac8618a76198c8ef533ad2f29628bbb435cd1134d638
+	sha = cba10bbf7bb08d841d2ddc990b67bc3f2c58fba0
+	etag = fc84e2bb7a348609b75bb20145333306e2030083c6929edcc4f675907b8c52ad
 	weak
 [file ".github/release.yml"]
 	url = https://github.com/devlooped/oss/blob/main/.github/release.yml
