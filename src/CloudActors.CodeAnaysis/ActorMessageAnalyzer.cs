@@ -13,6 +13,9 @@ public class ActorMessageAnalyzer : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(SingleInterfaceRequired, MustBeSerializable);
 
+#if DEBUG
+#pragma warning disable RS1026 // Enable concurrent execution: we only turn this on in release builds
+#endif
     public override void Initialize(AnalysisContext context)
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);

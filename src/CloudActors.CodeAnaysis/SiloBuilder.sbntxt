@@ -21,6 +21,10 @@ namespace Orleans.Runtime
     [CompilerGenerated]
     public static class CloudActorsExtensions
     {
+        /// <summary>
+        /// Adds Cloud Actors support to the silo, as well as all discovered 
+        /// actor types in the current assembly and its dependencies.
+        /// </summary>
         public static ISiloBuilder AddCloudActors(this ISiloBuilder builder)
         {
             builder.Configure<GrainTypeOptions>(options => 
@@ -28,6 +32,11 @@ namespace Orleans.Runtime
                 {{~ for grain in Grains ~}}                
                 options.Classes.Add(typeof({{grain}}));
                 {{~ end ~}}
+            });
+
+            builder.ConfigureServices(services =>
+            {
+                services.AddCloudActors();
             });
 
             return builder;

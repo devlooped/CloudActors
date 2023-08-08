@@ -151,15 +151,9 @@ var builder = WebApplication.CreateSlimBuilder(args);
 builder.Host.UseOrleans(silo =>
 {
     silo.UseLocalhostClustering();
-    silo.AddMemoryGrainStorageAsDefault();
-    silo.AddCloudActors();  // 👈 registers generated grains
+    // 👇 registers generated grains, actor bus and activation features
+    silo.AddCloudActors(); 
 });
-```
-
-Finally, you need to hook up the `IActorBus` service and related functionality with:
-
-```csharp
-builder.Services.AddCloudActors();  // 👈 registers bus and activation features
 ```
 
 ## How it works
@@ -224,7 +218,7 @@ public partial class AccountGrain : Grain, IActorGrain
                 }
                 catch 
                 {
-                    await storage.ReadStateAsync(); // 👈 rollback state on failure
+                    await storage.ReadStateAsync();
                     throw;
                 }
                 break;
@@ -236,7 +230,7 @@ public partial class AccountGrain : Grain, IActorGrain
                 }
                 catch 
                 {
-                    await storage.ReadStateAsync(); // 👈 rollback state on failure
+                    await storage.ReadStateAsync();
                     throw;
                 }
                 break;
@@ -248,7 +242,7 @@ public partial class AccountGrain : Grain, IActorGrain
                 }
                 catch 
                 {
-                    await storage.ReadStateAsync(); // 👈 rollback state on failure
+                    await storage.ReadStateAsync();
                     throw;
                 }
                 break;
@@ -282,6 +276,12 @@ namespace Orleans.Runtime
             {
                 // 👇 registers each generated grain type
                 options.Classes.Add(typeof(Tests.AccountGrain));
+            });
+
+            builder.ConfigureServices(services =>
+            {
+                // 👇 registers IActorBus and actor activation features
+                services.AddCloudActors();
             });
 
             return builder;

@@ -80,14 +80,11 @@ public class TestAccounts : IAsyncDisposable
                 .UseDevelopmentClustering(options => options.PrimarySiloEndpoint = new IPEndPoint(siloAddress, siloPort))
                 .ConfigureEndpoints(siloAddress, siloPort, gatewayPort)
                 .AddCloudActors()
+                .AddStreamstoneActorStorage(opt => opt.AutoSnapshot = true)
             )
             .ConfigureServices(services =>
             {
                 services.AddSingleton(CloudStorageAccount.DevelopmentStorageAccount);
-                services.AddSingleton<IGrainStorage>(sp => sp.GetServiceByName<IGrainStorage>(ProviderConstants.DEFAULT_STORAGE_PROVIDER_NAME));
-                services.AddSingletonNamedService<IGrainStorage, StreamstoneStorage>(ProviderConstants.DEFAULT_STORAGE_PROVIDER_NAME);
-
-                services.AddCloudActors();
             }).Build();
 
         //builder.Host.UseOrleans(silo =>
