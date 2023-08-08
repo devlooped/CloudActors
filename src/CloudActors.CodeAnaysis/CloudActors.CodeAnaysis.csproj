@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <AssemblyName>Devlooped.CloudActors.CodeAnalysis</AssemblyName>
@@ -11,10 +11,6 @@
     <!-- See https://github.com/scriban/scriban#source-embedding -->
     <PackageScribanIncludeSource>true</PackageScribanIncludeSource>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Remove="ActorSnapshot.sbntxt" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="NuGetizer" Version="1.2.0" />
@@ -30,10 +26,6 @@
 
   <ItemGroup>
     <EmbeddedResource Include="@(None -&gt; WithMetadataValue('Extension', '.sbntxt'))" Kind="text" />
-    <EmbeddedResource Include="ActorSnapshot.sbntxt">
-      <Generator></Generator>
-      <Kind>text</Kind>
-    </EmbeddedResource>
   </ItemGroup>
 
 </Project>
