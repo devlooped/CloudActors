@@ -63,7 +63,14 @@ public partial record Deposit(decimal Amount) : IActorCommand;  // 👈 marker i
 public partial record Withdraw(decimal Amount) : IActorCommand;
 
 [GenerateSerializer]
-public partial record Close() : IActorCommand<decimal>;         // 👈 marker interface for value-returning commands
+public partial record Close(CloseReason Reason = CloseReason.Customer) : IActorCommand<decimal>;         // 👈 marker interface for value-returning commands
+
+public enum CloseReason
+{
+    Customer,
+    Fraud,
+    Other
+}
 
 [GenerateSerializer]
 public partial record GetBalance() : IActorQuery<decimal>;      // 👈 marker interface for queries (a.k.a. readonly methods)
@@ -91,6 +98,7 @@ public class Account    // 👈 no need to inherit or implement anything by defa
     public string Id { get; }
     public decimal Balance { get; private set; }
     public bool IsClosed { get; private set; }
+    public CloseReason Reason { get; private set; }
 
     //public void Execute(Deposit command)      // 👈 methods can be overloads of message types
     //{
@@ -116,11 +124,12 @@ public class Account    // 👈 no need to inherit or implement anything by defa
     // Showcases value-returning operation with custom name.
     // In this case, closing the account returns the final balance.
     // As above, this can be async or not.
-    public decimal Close(Close _)
+    public decimal Close(Close command)
     {
         var balance = Balance;
         Balance = 0;
         IsClosed = true;
+        Reason = command.Reason;
         return balance;
     }
 
@@ -128,6 +137,10 @@ public class Account    // 👈 no need to inherit or implement anything by defa
     public decimal Query(GetBalance _) => Balance;  // 👈 becomes [ReadOnly] grain operation
 }
 ```
+
+> NOTE: properties with private setters do not need any additional attributes in order 
+> to be properly deserialized when reading the latest state from storage. A source generator 
+> provides a constructor with those for use in deserialization
 
 On the hosting side, an `AddCloudActors` extension method is provided to register the 
 automatically generated grains to route invocations to the actors:
@@ -285,6 +298,43 @@ as non-generic overloads, such as:
 
 ![query overloads](https://raw.githubusercontent.com/devlooped/CloudActors/main/assets/img/query-overloads.png?raw=true)
 
+## State Deserialization
+
+The above `Account` class only provides a single constructor receiving the account 
+identifier. After various operations are performed on it, however, the state will 
+be changed via private property setters, which are not available to the deserializer 
+by default. .NET 7+ adds JSON support for setting these properties via the 
+[JsonInclude](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.serialization.jsonincludeattribute?view=net-7.0#remarks) 
+attribute, but it's not very intuitive that you need to add it to all such properties.
+
+The equivalent in JSON.NET is the [JsonProperty](https://www.newtonsoft.com/json/help/html/T_Newtonsoft_Json_JsonPropertyAttribute.htm), 
+which suffers from the same drawback.
+
+To help uses fall in the pit of success, the library automatically generates a 
+constructor annotated with `[JsonConstructor]` for the actor class, which will be used 
+to deserialize the state. In the above `Account` example, the generated constructor looks like 
+the following:
+
+```csharp
+partial class Account
+{
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [JsonConstructor]
+    public Account(string id, System.Decimal balance, System.Boolean isClosed, Tests.CloseReason reason) 
+        : this(id) 
+    {
+        this.Balance = balance;
+        this.IsClosed = isClosed;
+        this.Reason = reason;
+    }
+}
+```
+
+The fact that the constructor is annotated with `[JsonContructor]` does not necessarily 
+mean that the state has to be serialized as JSON. It's up to the storage provider to 
+invoke this constructor with the appropriate values. If it does happens to use 
+`System.Text.Json` for serialization, then the constructor will be used automatically.
+
 ## Event Sourcing
 
 Quite a natural extension of the message-passing style of programming for these actors, 
@@ -339,17 +389,19 @@ public partial class Account : IEventSourced  // 👈 interface is *not* impleme
     {
         if (IsClosed)
             throw new InvalidOperationException("Account is closed");
+        if (command.Amount > Balance)
+            throw new InvalidOperationException("Insufficient funds.");
 
         Raise(new Withdrawn(command.Amount));
     }
 
-    public decimal Execute(Close _)
+    public decimal Execute(Close command)
     {
         if (IsClosed)
             throw new InvalidOperationException("Account is closed");
 
         var balance = Balance;
-        Raise(new Closed(Balance));
+        Raise(new Closed(Balance, command.Reason));
         return balance;
     }
 
@@ -365,6 +417,7 @@ public partial class Account : IEventSourced  // 👈 interface is *not* impleme
     {
         Balance = 0;
         IsClosed = true;
+        Reason = @event.Reason;
     }
 }
 ```
@@ -429,6 +482,15 @@ partial class Account
 ```
 
 Note how there's no dynamic dispatch here either 💯.
+
+An important colorary of this project is that the design of a library and particularly 
+its implementation details, will vary greatly if it can assume source generators will 
+play a role in its consumption. In this particular case, many design decisions 
+were different initially before I had the generators in place, and the result afterwards 
+was a simplification in many aspects, with less base types in the main library/interfaces 
+project, and more incremental behavior addded as users opt-in to certain features.
+
+
 
 <!-- #sponsors -->
 <!-- include https://github.com/devlooped/sponsors/raw/main/footer.md -->

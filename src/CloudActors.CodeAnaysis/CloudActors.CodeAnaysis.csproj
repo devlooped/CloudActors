@@ -13,6 +13,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="ActorSnapshot.sbntxt" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="NuGetizer" Version="1.0.5" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Pack="false" Version="4.5.0" />
     <PackageReference Include="PolySharp" PrivateAssets="All" Version="1.13.2" />
@@ -26,6 +30,10 @@
 
   <ItemGroup>
     <EmbeddedResource Include="@(None -&gt; WithMetadataValue('Extension', '.sbntxt'))" Kind="text" />
+    <EmbeddedResource Include="ActorSnapshot.sbntxt">
+      <Generator></Generator>
+      <Kind>text</Kind>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>

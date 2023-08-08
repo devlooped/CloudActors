@@ -54,7 +54,7 @@ public class TestAccounts : IAsyncDisposable
             var balance = await bus.QueryAsync("account/1", new GetBalance());
             Assert.Equal(50, balance);
 
-            Assert.Equal(50, await bus.ExecuteAsync("account/1", new Close()));
+            Assert.Equal(50, await bus.ExecuteAsync("account/1", new Close(CloseReason.Customer)));
             Assert.Equal(0, await bus.QueryAsync("account/1", new GetBalance()));
         }
 
@@ -128,18 +128,19 @@ public partial record Withdraw(decimal Amount) : IActorCommand;
 public partial record Withdrawn(decimal Amount);
 
 [GenerateSerializer]
-public partial record Close() : IActorCommand<decimal>;
+public partial record Close(CloseReason Reason = CloseReason.Customer) : IActorCommand<decimal>;
 
-public partial record Closed(decimal Balance);
+public enum CloseReason
+{
+    Customer,
+    Fraud,
+    Other
+}
+
+public partial record Closed(decimal Balance, CloseReason Reason);
 
 [GenerateSerializer]
 public partial record GetBalance() : IActorQuery<decimal>;
-
-partial class Account
-{
-    protected Account(string id, decimal balance, bool isClosed)
-        => (Id, Balance, IsClosed) = (id, balance, isClosed);
-}
 
 [Actor]
 public partial class Account : IEventSourced
@@ -148,13 +149,11 @@ public partial class Account : IEventSourced
 
     public string Id { get; }
 
-    [JsonInclude]
-    [JsonProperty]
     public decimal Balance { get; private set; }
 
-    [JsonInclude]
-    [JsonProperty]
     public bool IsClosed { get; private set; }
+
+    public CloseReason Reason { get; private set; }
 
     // Showcases that operation can also be just Execute overloads 
     //public void Execute(Deposit command)
@@ -191,11 +190,10 @@ public partial class Account : IEventSourced
     }
 
     // Showcases value-returning async operation with custom name.
-    public decimal Close(Close _)
+    public decimal Close(Close command)
     {
         var final = Balance;
-        Raise(new Closed(Balance));
-        IsClosed = true;
+        Raise(new Closed(Balance, command.Reason));
         return final;
     }
 
@@ -204,5 +202,10 @@ public partial class Account : IEventSourced
 
     void Apply(Deposited @event) => Balance += @event.Amount;
     void Apply(Withdrawn @event) => Balance -= @event.Amount;
-    void Apply(Closed @event) => Balance = 0;
+    void Apply(Closed @event)
+    {
+        Balance = 0;
+        IsClosed = true;
+        Reason = @event.Reason;
+    }
 }

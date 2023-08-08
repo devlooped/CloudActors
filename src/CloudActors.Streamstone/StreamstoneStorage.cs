@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos.Table;
 using Orleans;
@@ -16,8 +17,9 @@ public class StreamstoneOptions
     static readonly JsonSerializerOptions options = new()
     {
         AllowTrailingCommas = true,
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
-        PreferredObjectCreationHandling = System.Text.Json.Serialization.JsonObjectCreationHandling.Populate,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
+        Converters = { new JsonStringEnumConverter() },
     };
 
     /// <summary>
@@ -67,7 +69,6 @@ public class StreamstoneStorage : IGrainStorage
             var stream = await Stream.TryOpenAsync(partition);
             if (!stream.Found)
             {
-                state.LoadEvents(Enumerable.Empty<object>());
                 grainState.ETag = "0";
                 return;
             }
@@ -75,12 +76,12 @@ public class StreamstoneStorage : IGrainStorage
             if (options.AutoSnapshot)
             {
                 // See if we can quickly load from most recent snapshot.
-                var result = await table.ExecuteAsync(TableOperation.Retrieve<EventEntity>(table.Name, typeof(T).FullName));
+                var result = await table.ExecuteAsync(TableOperation.Retrieve<EventEntity>(rowId, typeof(T).FullName));
                 if (result.HttpStatusCode == 200 &&
                     result.Result is EventEntity entity &&
+                    typeof(T).Assembly.GetName() is { } asm &&
                     // We only apply snapshots where major.minor matches the current version, otherwise, 
                     // we might be losing important business logic changes.
-                    typeof(T).Assembly.GetName() is { } asm &&
                     new Version(asm.Version?.Major ?? 0, asm.Version?.Minor ?? 0).ToString() == entity.DataVersion &&
                     entity.Data is string data &&
                     JsonSerializer.Deserialize<T>(data, options.JsonOptions) is { } instance)
@@ -109,6 +110,7 @@ public class StreamstoneStorage : IGrainStorage
             if (result.HttpStatusCode == 404 ||
                 result.Result is not EventEntity entity ||
                 entity.Data is not string data ||
+                // TODO: how to deal with versioning in this case?
                 JsonSerializer.Deserialize<T>(data, options.JsonOptions) is not { } instance)
                 return;
 
