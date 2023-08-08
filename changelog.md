@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.3.0](https://github.com/devlooped/CloudActors/tree/v0.3.0) (2023-08-08)
+
+[Full Changelog](https://github.com/devlooped/CloudActors/compare/v0.2.2...v0.3.0)
+
 ## [v0.2.2](https://github.com/devlooped/CloudActors/tree/v0.2.2) (2023-08-07)
 
 [Full Changelog](https://github.com/devlooped/CloudActors/compare/v0.2.1...v0.2.2)
