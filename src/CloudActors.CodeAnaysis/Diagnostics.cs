@@ -40,7 +40,10 @@ public static class Diagnostics
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
-    public static SymbolDisplayFormat FullName { get; } = new(SymbolDisplayGlobalNamespaceStyle.Omitted, SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces);
+    public static SymbolDisplayFormat FullName { get; } = new(
+        typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+        genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
+        miscellaneousOptions: SymbolDisplayMiscellaneousOptions.ExpandNullable);
 
     public static string ToFileName(this ITypeSymbol type) => type.ToDisplayString(FullName).Replace('+', '.');
 

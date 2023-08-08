@@ -54,13 +54,13 @@ public class StreamstoneStorage : IGrainStorage
 
     public async Task ClearStateAsync<T>(string stateName, GrainId grainId, IGrainState<T> grainState)
     {
-        var table = await GetTable<T>(storage, stateName);
+        var table = await GetTable(storage, stateName);
         await table.ExecuteAsync(TableOperation.Delete(new TableEntity(table.Name, grainId.Key.ToString()!)));
     }
 
     public async Task ReadStateAsync<T>(string stateName, GrainId grainId, IGrainState<T> grainState)
     {
-        var table = await GetTable<T>(storage, stateName);
+        var table = await GetTable(storage, stateName);
         var rowId = grainId.Key.ToString();
 
         if (grainState.State is IEventSourced state)
@@ -122,7 +122,7 @@ public class StreamstoneStorage : IGrainStorage
 
     public async Task WriteStateAsync<T>(string stateName, GrainId grainId, IGrainState<T> grainState)
     {
-        var table = await GetTable<T>(storage, stateName);
+        var table = await GetTable(storage, stateName);
         var rowId = grainId.Key.ToString();
         var type = typeof(T);
         var asm = typeof(T).Assembly.GetName();
@@ -186,7 +186,7 @@ public class StreamstoneStorage : IGrainStorage
         }
     }
 
-    async Task<CloudTable> GetTable<T>(CloudStorageAccount storage, string name)
+    async Task<CloudTable> GetTable(CloudStorageAccount storage, string name)
     {
         var getTable = tables.GetOrAdd(name, async key =>
         {
