@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <AssemblyName>Devlooped.CloudActors.CodeFix</AssemblyName>
@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NuGetizer" Version="1.0.5" />
+    <PackageReference Include="NuGetizer" Version="1.1.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Pack="false" Version="4.5.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.Common" Pack="false" Version="4.5.0" />
     <PackageReference Include="PolySharp" PrivateAssets="All" Version="1.13.2" />
