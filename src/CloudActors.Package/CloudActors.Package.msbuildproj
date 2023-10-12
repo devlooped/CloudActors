@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.Build.NoTargets/3.7.0">
+<Project Sdk="Microsoft.Build.NoTargets/3.7.0">
   <PropertyGroup>
     <PackageId>Devlooped.CloudActors</PackageId>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -6,7 +6,7 @@
     <PackageTags>dotnet orleans actor</PackageTags>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="NuGetizer" Version="1.0.5" />
+    <PackageReference Include="NuGetizer" Version="1.2.0" />
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
   </ItemGroup>
   <ItemGroup>
