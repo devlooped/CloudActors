@@ -21,7 +21,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Pack="false" Version="4.5.0" />
     <PackageReference Include="PolySharp" PrivateAssets="All" Version="1.13.2" />
 
-    <PackageReference Include="Scriban" Version="5.7.0" Pack="false" IncludeAssets="build" />
+    <PackageReference Include="Scriban" Version="5.10.0" Pack="false" IncludeAssets="build" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" PrivateAssets="all" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" PrivateAssets="all" />
     <PackageReference Include="ThisAssembly.AssemblyInfo" Version="1.3.1" PrivateAssets="all" />
