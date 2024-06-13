@@ -1,11 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Devlooped.CloudActors;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Azure.Cosmos.Table;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Moq;
 using Newtonsoft.Json;
 using Orleans;
+using Orleans.Hosting;
 using Orleans.Runtime;
 using Tests;
 
@@ -58,8 +63,23 @@ public class StreamstoneTests
 
         Assert.Equal(wallet.Funds, state.State.Funds);
     }
+
+    [Fact]
+    public void ConfigureWebAppWithGeneratedSerializers()
+    {
+        var builder = WebApplication.CreateSlimBuilder();
+
+        builder.Host.UseOrleans(silo => silo
+            .AddCloudActors()
+            // See https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/source-generation
+            .AddStreamstoneActorStorage(options => options.JsonOptions.TypeInfoResolver = StreamstoneContext.Default));
+    }
 }
 
+// Read more about this at https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/source-generation 
+[JsonSourceGenerationOptions(DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, WriteIndented = true)]
+[JsonSerializable(typeof(Wallet))]
+partial class StreamstoneContext : JsonSerializerContext { }
 
 [Actor("CloudActorWallet")]
 public partial class Wallet(string id)

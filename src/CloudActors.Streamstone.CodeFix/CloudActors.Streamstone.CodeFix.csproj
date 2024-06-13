@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>Devlooped.CloudActors.Streamstone.CodeFix</AssemblyName>
+    <TargetFramework>netstandard2.0</TargetFramework>
+
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <NoWarn>RS1036</NoWarn>
+
+    <PackFolder>analyzers/dotnet/roslyn4.5/cs</PackFolder>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NuGetizer" Version="1.0.5" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Pack="false" Version="4.5.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.Common" Pack="false" Version="4.5.0" />
+    <PackageReference Include="PolySharp" PrivateAssets="All" Version="1.13.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CloudActors.Streamstone.CodeAnalysis\CloudActors.Streamstone.CodeAnalysis.csproj" />
+  </ItemGroup>
+
+</Project>
