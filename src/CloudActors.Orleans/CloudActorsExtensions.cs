@@ -19,10 +19,11 @@ namespace Devlooped.CloudActors
         /// It's not necessary to invoke this method if you already invoked <c>AddCloudActors</c> 
         /// on the <see cref="ISiloBuilder"/> when configuring Orleans.
         /// </remarks>
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public static IServiceCollection AddCloudActors(this IServiceCollection services)
         {
             services.TryAddSingleton<IActorBus>(sp => new OrleansActorBus(sp.GetRequiredService<IGrainFactory>()));
-            
+
             // Attempt to replace the OOB persistence so we don't require a parameterless constructor and always 
             // have actors initialized with a specific id from the grain.
             if (services.FirstOrDefault(d => d.ServiceType == typeof(IActorStateFactory)) is null &&
