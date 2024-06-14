@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Devlooped;
 using Devlooped.CloudActors;
-using Microsoft.Azure.Cosmos.Table;
 using Moq;
 using Newtonsoft.Json;
 using Orleans;
@@ -18,8 +18,7 @@ public class StreamstoneTests
     {
         await CloudStorageAccount.DevelopmentStorageAccount
             .CreateCloudTableClient()
-            .GetTableReference(nameof(Account))
-            .DeleteIfExistsAsync();
+            .DeleteTableAsync(nameof(Account));
 
         var account = new Account("1");
         account.Deposit(new Deposit(100));
@@ -42,8 +41,7 @@ public class StreamstoneTests
     {
         await CloudStorageAccount.DevelopmentStorageAccount
             .CreateCloudTableClient()
-            .GetTableReference("CloudActorWallet")
-            .DeleteIfExistsAsync();
+            .DeleteTableAsync("CloudActorWallet");
 
         var wallet = new Wallet("1");
         wallet.AddFunds("USD", 100);

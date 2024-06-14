@@ -7,9 +7,9 @@ using System.Net;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using Devlooped;
 using Devlooped.CloudActors;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -32,14 +32,11 @@ public class TestAccounts : IAsyncDisposable
 {
     public TestAccounts() => CloudStorageAccount.DevelopmentStorageAccount
         .CreateCloudTableClient()
-        .GetTableReference(nameof(Account))
-        .DeleteIfExistsAsync()
-        .Wait();
+        .DeleteTable(nameof(Account));
 
     public async ValueTask DisposeAsync() => await CloudStorageAccount.DevelopmentStorageAccount
         .CreateCloudTableClient()
-        .GetTableReference(nameof(Account))
-        .DeleteIfExistsAsync();
+        .DeleteTableAsync(nameof(Account));
 
     [Fact]
     public async Task HostedGrain()
