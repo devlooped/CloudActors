@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Orleans.Providers;
 using Orleans.Runtime;
+using Orleans.Runtime.Hosting;
 using Orleans.Storage;
 
 namespace Orleans.Hosting;
@@ -49,12 +50,7 @@ public static class StreamstoneSiloBuilderExtensions
         if (configure is not null)
             services.AddOptions<StreamstoneOptions>(name).Configure(configure);
 
-        if (string.Equals(name, ProviderConstants.DEFAULT_STORAGE_PROVIDER_NAME, StringComparison.Ordinal))
-        {
-            services.TryAddSingleton(sp => sp.GetServiceByName<IGrainStorage>(ProviderConstants.DEFAULT_STORAGE_PROVIDER_NAME));
-        }
-
-        return services.AddSingletonNamedService<IGrainStorage>(name, (sp, name) =>
+        return services.AddGrainStorage(name, (sp, name) =>
         {
             var snapshot = sp.GetRequiredService<IOptionsMonitor<StreamstoneOptions>>();
             return new StreamstoneStorage(sp.GetRequiredService<CloudStorageAccount>(), snapshot.Get(name));

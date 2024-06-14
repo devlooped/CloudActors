@@ -10,14 +10,13 @@
 
   <ItemGroup>
     <PackageReference Include="Devlooped.CloudStorageAccount" Version="1.2.0" />
-    <PackageReference Include="Microsoft.Orleans.Runtime" Version="7.2.6" />
+    <PackageReference Include="Microsoft.Orleans.Runtime" Version="8.1.0" />
     <PackageReference Include="NuGetizer" Version="1.2.2" />
     <PackageReference Include="Streamstone" Version="3.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\CloudActors.Package\CloudActors.Package.msbuildproj" ReferenceOutputAssembly="false" />
-    <ProjectReference Include="..\CloudActors.Streamstone.CodeAnalysis\CloudActors.Streamstone.CodeAnalysis.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\CloudActors\CloudActors.csproj" Pack="false" />
   </ItemGroup>
 

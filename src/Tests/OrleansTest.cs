@@ -70,11 +70,6 @@ public class ClusterFixture : IDisposable
     {
         ConcurrentDictionary<GrainId, object> memory = new();
 
-        public MemoryStorage()
-        {
-
-        }
-
         public Task ClearStateAsync<T>(string stateName, GrainId grainId, IGrainState<T> grainState)
             => memory.TryRemove(grainId, out _) ? Task.CompletedTask : Task.CompletedTask;
 
