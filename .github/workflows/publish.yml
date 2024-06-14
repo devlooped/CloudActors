@@ -27,6 +27,11 @@ jobs:
       - name: 🙏 build
         run: dotnet build -m:1 -p:version=${GITHUB_REF#refs/*/v} -bl:build.binlog
 
+      - name: ⚙ azurite
+        run: |
+          npm install azurite@3.20.1
+          npx azurite &
+
       - name: 🧪 test
         uses: ./.github/workflows/test
 
