@@ -68,9 +68,7 @@
 	weak
 [file ".github/workflows/publish.yml"]
 	url = https://github.com/devlooped/oss/blob/main/.github/workflows/publish.yml
-	sha = 5fb172362c767bef7c36478f1a6bdc264723f8f9
-	etag = 9ea4083894308a610742488923d2a44778ebba6ca73fb13424647d9a82c918b4
-	weak
+	skip
 [file ".github/workflows/sponsor.yml"]
 	url = https://github.com/devlooped/oss/blob/main/.github/workflows/sponsor.yml
 	sha = 5fb172362c767bef7c36478f1a6bdc264723f8f9
