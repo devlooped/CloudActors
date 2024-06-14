@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.4.0](https://github.com/devlooped/CloudActors/tree/v0.4.0) (2024-06-14)
+
+[Full Changelog](https://github.com/devlooped/CloudActors/compare/v0.3.0...v0.4.0)
+
+:sparkles: Implemented enhancements:
+
+- Update to streamstone v3 with latest Azure Data APIs [\#57](https://github.com/devlooped/CloudActors/pull/57) (@kzu)
+- Simplify silo/services configuration and streamstone config [\#45](https://github.com/devlooped/CloudActors/pull/45) (@kzu)
+
 ## [v0.3.0](https://github.com/devlooped/CloudActors/tree/v0.3.0) (2023-08-08)
 
 [Full Changelog](https://github.com/devlooped/CloudActors/compare/v0.2.2...v0.3.0)
