@@ -9,11 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Devlooped.CloudStorageAccount" Version="1.2.0" />
     <PackageReference Include="Microsoft.Orleans.Runtime" Version="7.2.1" />
     <PackageReference Include="NuGetizer" Version="1.2.0" />
-		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
-    <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="1.0.8" />
-    <PackageReference Include="Streamstone" Version="2.3.1" />
+    <PackageReference Include="Streamstone" Version="3.0.0" />
   </ItemGroup>
 
   <ItemGroup>

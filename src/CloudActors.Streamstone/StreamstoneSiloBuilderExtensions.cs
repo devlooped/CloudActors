@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
+using Devlooped;
 using Devlooped.CloudActors;
-using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;

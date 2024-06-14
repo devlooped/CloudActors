@@ -3,18 +3,20 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.Azure.Cosmos.Table;
+using Azure;
+using Azure.Data.Tables;
 using Orleans;
 using Orleans.Runtime;
 using Orleans.Storage;
 using Streamstone;
+using Streamstone.Utility;
 
 namespace Devlooped.CloudActors;
 
 public class StreamstoneStorage : IGrainStorage
 {
     // We cache table names to avoid running CreateIfNotExistsAsync on each access.
-    readonly ConcurrentDictionary<string, Task<CloudTable>> tables = new();
+    readonly ConcurrentDictionary<string, Task<TableClient>> tables = new();
     readonly CloudStorageAccount storage;
     readonly StreamstoneOptions options;
 
@@ -25,7 +27,7 @@ public class StreamstoneStorage : IGrainStorage
     public async Task ClearStateAsync<T>(string stateName, GrainId grainId, IGrainState<T> grainState)
     {
         var table = await GetTable(storage, stateName);
-        await table.ExecuteAsync(TableOperation.Delete(new TableEntity(table.Name, grainId.Key.ToString()!)));
+        await table.SubmitTransactionAsync([new TableTransactionAction(TableTransactionActionType.Delete, new TableEntity(table.Name, grainId.Key.ToString()!))]);
     }
 
     public async Task ReadStateAsync<T>(string stateName, GrainId grainId, IGrainState<T> grainState)
@@ -46,9 +48,8 @@ public class StreamstoneStorage : IGrainStorage
             if (options.AutoSnapshot)
             {
                 // See if we can quickly load from most recent snapshot.
-                var result = await table.ExecuteAsync(TableOperation.Retrieve<EventEntity>(rowId, typeof(T).FullName));
-                if (result.HttpStatusCode == 200 &&
-                    result.Result is EventEntity entity &&
+                var result = await table.GetEntityIfExistsAsync<EventEntity>(rowId, typeof(T).FullName ?? typeof(T).Name);
+                if (result.HasValue && result.Value is EventEntity entity &&
                     typeof(T).Assembly.GetName() is { } asm &&
                     // We only apply snapshots where major.minor matches the current version, otherwise, 
                     // we might be losing important business logic changes.
@@ -76,16 +77,16 @@ public class StreamstoneStorage : IGrainStorage
         }
         else
         {
-            var result = await table.ExecuteAsync(TableOperation.Retrieve<EventEntity>(table.Name, rowId));
-            if (result.HttpStatusCode == 404 ||
-                result.Result is not EventEntity entity ||
+            var result = await table.GetEntityIfExistsAsync<EventEntity>(table.Name, rowId);
+            if (!result.HasValue ||
+                result.Value is not EventEntity entity ||
                 entity.Data is not string data ||
                 // TODO: how to deal with versioning in this case?
                 JsonSerializer.Deserialize<T>(data, options.JsonOptions) is not { } instance)
                 return;
 
             grainState.State = instance;
-            grainState.ETag = result.Etag;
+            grainState.ETag = entity.ETag.ToString("G");
             grainState.RecordExists = true;
         }
     }
@@ -112,18 +113,17 @@ public class StreamstoneStorage : IGrainStorage
             try
             {
                 var includes = options.AutoSnapshot ?
-                    new ITableEntity[]
-                    {
+                    [
                         new EventEntity
                         {
                             PartitionKey = table.Name,
-                            RowKey = typeof(T).FullName,
+                            RowKey = typeof(T).FullName ?? typeof(T).Name,
                             Data = JsonSerializer.Serialize(grainState.State, options.JsonOptions),
                             DataVersion = new Version(asm.Version?.Major ?? 0, asm.Version?.Minor ?? 0).ToString(),
                             Type = $"{type.FullName}, {asm.Name}",
                             Version = stream.Version + state.Events.Count
                         }
-                    } : Array.Empty<ITableEntity>();
+                    ] : Array.Empty<ITableEntity>();
 
                 await Stream.WriteAsync(partition,
                     int.TryParse(grainState.ETag, out var version) ? version : 0,
@@ -141,27 +141,27 @@ public class StreamstoneStorage : IGrainStorage
         }
         else
         {
-            var result = await table.ExecuteAsync(TableOperation.InsertOrReplace(new EventEntity
+            var result = await table.SubmitTransactionAsync([new TableTransactionAction(TableTransactionActionType.UpsertReplace, new EventEntity
             {
                 PartitionKey = table.Name,
-                RowKey = rowId,
-                ETag = grainState.ETag,
+                RowKey = rowId!,
+                ETag = new ETag(grainState.ETag),
                 Data = JsonSerializer.Serialize(grainState.State, options.JsonOptions),
                 DataVersion = new Version(asm.Version?.Major ?? 0, asm.Version?.Minor ?? 0).ToString(),
                 Type = $"{type.FullName}, {asm.Name}",
-            }));
+            })]);
 
-            grainState.ETag = result.Etag;
+            grainState.ETag = result.Value[0].Headers.ETag?.ToString();
             grainState.RecordExists = true;
         }
     }
 
-    async Task<CloudTable> GetTable(CloudStorageAccount storage, string name)
+    async Task<TableClient> GetTable(CloudStorageAccount storage, string name)
     {
         var getTable = tables.GetOrAdd(name, async key =>
         {
             var client = storage.CreateCloudTableClient();
-            var table = client.GetTableReference(key);
+            var table = client.GetTableClient(key);
             await table.CreateIfNotExistsAsync();
             return table;
         });
@@ -169,8 +169,13 @@ public class StreamstoneStorage : IGrainStorage
         return await getTable;
     }
 
-    class EventEntity : TableEntity
+    class EventEntity : ITableEntity
     {
+        public string PartitionKey { get; set; } = "";
+        public string RowKey { get; set; } = "";
+        public DateTimeOffset? Timestamp { get; set; }
+        public ETag ETag { get; set; }
+
         public string? Data { get; set; }
         public string? DataVersion { get; set; }
         public string? Type { get; set; }

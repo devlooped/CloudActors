@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Devlooped;
 using Devlooped.CloudActors;
-using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans;
 using Xunit.Abstractions;
@@ -19,8 +19,7 @@ public class TestCustomers(ITestOutputHelper output, ClusterFixture fixture)
     {
         await CloudStorageAccount.DevelopmentStorageAccount
             .CreateCloudTableClient()
-            .GetTableReference("customer")
-            .DeleteIfExistsAsync();
+            .DeleteTableAsync("customer");
 
         var bus = fixture.Cluster.ServiceProvider.GetRequiredService<IActorBus>();
 
