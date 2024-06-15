@@ -84,10 +84,10 @@
          It's possible that some manifests will need interactive sync, and we'll render the 
          messages in that case. 
          Note that since running this requires autosync=true, we can safely assume the user 
-         has already run `gh sponsors [...] -autosync` at least once to turn it on. Otherwise, 
+         has already run `sponsorlink [...] -autosync` at least once to turn it on. Otherwise, 
          this target won't run at all.
          -->
-    <Exec Command="gh sponsors sync --local --unattended" StandardErrorImportance="high" StandardOutputImportance="low" ConsoleToMSBuild="true" ContinueOnError="true">
+    <Exec Command="sponsors sync --local --unattended" StandardErrorImportance="high" StandardOutputImportance="low" ConsoleToMSBuild="true" ContinueOnError="true">
       <Output TaskParameter="ExitCode" PropertyName="SponsorsExitCode" />
       <Output TaskParameter="ConsoleOutput" PropertyName="SponsorsOutput" />
     </Exec>
