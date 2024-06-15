@@ -101,8 +101,8 @@
 	weak
 [file "src/Directory.Build.props"]
 	url = https://github.com/devlooped/oss/blob/main/src/Directory.Build.props
-	sha = 6e96c592c7b44bfda10404b9f90e4b8fab299249
-	etag = a4925eb815bbcecc022de8d3245db069573d96ac5ecdf5f0e604f06b5577b01e
+	sha = 14deaea5cecc64df51781d29891a2f67caf8be16
+	etag = f177eb767aaa6a347da43ff7ff419c9a0736c562cb171e17ded8007a1945a8b0
 	weak
 [file "src/Directory.Build.targets"]
 	url = https://github.com/devlooped/oss/blob/main/src/Directory.Build.targets
@@ -186,13 +186,13 @@
 	weak
 [file "src/SponsorLink/SponsorLink/SponsorLink.es.resx"]
 	url = https://github.com/devlooped/oss/blob/main/src/SponsorLink/SponsorLink/SponsorLink.es.resx
-	sha = a0ae7272f31c766ebb129ea38c11c01df93b6b5d
-	etag = ded7de7a2624b335beb462763e3580413da21e80c8b40b4c773ca46c7af4e859
+	sha = 1c7fd8d13411eeaf23c9f3be754b680e72052731
+	etag = 3ccb4b82fffbb0a4244596d3081ff06664dc86fb687c30a8ed700780fe167d3c
 	weak
 [file "src/SponsorLink/SponsorLink/SponsorLink.resx"]
 	url = https://github.com/devlooped/oss/blob/main/src/SponsorLink/SponsorLink/SponsorLink.resx
-	sha = a0ae7272f31c766ebb129ea38c11c01df93b6b5d
-	etag = 7d9e89ef2cf762a6119c9c6c2ed2517b71a546838151c005400301fde8def266
+	sha = 1c7fd8d13411eeaf23c9f3be754b680e72052731
+	etag = bfe2910a5952c3b8a5834aa5b9edb9ea069d48b6609b74fb31b8e61919d4bea1
 	weak
 [file "src/SponsorLink/SponsorLink/SponsorLinkAnalyzer.cs"]
 	url = https://github.com/devlooped/oss/blob/main/src/SponsorLink/SponsorLink/SponsorLinkAnalyzer.cs
@@ -221,8 +221,8 @@
 	weak
 [file "src/SponsorLink/SponsorLink/buildTransitive/Devlooped.Sponsors.targets"]
 	url = https://github.com/devlooped/oss/blob/main/src/SponsorLink/SponsorLink/buildTransitive/Devlooped.Sponsors.targets
-	sha = a0ae7272f31c766ebb129ea38c11c01df93b6b5d
-	etag = 72ec691a085dc34f946627f7038a82569e44f0b63a9f4a7bd60f0f7b52fd198f
+	sha = b8fd87b94547860f560054ba9bf1272be0c46eac
+	etag = 95fd763e4c512e54f007d67d2f019c2fabbaaf083d118e5d53ec0cec537d9c71
 	weak
 [file "src/SponsorLink/SponsorLink/devlooped.pub.jwk"]
 	url = https://github.com/devlooped/oss/blob/main/src/SponsorLink/SponsorLink/devlooped.pub.jwk
