@@ -119,7 +119,7 @@
   </resheader>
   <data name="Unknown_Description" xml:space="preserve">
     <value>Sponsoring projects you depend on ensures they remain active, and that you get the support you need. It's also super affordable and available worldwide! 
-Please consider supporting the project by sponsoring at {links} and running 'sponsors sync {spaced}' afterwards.</value>
+Please consider supporting the project by sponsoring at {0} and running 'sponsor sync {1}' afterwards.</value>
     <comment>Unknown sponsor description</comment>
   </data>
   <data name="Unknown_Message" xml:space="preserve">
@@ -129,7 +129,7 @@ Please consider supporting the project by sponsoring at {links} and running 'spo
     <value>Unknown sponsor status</value>
   </data>
   <data name="Expired_Description" xml:space="preserve">
-    <value>Sponsor-only features may be disabled. Please run 'sponsors sync {spaced}' and optionally enable automatic sync.</value>
+    <value>Sponsor-only features may be disabled. Please run 'sponsor sync {0}' and optionally enable automatic sync.</value>
   </data>
   <data name="Expired_Message" xml:space="preserve">
     <value>Sponsor status has expired and automatic sync has not been enabled.</value>
@@ -147,7 +147,7 @@ Please consider supporting the project by sponsoring at {links} and running 'spo
     <value>You are a sponsor of the project, you rock 💟!</value>
   </data>
   <data name="Expiring_Description" xml:space="preserve">
-    <value>Sponsor status has expired and you are in the grace period. Please run 'sponsors sync {spaced}' and optionally enable automatic sync.</value>
+    <value>Sponsor status has expired and you are in the grace period. Please run 'sponsor sync {0}' and optionally enable automatic sync.</value>
   </data>
   <data name="Expiring_Message" xml:space="preserve">
     <value>Sponsor status needs periodic updating and automatic sync has not been enabled.</value>

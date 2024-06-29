@@ -224,11 +224,6 @@
 	sha = b8fd87b94547860f560054ba9bf1272be0c46eac
 	etag = 95fd763e4c512e54f007d67d2f019c2fabbaaf083d118e5d53ec0cec537d9c71
 	weak
-[file "src/SponsorLink/SponsorLink/devlooped.pub.jwk"]
-	url = https://github.com/devlooped/oss/blob/main/src/SponsorLink/SponsorLink/devlooped.pub.jwk
-	sha = a0ae7272f31c766ebb129ea38c11c01df93b6b5d
-	etag = cf884781ff88b4d096841e3169282762a898b2050c9b5dac0013bc15bdbee267
-	weak
 [file "src/SponsorLink/SponsorLink/sponsorable.md"]
 	url = https://github.com/devlooped/oss/blob/main/src/SponsorLink/SponsorLink/sponsorable.md
 	sha = a0ae7272f31c766ebb129ea38c11c01df93b6b5d
