@@ -119,7 +119,7 @@
   </resheader>
   <data name="Unknown_Description" xml:space="preserve">
     <value>Patrocinar los proyectos en que dependes asegura que se mantengan activos, y que recibas el apoyo que necesitas. También es muy económico y está disponible en todo el mundo!
-Por favor considera apoyar el proyecto patrocinando en {links} y ejecutando posteriormente 'sponsors sync {spaced}'.</value>
+Por favor considera apoyar el proyecto patrocinando en {0} y ejecutando posteriormente 'sponsor sync {1}'.</value>
   </data>
   <data name="Unknown_Message" xml:space="preserve">
     <value>Por favor considere apoyar {0} patrocinando @{1} 🙏</value>
@@ -128,7 +128,7 @@ Por favor considera apoyar el proyecto patrocinando en {links} y ejecutando post
     <value>Estado de patrocinio desconocido</value>
   </data>
   <data name="Expired_Description" xml:space="preserve">
-    <value>Funcionalidades exclusivas para patrocinadores pueden no estar disponibles. Ejecuta 'sponsors sync {spaced}' y, opcionalmente, habilita la sincronización automática.</value>
+    <value>Funcionalidades exclusivas para patrocinadores pueden no estar disponibles. Ejecuta 'sponsor sync {0}' y, opcionalmente, habilita la sincronización automática.</value>
   </data>
   <data name="Expired_Message" xml:space="preserve">
     <value>El estado de patrocino ha expirado y la sincronización automática no está habilitada.</value>
@@ -146,7 +146,7 @@ Por favor considera apoyar el proyecto patrocinando en {links} y ejecutando post
     <value>Eres un patrocinador del proyecto, eres lo máximo 💟!</value>
   </data>
   <data name="Expiring_Description" xml:space="preserve">
-    <value>El estado de patrocino ha expirado y estás en un período de gracia. Ejecuta 'sponsors sync {spaced}' y, opcionalmente, habilita la sincronización automática.</value>
+    <value>El estado de patrocino ha expirado y estás en un período de gracia. Ejecuta 'sponsor sync {0}' y, opcionalmente, habilita la sincronización automática.</value>
   </data>
   <data name="Expiring_Message" xml:space="preserve">
     <value>El estado de patrocino necesita actualización periódica y la sincronización automática no está habilitada.</value>
