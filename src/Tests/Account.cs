@@ -139,7 +139,13 @@ public partial record GetBalance() : IActorQuery<decimal>;
 [Actor]
 public partial class Account : IEventSourced
 {
+    //readonly IActorBus bus;
+
     public Account(string id) => Id = id;
+
+    //public Account(string id, IActorBus bus) 
+    //    => (Id, this.bus) 
+    //    = (id, bus);
 
     public string Id { get; }
 

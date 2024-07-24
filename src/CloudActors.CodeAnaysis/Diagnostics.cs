@@ -30,7 +30,7 @@ public static class Diagnostics
         isEnabledByDefault: true);
 
     /// <summary>
-    /// DCA003: Actor messages must be serializable.
+    /// DCA003: Actor messages can only implement a single message interface.
     /// </summary>
     public static DiagnosticDescriptor SingleInterfaceRequired { get; } = new(
         "DCA003",
