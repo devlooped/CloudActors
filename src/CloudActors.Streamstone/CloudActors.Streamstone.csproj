@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="Devlooped.CloudStorageAccount" Version="1.2.0" />
-    <PackageReference Include="Microsoft.Orleans.Runtime" Version="8.1.0" />
+    <PackageReference Include="Microsoft.Orleans.Runtime" Version="8.2.0" />
     <PackageReference Include="NuGetizer" Version="1.2.2" />
     <PackageReference Include="Streamstone" Version="3.0.0" />
   </ItemGroup>
