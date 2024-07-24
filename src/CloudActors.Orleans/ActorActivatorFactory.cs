@@ -19,7 +19,7 @@ class ActorStateFactory(IPersistentStateFactory factory) : IActorStateFactory
             state is StateStorageBridge<TState> bridge &&
             // We only support a ctor that receives the grain id as a string
             context.GrainId.Key.ToString() is object id &&
-            typeof(TState).GetConstructor(new[] { typeof(string) }) is not null &&
+            typeof(TState).GetConstructor([typeof(string)]) is not null &&
             // Even so, we might fail activation
             Activator.CreateInstance(typeof(TState), id) is TState actor)
         {

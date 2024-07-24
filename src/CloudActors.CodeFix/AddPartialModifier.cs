@@ -8,16 +8,8 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace Devlooped.CloudActors.CodeAnalysis;
 
-public class AddPartialModifier : CodeAction
+public class AddPartialModifier(Document document, SyntaxNode root, TypeDeclarationSyntax declaration) : CodeAction
 {
-    readonly Document document;
-    readonly SyntaxNode root;
-    readonly TypeDeclarationSyntax declaration;
-
-    public AddPartialModifier(Document document, SyntaxNode root, TypeDeclarationSyntax declaration)
-        => (this.document, this.root, this.declaration)
-        = (document, root, declaration);
-
     public override string Title => "Add partial modifier";
     public override string EquivalenceKey => Title;
 
