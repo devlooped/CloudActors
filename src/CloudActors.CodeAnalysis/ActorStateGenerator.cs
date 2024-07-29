@@ -3,7 +3,7 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Scriban;
-using static Devlooped.CloudActors.Diagnostics;
+using static Devlooped.CloudActors.AnalysisExtensions;
 
 namespace Devlooped.CloudActors;
 
@@ -22,7 +22,7 @@ public class ActorStateGenerator : IIncrementalGenerator
 
         var actors = context.CompilationProvider
             .SelectMany((x, _) => x.Assembly.GetAllTypes().OfType<INamedTypeSymbol>())
-            .Where(x => x.GetAttributes().Any(IsActor));
+            .Where(x => x.GetAttributes().Any(x => x.IsActor()));
 
         context.RegisterImplementationSourceOutput(actors.Combine(options), (ctx, source) =>
         {
