@@ -13,12 +13,16 @@ public class ActorGrainGenerator : IIncrementalGenerator
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var source = context.CompilationProvider
+        var options = context.GetOrleansOptions();
+
+        var actors = context.CompilationProvider
             .SelectMany((x, _) => x.Assembly.GetAllTypes().OfType<INamedTypeSymbol>())
             .Where(x => x.GetAttributes().Any(IsActor));
 
-        context.RegisterSourceOutput(source, (ctx, actor) =>
+        context.RegisterImplementationSourceOutput(actors.Combine(options), (ctx, source) =>
         {
+            var (actor, options) = source;
+
             var attribute = actor.GetAttributes().First(IsActor);
             var state = default(string);
             var storage = default(string);
@@ -38,8 +42,10 @@ public class ActorGrainGenerator : IIncrementalGenerator
                 VoidCommands: actor.GetMembers().OfType<IMethodSymbol>().Where(IsVoidCommand).Select(ToOperation));
 
             var output = template.Render(model, member => member.Name);
+            var orleans = OrleansGenerator.GenerateCode(options, output, actor.Name, ctx.CancellationToken);
 
-            ctx.AddSource($"{actor.ToFileName()}.g.cs", output);
+            ctx.AddSource($"{actor.ToFileName()}.cs", output);
+            ctx.AddSource($"{actor.ToFileName()}.orleans.cs", orleans);
         });
     }
 

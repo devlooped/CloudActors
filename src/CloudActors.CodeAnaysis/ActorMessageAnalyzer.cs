@@ -11,7 +11,7 @@ namespace Devlooped.CloudActors;
 [DiagnosticAnalyzer(LanguageNames.CSharp, LanguageNames.VisualBasic)]
 public class ActorMessageAnalyzer : DiagnosticAnalyzer
 {
-    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(SingleInterfaceRequired, MustBeSerializable);
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(SingleInterfaceRequired, MustNotBeSerializable);
 
 #if DEBUG
 #pragma warning disable RS1026 // Enable concurrent execution: we only turn this on in release builds
@@ -50,9 +50,12 @@ public class ActorMessageAnalyzer : DiagnosticAnalyzer
         }
 
         if (context.Compilation.GetTypeByMetadataName("Orleans.GenerateSerializerAttribute") is INamedTypeSymbol generateAttr &&
-            !symbol.GetAttributes().Any(a => generateAttr.Equals(a.AttributeClass, SymbolEqualityComparer.Default)))
+            typeDeclaration.AttributeLists
+                .SelectMany(al => al.Attributes)
+                .Select(a => context.SemanticModel.GetSymbolInfo(a).Symbol)
+                .Any(a => generateAttr.Equals(a, SymbolEqualityComparer.Default)))
         {
-            context.ReportDiagnostic(Diagnostic.Create(MustBeSerializable, typeDeclaration.Identifier.GetLocation(), symbol.Name));
+            context.ReportDiagnostic(Diagnostic.Create(MustNotBeSerializable, typeDeclaration.Identifier.GetLocation(), symbol.Name));
         }
     }
 }

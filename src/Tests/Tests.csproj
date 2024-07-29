@@ -7,6 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="ManualActors.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="ManualActors.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
     <PackageReference Include="xunit" Version="2.8.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.1" />
@@ -25,6 +33,7 @@
     <ProjectReference Include="..\CloudActors\CloudActors.csproj" />
     <ProjectReference Include="..\CloudActors.CodeAnaysis\CloudActors.CodeAnaysis.csproj" OutputItemType="Analyzer" />
     <ProjectReference Include="..\CloudActors.CodeFix\CloudActors.CodeFix.csproj" OutputItemType="Analyzer" />
+    <ProjectReference Include="..\TestDomain\TestDomain.csproj" />
   </ItemGroup>
 
 </Project>

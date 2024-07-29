@@ -11,7 +11,6 @@ public class ActorBusOverloadGenerator : IIncrementalGenerator
     {
         var source = context.CompilationProvider.SelectMany((x, _) => x.Assembly.GetAllTypes().OfType<INamedTypeSymbol>())
             .Where(IsActorMessage)
-            //.Where(IsPartial)
             .Combine(context.CompilationProvider
             .Select((c, _) => new
             {

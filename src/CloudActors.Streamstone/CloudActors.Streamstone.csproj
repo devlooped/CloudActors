@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CloudActors.Orleans\CloudActors.Orleans.csproj" />
     <ProjectReference Include="..\CloudActors.Package\CloudActors.Package.msbuildproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\CloudActors\CloudActors.csproj" Pack="false" />
   </ItemGroup>

@@ -15,7 +15,7 @@ namespace Devlooped.CloudActors;
 [ExportCodeFixProvider(LanguageNames.CSharp)]
 public class ActorMessageFixer : CodeFixProvider
 {
-    public override ImmutableArray<string> FixableDiagnosticIds { get; } = ImmutableArray.Create(Diagnostics.MustBeSerializable.Id);
+    public override ImmutableArray<string> FixableDiagnosticIds { get; } = ImmutableArray.Create(Diagnostics.MustNotBeSerializable.Id);
 
     public override FixAllProvider GetFixAllProvider() => WellKnownFixAllProviders.BatchFixer;
 

@@ -22,8 +22,8 @@ public class PartialAnalyzer : DiagnosticAnalyzer
 
     void Analyze(SyntaxNodeAnalysisContext context)
     {
-        var node = context.Node;
-        if (node is not TypeDeclarationSyntax typeDeclaration)
+        if (context.Node is not TypeDeclarationSyntax typeDeclaration ||
+            context.Compilation.GetTypeByMetadataName("Devlooped.CloudActors.IActorMessage") is not { } messageType)
             return;
 
         if (typeDeclaration.Modifiers.Any(SyntaxKind.PartialKeyword))
@@ -33,8 +33,10 @@ public class PartialAnalyzer : DiagnosticAnalyzer
         if (symbol is null)
             return;
 
-        // Only require this for actor types, denoted by the ActorAttribute.
-        if (!symbol.GetAttributes().Any(IsActor))
+        // Only require this for actor and message types
+        if (!symbol.GetAttributes().Any(IsActor) &&
+            // symbol implements IActorMessage
+            !symbol.AllInterfaces.Contains(messageType, SymbolEqualityComparer.Default))
             return;
 
         context.ReportDiagnostic(Diagnostic.Create(MustBePartial, typeDeclaration.Identifier.GetLocation()));
