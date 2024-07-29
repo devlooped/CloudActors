@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Scriban;
-using static Devlooped.CloudActors.Diagnostics;
+using static Devlooped.CloudActors.AnalysisExtensions;
 
 namespace Devlooped.CloudActors;
 
@@ -16,14 +17,24 @@ public class ActorGrainGenerator : IIncrementalGenerator
         var options = context.GetOrleansOptions();
 
         var actors = context.CompilationProvider
-            .SelectMany((x, _) => x.Assembly.GetAllTypes().OfType<INamedTypeSymbol>())
-            .Where(x => x.GetAttributes().Any(IsActor));
+            .SelectMany((x, _) => x.Assembly
+                .GetAllTypes()
+                .OfType<INamedTypeSymbol>()
+                .Where(t => t.IsActor())
+                .Concat(x.GetUsedAssemblyReferences()
+                .SelectMany(r =>
+                {
+                    if (x.GetAssemblyOrModuleSymbol(r) is IAssemblySymbol asm)
+                        return asm.GetAllTypes().OfType<INamedTypeSymbol>().Where(t => t.IsActor());
+
+                    return [];
+                })));
 
         context.RegisterImplementationSourceOutput(actors.Combine(options), (ctx, source) =>
         {
             var (actor, options) = source;
 
-            var attribute = actor.GetAttributes().First(IsActor);
+            var attribute = actor.GetAttributes().First(x => x.IsActor());
             var state = default(string);
             var storage = default(string);
             if (attribute.ConstructorArguments.Length >= 1)

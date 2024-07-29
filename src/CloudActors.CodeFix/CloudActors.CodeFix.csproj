@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CloudActors.CodeAnaysis\CloudActors.CodeAnaysis.csproj" />
+    <ProjectReference Include="..\CloudActors.CodeAnalysis\CloudActors.CodeAnalysis.csproj" />
   </ItemGroup>
 
 </Project>

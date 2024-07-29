@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Scriban;
-using static Devlooped.CloudActors.Diagnostics;
+using static Devlooped.CloudActors.AnalysisExtensions;
 
 namespace Devlooped.CloudActors;
 
@@ -18,7 +18,7 @@ public class EventSourcedGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var actors = context.CompilationProvider.SelectMany((x, _) => x.Assembly.GetAllTypes().OfType<INamedTypeSymbol>())
-            .Where(x => x.GetAttributes().Any(IsActor) && x.AllInterfaces.Any(i => i.ToDisplayString(FullName) == "Devlooped.CloudActors.IEventSourced"))
+            .Where(x => x.GetAttributes().Any(a => a.IsActor()) && x.AllInterfaces.Any(i => i.ToDisplayString(FullName) == "Devlooped.CloudActors.IEventSourced"))
             .Combine(context.CompilationProvider.Select((c, _) => c.GetTypeByMetadataName("Devlooped.CloudActors.IEventSourced")))
             .Where(x => x.Right != null && !x.Right
                 // Only if users haven't already implemented *any* members of the interface

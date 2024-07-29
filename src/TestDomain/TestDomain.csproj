@@ -12,7 +12,7 @@
   <ItemGroup>
     <ProjectReference Include="..\CloudActors\CloudActors.csproj" />
     <ProjectReference Include="..\CloudActors.Orleans\CloudActors.Orleans.csproj" />
-    <ProjectReference Include="..\CloudActors.CodeAnaysis\CloudActors.CodeAnaysis.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\CloudActors.CodeAnalysis\CloudActors.CodeAnalysis.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\CloudActors.CodeFix\CloudActors.CodeFix.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
