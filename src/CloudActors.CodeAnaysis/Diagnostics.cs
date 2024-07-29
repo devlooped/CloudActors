@@ -12,8 +12,8 @@ public static class Diagnostics
     /// </summary>
     public static DiagnosticDescriptor MustBePartial { get; } = new(
         "DCA001",
-        "Actors must be partial",
-        "Cloud Actors require partial actor types.",
+        "Actors and messages must be partial",
+        "Cloud Actors require partial actor and message types.",
         "Build",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
@@ -21,10 +21,10 @@ public static class Diagnostics
     /// <summary>
     /// DCA002: Actor messages must be serializable.
     /// </summary>
-    public static DiagnosticDescriptor MustBeSerializable { get; } = new(
+    public static DiagnosticDescriptor MustNotBeSerializable { get; } = new(
         "DCA002",
-        "Actor messages must be serializable",
-        "Annotate '{0}' with [GenerateSerializer] attribute as required by Orleans.",
+        "Actor messages must not be annotated as serializable",
+        "Do not annotate '{0}' with [GenerateSerializer] as it's done automatically.",
         "Build",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);

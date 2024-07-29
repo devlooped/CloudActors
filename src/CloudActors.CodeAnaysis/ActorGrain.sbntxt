@@ -18,16 +18,17 @@ namespace {{ Namespace }}
     [CompilerGenerated]
     public partial class {{ Name }}Grain : Grain, IActorGrain
     {
-        readonly IPersistentState<{{ Name }}> storage;
+        readonly IActorPersistentState<{{ Name }}.ActorState, {{ Name }}> storage;
 
         {{~ if StorageName ~}}
-        public {{ Name }}Grain([PersistentState("{{ StateName }}", "{{ StorageName }}")] IPersistentState<{{ Name }}> storage)
+        public {{ Name }}Grain([PersistentState("{{ StateName }}", "{{ StorageName }}")] IPersistentState<{{ Name }}.ActorState> storage)
         {{~ else if StateName ~}}
-        public {{ Name }}Grain([PersistentState("{{ StateName }}")] IPersistentState<{{ Name }}> storage)
+        public {{ Name }}Grain([PersistentState("{{ StateName }}")] IPersistentState<{{ Name }}.ActorState> storage)
         {{~ else ~}}
-        public {{ Name }}Grain([PersistentState(nameof({{ Name }}))] IPersistentState<{{ Name }}> storage)
+        public {{ Name }}Grain([PersistentState(nameof({{ Name }}))] IPersistentState<{{ Name }}.ActorState> storage)
         {{~ end ~}}
-            => this.storage = storage;
+            => this.storage = storage as IActorPersistentState<{{ Name }}.ActorState, {{ Name }}> ?? 
+                throw new ArgumentException("Unsupported persistent state");
 
         [ReadOnly]
         public {{ QueryAsync ? "async " : "" }}Task<TResult> QueryAsync<TResult>(IActorQuery<TResult> command)
@@ -37,11 +38,11 @@ namespace {{ Namespace }}
                 {{~ for query in Queries ~}}
                 case {{ query.Type }} query:
                     {{~ if query.IsAsync ~}}
-                    return (TResult)(object)await storage.State.{{ query.Name }}(query)));
+                    return (TResult)(object)await storage.Actor.{{ query.Name }}(query)));
                     {{~ else if QueryAsync ~}}
-                    return (TResult)(object)storage.State.{{ query.Name }}(query);
+                    return (TResult)(object)storage.Actor.{{ query.Name }}(query);
                     {{~ else ~}}
-                    return Task.FromResult((TResult)(object)storage.State.{{ query.Name }}(query));
+                    return Task.FromResult((TResult)(object)storage.Actor.{{ query.Name }}(query));
                     {{~ end ~}}
                 {{~ end ~}}
                 default:
@@ -56,9 +57,9 @@ namespace {{ Namespace }}
                 {{~ for command in Commands ~}}
                 case {{ command.Type }} cmd:
                     {{~ if command.IsAsync ~}}
-                    var result = await storage.State.{{ command.Name }}(cmd);
+                    var result = await storage.Actor.{{ command.Name }}(cmd);
                     {{~ else ~}}
-                    var result = storage.State.{{ command.Name }}(cmd);
+                    var result = storage.Actor.{{ command.Name }}(cmd);
                     {{~ end ~}}
                     try
                     {
@@ -83,9 +84,9 @@ namespace {{ Namespace }}
                 {{~ for command in VoidCommands ~}}
                 case {{ command.Type }} cmd:
                     {{~ if command.IsAsync ~}}
-                    await storage.State.{{ command.Name }}(cmd);
+                    await storage.Actor.{{ command.Name }}(cmd);
                     {{~ else ~}}
-                    storage.State.{{ command.Name }}(cmd);
+                    storage.Actor.{{ command.Name }}(cmd);
                     {{~ end ~}}
                     try
                     {

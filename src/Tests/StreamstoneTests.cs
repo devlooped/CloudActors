@@ -7,6 +7,7 @@ using Moq;
 using Newtonsoft.Json;
 using Orleans;
 using Orleans.Runtime;
+using TestDomain;
 using Tests;
 
 namespace Tests;

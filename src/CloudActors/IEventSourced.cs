@@ -13,7 +13,7 @@ public interface IEventSourced
     IReadOnlyList<object> Events { get; }
     /// <summary>
     /// Clears the pending events produced by this actor so far, typically done 
-    /// by the storage provider after successufly persisting them.
+    /// by the storage provider after successfully persisting them.
     /// </summary>
     void AcceptEvents();
     /// <summary>

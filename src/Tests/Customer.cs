@@ -34,13 +34,10 @@ public class TestCustomers(ITestOutputHelper output, ClusterFixture fixture)
     }
 }
 
-[GenerateSerializer]
 public record Address(string Street, string City, string State, string Zip);
 
-[GenerateSerializer]
 public partial record SetAddress(Address Address) : IActorCommand;
 
-[GenerateSerializer]
 public partial record GetAddress() : IActorQuery<Address>;
 
 [Actor]

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Net;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,6 +14,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Moq;
 using Newtonsoft.Json;
 using Orleans;
 using Orleans.Configuration;
@@ -22,6 +24,7 @@ using Orleans.Providers;
 using Orleans.Runtime;
 using Orleans.Runtime.Development;
 using Orleans.Storage;
+using TestDomain;
 using Xunit.Abstractions;
 
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
@@ -76,12 +79,12 @@ public class TestAccounts : IAsyncDisposable
                 .Configure<ClusterOptions>(options => options.ClusterId = "TEST")
                 .UseDevelopmentClustering(options => options.PrimarySiloEndpoint = new IPEndPoint(siloAddress, siloPort))
                 .ConfigureEndpoints(siloAddress, siloPort, gatewayPort)
-                .AddCloudActors()
                 .AddStreamstoneActorStorage(opt => opt.AutoSnapshot = true)
             )
             .ConfigureServices(services =>
             {
                 services.AddSingleton(CloudStorageAccount.DevelopmentStorageAccount);
+                services.AddCloudActors();
             }).Build();
 
         //builder.Host.UseOrleans(silo =>
@@ -108,104 +111,5 @@ public class TestAccounts : IAsyncDisposable
         Assert.Equal(0, await bus.QueryAsync("account/1", new GetBalance()));
 
         await host.StopAsync();
-    }
-}
-
-[GenerateSerializer]
-public partial record Deposit(decimal Amount) : IActorCommand;
-
-public partial record Deposited(decimal Amount);
-
-[GenerateSerializer]
-public partial record Withdraw(decimal Amount) : IActorCommand;
-
-public partial record Withdrawn(decimal Amount);
-
-[GenerateSerializer]
-public partial record Close(CloseReason Reason = CloseReason.Customer) : IActorCommand<decimal>;
-
-public enum CloseReason
-{
-    Customer,
-    Fraud,
-    Other
-}
-
-public partial record Closed(decimal Balance, CloseReason Reason);
-
-[GenerateSerializer]
-public partial record GetBalance() : IActorQuery<decimal>;
-
-[Actor]
-public partial class Account : IEventSourced
-{
-    //readonly IActorBus bus;
-
-    public Account(string id) => Id = id;
-
-    //public Account(string id, IActorBus bus) 
-    //    => (Id, this.bus) 
-    //    = (id, bus);
-
-    public string Id { get; }
-
-    public decimal Balance { get; private set; }
-
-    public bool IsClosed { get; private set; }
-
-    public CloseReason Reason { get; private set; }
-
-    // Showcases that operation can also be just Execute overloads 
-    //public void Execute(Deposit command)
-    //{
-    //    // validate command
-    //    Raise(new Deposited(command.Amount));
-    //}
-    //public void Execute(Withdraw command)
-    //{
-    //    // validate command
-    //    Raise(new Withdraw(command.Amount));
-    //}
-
-    // Showcases that operations can have a name that's not Execute
-    public void Deposit(Deposit command)
-    {
-        if (IsClosed)
-            throw new InvalidOperationException("Account is closed.");
-
-        // validate command
-        Raise(new Deposited(command.Amount));
-    }
-
-    // Showcases that operations don't have to be async
-    public void Withdraw(Withdraw command)
-    {
-        if (IsClosed)
-            throw new InvalidOperationException("Account is closed.");
-
-        if (command.Amount > Balance)
-            throw new InvalidOperationException("Insufficient funds.");
-
-        Raise(new Withdrawn(command.Amount));
-    }
-
-    // Showcases value-returning async operation with custom name.
-    public decimal Close(Close command)
-    {
-        var final = Balance;
-        Raise(new Closed(Balance, command.Reason));
-        return final;
-    }
-
-    // Showcases a query that doesn't change state, which becomes a [ReadOnly] grain operation.
-    public decimal Query(GetBalance _) => Balance;
-
-    void Apply(Deposited @event) => Balance += @event.Amount;
-    void Apply(Withdrawn @event) => Balance -= @event.Amount;
-    void Apply(Closed @event)
-    {
-        Balance = 0;
-        IsClosed = true;
-        Reason = @event.Reason;
     }
 }

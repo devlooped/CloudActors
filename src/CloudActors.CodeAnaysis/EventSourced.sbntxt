@@ -46,6 +46,10 @@ namespace {{ Namespace }}
             }
         }
 
+        {{~ for event in Events ~}}
+        partial void Apply({{event}} e);
+        {{~ end ~}}
+
         /// <summary>
         /// Raises and applies a new event of the specified type.
         /// See <see cref="Raise{T}(T)"/>.
