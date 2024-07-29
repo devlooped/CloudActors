@@ -1,6 +1,4 @@
 ﻿using System.Collections.Immutable;
-using System.Composition;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
@@ -11,8 +9,9 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace Devlooped.CloudActors;
 
-[Shared]
-[ExportCodeFixProvider(LanguageNames.CSharp)]
+// NOTE: we don't generate serializer attribute anymore, we instead emit it via partial types.
+//[Shared]
+//[ExportCodeFixProvider(LanguageNames.CSharp)]
 public class ActorMessageFixer : CodeFixProvider
 {
     public override ImmutableArray<string> FixableDiagnosticIds { get; } = ImmutableArray.Create(Diagnostics.MustNotBeSerializable.Id);

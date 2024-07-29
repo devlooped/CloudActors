@@ -1,14 +1,10 @@
 ﻿using System.Collections.Generic;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Devlooped;
 using Devlooped.CloudActors;
-using Moq;
-using Newtonsoft.Json;
 using Orleans;
 using Orleans.Runtime;
 using TestDomain;
-using Tests;
 
 namespace Tests;
 
@@ -27,10 +23,12 @@ public class StreamstoneTests
         account.Close(new Close(CloseReason.Customer));
 
         var storage = new StreamstoneStorage(CloudStorageAccount.DevelopmentStorageAccount);
-        await storage.WriteStateAsync(nameof(Account), GrainId.Parse("account/1"), GrainState.Create(account));
+        var actor = (IActor<Account.ActorState>)account;
+        await storage.WriteStateAsync(nameof(Account), GrainId.Parse("account/1"), GrainState.Create(actor.GetState()));
 
-        var state = GrainState.Create<Account>(new Account("1"));
+        var state = GrainState.Create<Account.ActorState>(((IActor<Account.ActorState>)new Account("1")).GetState());
         await storage.ReadStateAsync(nameof(Account), GrainId.Parse("account/1"), state);
+        actor.SetState(state.State);
 
         Assert.Equal(account.Balance, state.State.Balance);
         Assert.Equal(account.IsClosed, state.State.IsClosed);
@@ -49,11 +47,14 @@ public class StreamstoneTests
         wallet.AddFunds("EUR", 50);
         wallet.AddFunds("EUR", 25);
 
-        var storage = new StreamstoneStorage(CloudStorageAccount.DevelopmentStorageAccount);
-        await storage.WriteStateAsync("CloudActorWallet", GrainId.Parse("wallet/1"), GrainState.Create(wallet));
+        var actor = (IActor<Wallet.ActorState>)wallet;
 
-        var state = GrainState.Create<Wallet>(new Wallet("1"));
+        var storage = new StreamstoneStorage(CloudStorageAccount.DevelopmentStorageAccount);
+        await storage.WriteStateAsync("CloudActorWallet", GrainId.Parse("wallet/1"), GrainState.Create(actor.GetState()));
+
+        var state = GrainState.Create<Wallet.ActorState>(((IActor<Wallet.ActorState>)new Wallet("1")).GetState());
         await storage.ReadStateAsync("CloudActorWallet", GrainId.Parse("wallet/1"), state);
+        actor.SetState(state.State);
 
         Assert.Equal(wallet.Funds, state.State.Funds);
     }

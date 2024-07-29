@@ -2,6 +2,7 @@
 using System.Runtime.Serialization;
 using Devlooped.CloudActors;
 using Moq;
+using Orleans;
 
 namespace TestDomain;
 
