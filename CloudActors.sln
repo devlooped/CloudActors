@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CloudActors", "src\CloudAct
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "src\Tests\Tests.csproj", "{1F95CDB9-4030-4F16-A20D-12AE362D00DB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CloudActors.CodeAnaysis", "src\CloudActors.CodeAnaysis\CloudActors.CodeAnaysis.csproj", "{A610D1AC-9F46-4CC7-90AC-4B2DFBF4D5C2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CloudActors.CodeAnalysis", "src\CloudActors.CodeAnalysis\CloudActors.CodeAnalysis.csproj", "{A610D1AC-9F46-4CC7-90AC-4B2DFBF4D5C2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CloudActors.CodeFix", "src\CloudActors.CodeFix\CloudActors.CodeFix.csproj", "{03D8620C-6745-476A-B097-7C62D076F9A7}"
 EndProject
@@ -25,6 +25,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestDomain", "src\TestDomain\TestDomain.csproj", "{1D75C6E9-C4E9-44D8-B598-3A2D45C25EE6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CloudActors.Orleans.CodeAnalysis", "src\CloudActors.Orleans.CodeAnalysis\CloudActors.Orleans.CodeAnalysis.csproj", "{68823E7F-269E-4947-8E2B-9905F163C96B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -64,6 +66,10 @@ Global
 		{1D75C6E9-C4E9-44D8-B598-3A2D45C25EE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1D75C6E9-C4E9-44D8-B598-3A2D45C25EE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1D75C6E9-C4E9-44D8-B598-3A2D45C25EE6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{68823E7F-269E-4947-8E2B-9905F163C96B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{68823E7F-269E-4947-8E2B-9905F163C96B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{68823E7F-269E-4947-8E2B-9905F163C96B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{68823E7F-269E-4947-8E2B-9905F163C96B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

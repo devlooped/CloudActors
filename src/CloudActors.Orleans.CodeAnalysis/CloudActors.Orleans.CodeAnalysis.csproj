@@ -1,0 +1,45 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>Devlooped.CloudActors.Orleans.CodeAnalysis</AssemblyName>
+    <TargetFramework>netstandard2.0</TargetFramework>
+
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <!-- CS8785: ignoring Orleans source generator being run due to https://github.com/NuGet/Home/issues/6279 -->
+    <NoWarn>RS1036;CS8785</NoWarn>
+
+    <PackFolder>analyzers/dotnet/roslyn4.5/cs</PackFolder>
+    <!-- See https://github.com/scriban/scriban#source-embedding -->
+    <PackageScribanIncludeSource>true</PackageScribanIncludeSource>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\CloudActors.CodeAnalysis\AnalysisExtensions.cs" Link="AnalysisExtensions.cs" />
+    <Compile Include="..\CloudActors.CodeAnalysis\OrleansGenerator.cs" Link="OrleansGenerator.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- See: https://github.com/NuGet/Home/issues/6279. For now, ExcludeAssets doesn't work for analyzers/generators, so we ARE running 
+         the Orleans source generator in this analyzer project itself, even if we don't want/need to. -->
+    <PackageReference Include="Microsoft.Orleans.CodeGenerator" Version="8.2.0" ExcludeAssets="all" PrivateAssets="all" GeneratePathProperty="true" />
+    <PackageReference Include="NuGetizer" Version="1.2.2" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Pack="false" Version="4.5.0" />
+    <PackageReference Include="PolySharp" PrivateAssets="All" Version="1.14.1" />
+
+    <PackageReference Include="Scriban" Version="5.10.0" Pack="false" IncludeAssets="build" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" PrivateAssets="all" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" PrivateAssets="all" />
+    <PackageReference Include="ThisAssembly.AssemblyInfo" Version="1.4.3" PrivateAssets="all" />
+    <PackageReference Include="ThisAssembly.Resources" Version="1.4.3" PrivateAssets="all" Pack="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="$(PkgMicrosoft_Orleans_CodeGenerator)\analyzers\dotnet\cs\Orleans.CodeGenerator.dll" />
+    <PackageFile Include="$(PkgMicrosoft_Orleans_CodeGenerator)\analyzers\dotnet\cs\Orleans.CodeGenerator.dll" PackagePath="$(PackFolder)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="@(None -&gt; WithMetadataValue('Extension', '.sbntxt'))" Kind="text" />
+  </ItemGroup>
+
+</Project>

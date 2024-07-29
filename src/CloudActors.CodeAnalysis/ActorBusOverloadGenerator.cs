@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 using Microsoft.CodeAnalysis;
-using static Devlooped.CloudActors.Diagnostics;
+using static Devlooped.CloudActors.AnalysisExtensions;
 
 namespace Devlooped.CloudActors;
 
@@ -10,7 +10,7 @@ public class ActorBusOverloadGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var source = context.CompilationProvider.SelectMany((x, _) => x.Assembly.GetAllTypes().OfType<INamedTypeSymbol>())
-            .Where(IsActorMessage)
+            .Where(t => t.IsActorMessage())
             .Combine(context.CompilationProvider
             .Select((c, _) => new
             {

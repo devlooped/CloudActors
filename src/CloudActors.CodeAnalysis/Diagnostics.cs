@@ -50,34 +50,4 @@ public static class Diagnostics
         "Build",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
-
-    public static SymbolDisplayFormat FullName { get; } = new(
-        typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
-        genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
-        miscellaneousOptions: SymbolDisplayMiscellaneousOptions.ExpandNullable);
-
-    public static string ToFileName(this ITypeSymbol type) => type.ToDisplayString(FullName).Replace('+', '.');
-
-    public static bool IsActorMessage(ITypeSymbol type) => type.AllInterfaces.Any(x =>
-        x.ToDisplayString(FullName).Equals("Devlooped.CloudActors.IActorMessage"));
-
-    public static bool IsActorCommand(this ITypeSymbol type) => type.AllInterfaces.Any(x =>
-        x.ToDisplayString(FullName).StartsWith("Devlooped.CloudActors.IActorCommand") && x.IsGenericType);
-
-    public static bool IsActorVoidCommand(this ITypeSymbol type) => type.AllInterfaces.Any(x =>
-        x.ToDisplayString(FullName).StartsWith("Devlooped.CloudActors.IActorCommand") && !x.IsGenericType);
-
-    public static bool IsActorQuery(this ITypeSymbol type) => type.AllInterfaces.Any(x =>
-        x.ToDisplayString(FullName).StartsWith("Devlooped.CloudActors.IActorQuery") && x.IsGenericType);
-
-    public static bool IsActor(AttributeData attr) =>
-        attr.AttributeClass?.ToDisplayString(FullName) == "Devlooped.CloudActors.ActorAttribute";
-
-    public static bool IsPartial(ITypeSymbol node) =>
-        node.DeclaringSyntaxReferences.Any(r =>
-            r.GetSyntax() is ClassDeclarationSyntax { Modifiers: { } modifiers } &&
-            modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword))) ||
-        node.DeclaringSyntaxReferences.Any(r =>
-        r.GetSyntax() is RecordDeclarationSyntax { Modifiers: { } modifiers } &&
-        modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword)));
 }

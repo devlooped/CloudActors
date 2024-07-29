@@ -33,7 +33,7 @@ public class PartialAnalyzer : DiagnosticAnalyzer
             return;
 
         // Only require this for actor and message types
-        if (!symbol.GetAttributes().Any(IsActor) &&
+        if (!symbol.GetAttributes().Any(x => x.IsActor()) &&
             // symbol implements IActorMessage
             !symbol.AllInterfaces.Contains(messageType, SymbolEqualityComparer.Default))
             return;
@@ -69,7 +69,7 @@ public class PartialAnalyzer : DiagnosticAnalyzer
             // where the type is not partial
             //.Where(t => !t.GetAttributes().Any(a => generateAttr.Equals(a.AttributeClass, SymbolEqualityComparer.Default))),
             .Where(t =>
-                !t.GetAttributes().Any(IsActor) &&
+                !t.GetAttributes().Any(x => x.IsActor()) &&
                 !t.AllInterfaces.Contains(messageType, SymbolEqualityComparer.Default) &&
                 !t.IsPartial() &&
                 t.Locations.Any(l => l.IsInSource)),

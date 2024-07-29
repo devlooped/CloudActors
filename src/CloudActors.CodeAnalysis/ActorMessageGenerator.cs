@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis;
-using static Devlooped.CloudActors.Diagnostics;
 
 namespace Devlooped.CloudActors;
 
@@ -13,7 +12,7 @@ public class ActorMessageGenerator : IIncrementalGenerator
         var options = context.GetOrleansOptions();
         var messages = context.CompilationProvider
             .SelectMany((x, _) => x.Assembly.GetAllTypes().OfType<INamedTypeSymbol>())
-            .Where(IsActorMessage)
+            .Where(t => t.IsActorMessage())
             .Where(t => t.IsPartial());
 
         var additionalTypes = messages.SelectMany((x, _) =>
@@ -31,7 +30,7 @@ public class ActorMessageGenerator : IIncrementalGenerator
             .Select(p => p.Type)
             .OfType<INamedTypeSymbol>()))
             // We already generate separately for actor messages.
-            .Where(t => !IsActorMessage(t) && t.IsPartial())
+            .Where(t => !t.IsActorMessage() && t.IsPartial())
             .Collect();
 
         context.RegisterImplementationSourceOutput(messages.Combine(options), GenerateCode);
