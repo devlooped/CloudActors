@@ -13,7 +13,7 @@ public static class Diagnostics
     public static DiagnosticDescriptor MustBePartial { get; } = new(
         "DCA001",
         "Actors and messages must be partial",
-        "Cloud Actors require partial actor and message types.",
+        "Add the partial keyword to '{0}' as required for types used by actors.",
         "Build",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
@@ -36,6 +36,17 @@ public static class Diagnostics
         "DCA003",
         "Actor messages can only implement a single message interface",
         "'{0}' can only implement one of 'IActorCommand', 'IActorCommand<TResult> or 'IActorQuery<TResult>'.",
+        "Build",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+    /// <summary>
+    /// DCA004: Indirectly used types must be serializable
+    /// </summary>
+    public static DiagnosticDescriptor MustBeSerializable { get; } = new(
+        "DCA004",
+        "Types used in actor messages must have a [GenerateSerializer] attribute,",
+        "Annotate '{0}' with [GenerateSerializer] as it is used by at least one actor message.",
         "Build",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);

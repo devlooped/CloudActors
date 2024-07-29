@@ -34,7 +34,7 @@ public class TestCustomers(ITestOutputHelper output, ClusterFixture fixture)
     }
 }
 
-public record Address(string Street, string City, string State, string Zip);
+public partial record Address(string Street, string City, string State, string Zip);
 
 public partial record SetAddress(Address Address) : IActorCommand;
 

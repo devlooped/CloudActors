@@ -70,31 +70,6 @@ public class CodeFixers
     }
 
     [Fact]
-    public async Task NoGenerateSerializer()
-    {
-        var context = new CSharpAnalyzerTest<ActorMessageAnalyzer, DefaultVerifier>();
-        context.ReferenceAssemblies = ReferenceAssemblies.Net.Net80
-            .AddPackages([
-                new PackageIdentity("Devlooped.CloudActors", "0.4.0"),
-                new PackageIdentity("Microsoft.Orleans.Serialization.Abstractions", "8.2.0"),
-            ]);
-
-        context.TestCode =
-            /* lang=c#-test */
-            """
-            using Devlooped.CloudActors;
-            using Orleans;
-
-            namespace Tests;
-
-            [GenerateSerializer]
-            public record {|DCA002:GetBalance|}() : IActorQuery<decimal>;
-            """;
-
-        await context.RunAsync();
-    }
-
-    [Fact]
     public async Task AddPartialMessage()
     {
         var context = new CSharpCodeFixTest<PartialAnalyzer, TypeMustBePartial, DefaultVerifier>();
@@ -123,4 +98,66 @@ public class CodeFixers
 
         await context.RunAsync();
     }
+
+
+    [Fact]
+    public async Task ReportPartialIndirectMessage()
+    {
+        // Can't verify the codefix due to being reported for another node.
+        var context = new CSharpAnalyzerTest<PartialAnalyzer, DefaultVerifier>();
+        context.ReferenceAssemblies = ReferenceAssemblies.Net.Net80
+            .AddPackages([new PackageIdentity("Devlooped.CloudActors", "0.4.0")]);
+
+        context.TestCode =
+            /* lang=c#-test */
+            """
+            using Devlooped.CloudActors;
+
+            namespace Tests;
+
+            public record {|DCA001:Address|}(string Street, string City, string State, string Zip);
+
+            public partial record SetAddress(Address Address) : IActorCommand;
+            """;
+
+        //context.FixedCode =
+        //    /* lang=c#-test */
+        //    """
+        //    using Devlooped.CloudActors;
+
+        //    namespace Tests;
+
+        //    public partial record Address(string Street, string City, string State, string Zip);
+
+        //    public partial record SetAddress(Address Address) : IActorCommand;
+        //    """;
+
+        await context.RunAsync();
+    }
+
+    [Fact]
+    public async Task NoGenerateSerializer()
+    {
+        var context = new CSharpAnalyzerTest<ActorMessageAnalyzer, DefaultVerifier>();
+        context.ReferenceAssemblies = ReferenceAssemblies.Net.Net80
+            .AddPackages([
+                new PackageIdentity("Devlooped.CloudActors", "0.4.0"),
+                new PackageIdentity("Microsoft.Orleans.Serialization.Abstractions", "8.2.0"),
+            ]);
+
+        context.TestCode =
+            /* lang=c#-test */
+            """
+            using Devlooped.CloudActors;
+            using Orleans;
+
+            namespace Tests;
+
+            [GenerateSerializer]
+            public record {|DCA002:GetBalance|}() : IActorQuery<decimal>;
+            """;
+
+        await context.RunAsync();
+    }
+
 }
