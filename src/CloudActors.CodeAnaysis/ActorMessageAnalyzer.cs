@@ -53,6 +53,7 @@ public class ActorMessageAnalyzer : DiagnosticAnalyzer
             typeDeclaration.AttributeLists
                 .SelectMany(al => al.Attributes)
                 .Select(a => context.SemanticModel.GetSymbolInfo(a).Symbol)
+                .Select(s => s is IMethodSymbol ? s.ContainingType : s)
                 .Any(a => generateAttr.Equals(a, SymbolEqualityComparer.Default)))
         {
             context.ReportDiagnostic(Diagnostic.Create(MustNotBeSerializable, typeDeclaration.Identifier.GetLocation(), symbol.Name));

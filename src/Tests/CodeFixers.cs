@@ -70,9 +70,34 @@ public class CodeFixers
     }
 
     [Fact]
-    public async Task AddGenerateSerializer()
+    public async Task NoGenerateSerializer()
     {
-        var context = new CSharpCodeFixTest<ActorMessageAnalyzer, ActorMessageFixer, DefaultVerifier>();
+        var context = new CSharpAnalyzerTest<ActorMessageAnalyzer, DefaultVerifier>();
+        context.ReferenceAssemblies = ReferenceAssemblies.Net.Net80
+            .AddPackages([
+                new PackageIdentity("Devlooped.CloudActors", "0.4.0"),
+                new PackageIdentity("Microsoft.Orleans.Serialization.Abstractions", "8.2.0"),
+            ]);
+
+        context.TestCode =
+            /* lang=c#-test */
+            """
+            using Devlooped.CloudActors;
+            using Orleans;
+
+            namespace Tests;
+
+            [GenerateSerializer]
+            public record {|DCA002:GetBalance|}() : IActorQuery<decimal>;
+            """;
+
+        await context.RunAsync();
+    }
+
+    [Fact]
+    public async Task AddPartialMessage()
+    {
+        var context = new CSharpCodeFixTest<PartialAnalyzer, TypeMustBePartial, DefaultVerifier>();
         context.ReferenceAssemblies = ReferenceAssemblies.Net.Net80
             .AddPackages([new PackageIdentity("Devlooped.CloudActors", "0.4.0")]);
 
@@ -83,18 +108,16 @@ public class CodeFixers
 
             namespace Tests;
 
-            public partial record {|DCA002:GetBalance|}() : IActorQuery<decimal>;
+            public record {|DCA001:GetBalance|}() : IActorQuery<decimal>;
             """;
 
         context.FixedCode =
             /* lang=c#-test */
             """
             using Devlooped.CloudActors;
-            using Orleans;
             
             namespace Tests;
 
-            [GenerateSerializer]
             public partial record GetBalance() : IActorQuery<decimal>;
             """;
 
