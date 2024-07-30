@@ -1,5 +1,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
+  <!-- We don't use buildTransitive even though analyzers propagate outside the referencing project, because 
+       we want to detect projects that are *directly* referencing the Server package. -->
   <PropertyGroup>
     <IsCloudActorsServer>true</IsCloudActorsServer>
   </PropertyGroup>
