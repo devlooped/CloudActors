@@ -26,15 +26,13 @@
     <PackageReference Include="PolySharp" PrivateAssets="All" Version="1.14.1" />
 
     <PackageReference Include="Scriban" Version="5.10.0" Pack="false" IncludeAssets="build" />
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" PrivateAssets="all" />
-    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" PrivateAssets="all" />
     <PackageReference Include="ThisAssembly.AssemblyInfo" Version="1.4.3" PrivateAssets="all" />
     <PackageReference Include="ThisAssembly.Resources" Version="1.4.3" PrivateAssets="all" Pack="false" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="$(PkgMicrosoft_Orleans_CodeGenerator)\analyzers\dotnet\cs\Orleans.CodeGenerator.dll" />
-    <PackageFile Include="$(PkgMicrosoft_Orleans_CodeGenerator)\analyzers\dotnet\cs\Orleans.CodeGenerator.dll" PackagePath="$(PackFolder)" />
+    <PackageFile Include="$(PkgMicrosoft_Orleans_CodeGenerator)\analyzers\dotnet\cs\Orleans.CodeGenerator.dll" PackFolder="$(PackFolder)" />
   </ItemGroup>
 
   <ItemGroup>
