@@ -1,10 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <AssemblyName>Devlooped.CloudActors.Server</AssemblyName>
     <TargetFramework>net8.0</TargetFramework>
     <PackageId>$(AssemblyName)</PackageId>
-    <Description>Cloud Native Actors Server/Hosting</Description>
+    <Description>Cloud Native Actors Orleans Server/Hosting</Description>
     <PackageTags>dotnet orleans actor server</PackageTags>
   </PropertyGroup>
 
@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CloudActors\CloudActors.csproj" />
-    <ProjectReference Include="..\CloudActors.Orleans.CodeAnalysis\CloudActors.Orleans.CodeAnalysis.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\CloudActors.Server.CodeAnalysis\CloudActors.Server.CodeAnalysis.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 </Project>

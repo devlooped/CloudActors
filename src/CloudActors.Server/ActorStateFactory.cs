@@ -4,10 +4,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using Orleans;
 using Orleans.Core;
 using Orleans.Runtime;
 
@@ -97,10 +95,15 @@ class ActorStateFactory(IPersistentStateFactory factory) : IActorStateFactory
         }
 
         public Task ClearStateAsync() => persistence.ClearStateAsync()
-                .ContinueWith(t => Actor.SetState(persistence.State));
+                .ContinueWith(t => Actor.SetState(persistence.State), TaskContinuationOptions.OnlyOnRanToCompletion);
 
         public Task ReadStateAsync() => persistence.ReadStateAsync()
-                .ContinueWith(t => Actor.SetState(persistence.State));
+                .ContinueWith(t =>
+                {
+                    // Don't overwrite state that may already have initial values from actor constructor.
+                    if (persistence.RecordExists)
+                        Actor.SetState(persistence.State);
+                }, TaskContinuationOptions.OnlyOnRanToCompletion);
 
         public Task WriteStateAsync()
         {

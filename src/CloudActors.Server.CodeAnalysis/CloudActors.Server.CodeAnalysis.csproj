@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyName>Devlooped.CloudActors.Orleans.CodeAnalysis</AssemblyName>
+    <AssemblyName>Devlooped.CloudActors.Server.CodeAnalysis</AssemblyName>
     <TargetFramework>netstandard2.0</TargetFramework>
 
     <IsRoslynComponent>true</IsRoslynComponent>
@@ -15,7 +15,6 @@
 
   <ItemGroup>
     <Compile Include="..\CloudActors.CodeAnalysis\AnalysisExtensions.cs" Link="AnalysisExtensions.cs" />
-    <Compile Include="..\CloudActors.CodeAnalysis\OrleansGenerator.cs" Link="OrleansGenerator.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -40,6 +39,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="@(None -&gt; WithMetadataValue('Extension', '.sbntxt'))" Kind="text" />
+    <None Update="Devlooped.CloudActors.Server.targets" PackFolder="build" />
   </ItemGroup>
 
 </Project>

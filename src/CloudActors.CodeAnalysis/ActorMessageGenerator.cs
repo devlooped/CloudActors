@@ -64,9 +64,15 @@ public class ActorMessageGenerator : IIncrementalGenerator
                 }
                 """;
 
-        var orleans = OrleansGenerator.GenerateCode(options, output, message.Name, ctx.CancellationToken);
 
         ctx.AddSource($"{message.ToFileName()}.Serializable.cs", output);
-        ctx.AddSource($"{message.ToFileName()}.Serializable.orleans.cs", orleans);
+
+        // This supports the scenario where the actor and messages exist in the server project itself, 
+        // which is likely not very common but nevertheless it should be supported.
+        if (options.IsCloudActorsServer)
+        {
+            var orleans = OrleansGenerator.GenerateCode(options, output, message.Name, ctx.CancellationToken);
+            ctx.AddSource($"{message.ToFileName()}.Serializable.orleans.cs", orleans);
+        }
     }
 }

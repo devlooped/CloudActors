@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "CodeAnalysis": {
+      "commandName": "DebugRoslynComponent",
+      "targetProject": "..\\Tests\\Tests.csproj"
+    }
+  }
+}

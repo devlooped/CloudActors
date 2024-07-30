@@ -18,15 +18,12 @@ public class ActorStateGenerator : IIncrementalGenerator
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var options = context.GetOrleansOptions();
-
         var actors = context.CompilationProvider
             .SelectMany((x, _) => x.Assembly.GetAllTypes().OfType<INamedTypeSymbol>())
             .Where(x => x.GetAttributes().Any(x => x.IsActor()));
 
-        context.RegisterImplementationSourceOutput(actors.Combine(options), (ctx, source) =>
+        context.RegisterImplementationSourceOutput(actors, (ctx, actor) =>
         {
-            var (actor, options) = source;
             var ns = actor.ContainingNamespace.ToDisplayString();
 
             var props = actor.GetMembers()
@@ -59,10 +56,7 @@ public class ActorStateGenerator : IIncrementalGenerator
                     EventSourced: es);
 
                 var output = template.Render(model, member => member.Name);
-                var orleans = OrleansGenerator.GenerateCode(options, output, $"{actor.Name}.State", ctx.CancellationToken);
-
                 ctx.AddSource($"{actor.ToFileName()}.State.cs", output);
-                ctx.AddSource($"{actor.ToFileName()}.State.orleans.cs", orleans);
             }
         });
     }

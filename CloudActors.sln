@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CloudActors.CodeFix", "src\
 EndProject
 Project("{13B669BE-BB05-4DDF-9536-439F39A36129}") = "CloudActors.Package", "src\CloudActors.Package\CloudActors.Package.msbuildproj", "{22150004-BDDD-4C7E-9E42-0B5A2EC48268}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CloudActors.Orleans", "src\CloudActors.Orleans\CloudActors.Orleans.csproj", "{F4256D7D-262F-401A-BFD1-C27F863FE5E1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CloudActors.Server", "src\CloudActors.Server\CloudActors.Server.csproj", "{F4256D7D-262F-401A-BFD1-C27F863FE5E1}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CloudActors.Streamstone", "src\CloudActors.Streamstone\CloudActors.Streamstone.csproj", "{67E7E202-1AC7-477C-AE90-E7D7C04FF6DC}"
 EndProject
@@ -26,7 +26,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestDomain", "src\TestDomain\TestDomain.csproj", "{1D75C6E9-C4E9-44D8-B598-3A2D45C25EE6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CloudActors.Orleans.CodeAnalysis", "src\CloudActors.Orleans.CodeAnalysis\CloudActors.Orleans.CodeAnalysis.csproj", "{68823E7F-269E-4947-8E2B-9905F163C96B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CloudActors.Server.CodeAnalysis", "src\CloudActors.Server.CodeAnalysis\CloudActors.Server.CodeAnalysis.csproj", "{68823E7F-269E-4947-8E2B-9905F163C96B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -28,13 +28,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CloudActors.Orleans\CloudActors.Orleans.csproj" />
-    <ProjectReference Include="..\CloudActors.Streamstone\CloudActors.Streamstone.csproj" />
     <ProjectReference Include="..\CloudActors\CloudActors.csproj" />
     <ProjectReference Include="..\CloudActors.CodeAnalysis\CloudActors.CodeAnalysis.csproj" OutputItemType="Analyzer" />
     <ProjectReference Include="..\CloudActors.CodeFix\CloudActors.CodeFix.csproj" OutputItemType="Analyzer" />
-    <ProjectReference Include="..\CloudActors.Orleans.CodeAnalysis\CloudActors.Orleans.CodeAnalysis.csproj" OutputItemType="Analyzer" />
+    <ProjectReference Include="..\CloudActors.Server\CloudActors.Server.csproj" />
+    <ProjectReference Include="..\CloudActors.Server.CodeAnalysis\CloudActors.Server.CodeAnalysis.csproj" OutputItemType="Analyzer" />
+    <ProjectReference Include="..\CloudActors.Streamstone\CloudActors.Streamstone.csproj" />
     <ProjectReference Include="..\TestDomain\TestDomain.csproj" />
   </ItemGroup>
+
+  <Import Project="..\CloudActors.Server.CodeAnalysis\Devlooped.CloudActors.Server.targets"/>
 
 </Project>

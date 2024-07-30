@@ -17,18 +17,8 @@ public class ActorGrainGenerator : IIncrementalGenerator
         var options = context.GetOrleansOptions();
 
         var actors = context.CompilationProvider
-            .SelectMany((x, _) => x.Assembly
-                .GetAllTypes()
-                .OfType<INamedTypeSymbol>()
-                .Where(t => t.IsActor())
-                .Concat(x.GetUsedAssemblyReferences()
-                .SelectMany(r =>
-                {
-                    if (x.GetAssemblyOrModuleSymbol(r) is IAssemblySymbol asm)
-                        return asm.GetAllTypes().OfType<INamedTypeSymbol>().Where(t => t.IsActor());
-
-                    return [];
-                })));
+            .SelectMany((x, _) => x.GetAllTypes())
+            .Where(t => t.IsActor());
 
         context.RegisterImplementationSourceOutput(actors.Combine(options), (ctx, source) =>
         {
