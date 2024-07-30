@@ -13,7 +13,11 @@ using Orleans.CodeGenerator;
 
 namespace Devlooped.CloudActors;
 
-public record OrleansGeneratorOptions(Compilation Compilation, CSharpParseOptions? ParseOptions, AnalyzerConfigOptions AnalyzerConfig);
+public record OrleansGeneratorOptions(Compilation Compilation, CSharpParseOptions? ParseOptions, AnalyzerConfigOptions AnalyzerConfig)
+{
+    public bool IsCloudActorsServer => AnalyzerConfig.TryGetValue("build_property.IsCloudActorsServer", out var value) &&
+        bool.TryParse(value, out var isServer) && isServer;
+}
 
 public static class OrleansGeneratorExtensions
 {
@@ -72,7 +76,6 @@ public class OrleansGenerator : IIncrementalGenerator
         var generator = new CodeGenerator(compilation, options);
         var syntax = generator.GenerateCode(cancellation);
 
-        // Remove all attributes like: [assembly: global::Orleans.ApplicationPartAttribute]
         syntax = syntax.RemoveNodes(
             syntax.DescendantNodes()
                 .OfType<AttributeSyntax>()
@@ -97,22 +100,22 @@ public class OrleansGenerator : IIncrementalGenerator
         var options = new CodeGeneratorOptions();
         if (orleans.AnalyzerConfig.TryGetValue("build_property.orleans_immutableattributes", out var immutableAttributes) && immutableAttributes is { Length: > 0 })
         {
-            options.ImmutableAttributes.AddRange(immutableAttributes.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList());
+            options.ImmutableAttributes.AddRange([.. immutableAttributes.Split([';'], StringSplitOptions.RemoveEmptyEntries)]);
         }
 
         if (orleans.AnalyzerConfig.TryGetValue("build_property.orleans_aliasattributes", out var aliasAttributes) && aliasAttributes is { Length: > 0 })
         {
-            options.AliasAttributes.AddRange(aliasAttributes.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList());
+            options.AliasAttributes.AddRange([.. aliasAttributes.Split([';'], StringSplitOptions.RemoveEmptyEntries)]);
         }
 
         if (orleans.AnalyzerConfig.TryGetValue("build_property.orleans_idattributes", out var idAttributes) && idAttributes is { Length: > 0 })
         {
-            options.IdAttributes.AddRange(idAttributes.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList());
+            options.IdAttributes.AddRange([.. idAttributes.Split([';'], StringSplitOptions.RemoveEmptyEntries)]);
         }
 
         if (orleans.AnalyzerConfig.TryGetValue("build_property.orleans_generateserializerattributes", out var generateSerializerAttributes) && generateSerializerAttributes is { Length: > 0 })
         {
-            options.GenerateSerializerAttributes.AddRange(generateSerializerAttributes.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList());
+            options.GenerateSerializerAttributes.AddRange([.. generateSerializerAttributes.Split([';'], StringSplitOptions.RemoveEmptyEntries)]);
         }
 
         if (orleans.AnalyzerConfig.TryGetValue("build_property.orleans_generatefieldids", out var generateFieldIds) && generateFieldIds is { Length: > 0 })
