@@ -23,8 +23,8 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing" Version="1.1.2" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeFix.Testing" Version="1.1.2" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.10.0" />
-    <PackageReference Include="Microsoft.Orleans.TestingHost" Version="8.2.0" />
-    <PackageReference Include="Microsoft.Orleans.Server" Version="8.2.0" />
+    <PackageReference Include="Microsoft.Orleans.TestingHost" Version="$(OrleansVersion)" />
+    <PackageReference Include="Microsoft.Orleans.Server" Version="$(OrleansVersion)" />
   </ItemGroup>
 
   <ItemGroup>
@@ -37,6 +37,6 @@
     <ProjectReference Include="..\TestDomain\TestDomain.csproj" />
   </ItemGroup>
 
-  <Import Project="..\CloudActors.Server.CodeAnalysis\Devlooped.CloudActors.Server.targets"/>
+  <Import Project="..\CloudActors.Server.CodeAnalysis\Devlooped.CloudActors.Server.targets" />
 
 </Project>

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 
@@ -63,7 +63,6 @@ public class ActorMessageGenerator : IIncrementalGenerator
                     partial {{kind}} {{message.Name}};
                 }
                 """;
-
 
         ctx.AddSource($"{message.ToFileName()}.Serializable.cs", output);
 

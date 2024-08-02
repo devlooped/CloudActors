@@ -46,7 +46,8 @@ public class OrleansGenerator : IIncrementalGenerator
         context.RegisterImplementationSourceOutput(options, (ctx, orleans) =>
         {
             var options = CreateGeneratorOptions(orleans);
-            var generator = new CodeGenerator(orleans.Compilation, options);
+            var generator = new CodeGenerator(
+                orleans.Compilation.WithAssemblyName($"{orleans.Compilation.AssemblyName}.OrleansGenerator"), options);
             var syntax = generator.GenerateCode(ctx.CancellationToken);
             var code = syntax.NormalizeWhitespace().ToFullString();
             var text = SourceText.From(code, Encoding.UTF8);

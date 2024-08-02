@@ -6,6 +6,12 @@
     <RootNamespace>Devlooped.CloudActors</RootNamespace>
     <SignAssembly>false</SignAssembly>
     <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
+    <OrleansVersion>8.2.0</OrleansVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="Exists('C:\Code\oss\orleans\Artifacts\Debug')">
+    <RestoreSources>C:\Code\oss\orleans\Artifacts\Debug;https://api.nuget.org/v3/index.json</RestoreSources>
+    <OrleansVersion>8.0.0-devs</OrleansVersion>
   </PropertyGroup>
 
 </Project>
