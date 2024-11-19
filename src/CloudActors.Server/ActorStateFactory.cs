@@ -15,8 +15,6 @@ interface IActorStateFactory : IPersistentStateFactory { }
 
 class ActorStateFactory(IPersistentStateFactory factory) : IActorStateFactory
 {
-    ConcurrentDictionary<Type, Delegate> stateFactories = new();
-
     public IPersistentState<TState> Create<TState>(IGrainContext context, IPersistentStateConfiguration config)
     {
         // We're super conservative here, only replacing if all conditions are met.
@@ -68,18 +66,10 @@ class ActorStateFactory(IPersistentStateFactory factory) : IActorStateFactory
         //bridge.OnRehydrate(new ActivationContext(new GrainState<TState>(actor)));
     }
 
-    class ActorPersistentState<TState, TActor> : IActorPersistentState<TState, TActor>
+    class ActorPersistentState<TState, TActor>(TActor actor, IPersistentState<TState> persistence) : IActorPersistentState<TState, TActor>
         where TActor : IActor<TState>
     {
-        readonly IPersistentState<TState> persistence;
-
-        public ActorPersistentState(TActor actor, IPersistentState<TState> state)
-        {
-            Actor = actor;
-            this.persistence = state;
-        }
-
-        public TActor Actor { get; set; }
+        public TActor Actor { get; set; } = actor;
 
         public TState State => persistence.State;
 
