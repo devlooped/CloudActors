@@ -8,7 +8,7 @@
     <!-- CS8785: ignoring Orleans source generator being run due to https://github.com/NuGet/Home/issues/6279 -->
     <NoWarn>RS1036;CS8785</NoWarn>
 
-    <PackFolder>analyzers/dotnet/roslyn4.5/cs</PackFolder>
+    <PackFolder>analyzers/dotnet/roslyn4.8/cs</PackFolder>
     <!-- See https://github.com/scriban/scriban#source-embedding -->
     <PackageScribanIncludeSource>true</PackageScribanIncludeSource>
   </PropertyGroup>
@@ -22,10 +22,12 @@
          the Orleans source generator in this analyzer project itself, even if we don't want/need to. -->
     <PackageReference Include="Microsoft.Orleans.CodeGenerator" Version="$(OrleansVersion)" ExcludeAssets="all" PrivateAssets="all" GeneratePathProperty="true" />
     <PackageReference Include="NuGetizer" Version="1.2.3" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Pack="false" Version="4.5.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Pack="false" Version="4.8.0" />
     <PackageReference Include="PolySharp" PrivateAssets="All" Version="1.14.1" />
 
     <PackageReference Include="Scriban" Version="5.12.0" Pack="false" IncludeAssets="build" />
+    <PackageReference Include="System.Collections.Immutable" Version="8.0.0" PrivateAssets="all" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" PrivateAssets="all" />
     <PackageReference Include="ThisAssembly.AssemblyInfo" Version="2.0.8" PrivateAssets="all" />
     <PackageReference Include="ThisAssembly.Resources" Version="2.0.8" PrivateAssets="all" Pack="false" />
   </ItemGroup>
