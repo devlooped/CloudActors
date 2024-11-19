@@ -25,8 +25,8 @@
 	weak
 [file ".gitattributes"]
 	url = https://github.com/devlooped/oss/blob/main/.gitattributes
-	sha = 0683ee777d7d878d4bf013d7deea352685135a05
-	etag = 7acb32f5fa6d4ccd9c824605a7c2b8538497f0068c165567807d393dcf4d6bb7
+	sha = 5f92a68e302bae675b394ef343114139c075993e
+	etag = 338ba6d92c8d1774363396739c2be4257bfc58026f4b0fe92cb0ae4460e1eff7
 	weak
 [file ".github/dependabot.yml"]
 	url = https://github.com/devlooped/oss/blob/main/.github/dependabot.yml
@@ -35,16 +35,16 @@
 	weak
 [file ".github/release.yml"]
 	url = https://github.com/devlooped/oss/blob/main/.github/release.yml
-	sha = 1afd173fe8f81b510c597737b0d271218e81fa73
-	etag = 482dc2c892fc7ce0cb3a01eb5d9401bee50ddfb067d8cb85873555ce63cf5438
+	sha = 0c23e24704625cf75b2cb1fdc566cef7e20af313
+	etag = 310df162242c95ed19ed12e3c96a65f77e558b46dced676ad5255eb12caafe75
 	weak
 [file ".github/workflows/build.yml"]
 	url = https://github.com/devlooped/oss/blob/main/.github/workflows/build.yml
    	skip
 [file ".github/workflows/changelog.config"]
 	url = https://github.com/devlooped/oss/blob/main/.github/workflows/changelog.config
-	sha = 055a8b7c94b74ae139cce919d60b83976d2a9942
-	etag = ddb17acb5872e9e69a76f9dec0ca590f25382caa2ccf750df058dcabb674db2b
+	sha = 08d83cb510732f861416760d37702f9f55bd7f9e
+	etag = 556a28914eeeae78ca924b1105726cdaa211af365671831887aec81f5f4301b4
 	weak
 [file ".github/workflows/changelog.yml"]
 	url = https://github.com/devlooped/oss/blob/main/.github/workflows/changelog.yml
@@ -71,8 +71,8 @@
 	skip
 [file ".gitignore"]
 	url = https://github.com/devlooped/oss/blob/main/.gitignore
-	sha = 02811fa23b0a102b9b33048335d41e515bf75737
-	etag = a9c37ae312afac14b78436a7d018af4483d88736b5f780576f2c5a0b3f14998c
+	sha = e0be248fff1d39133345283b8227372b36574b75
+	etag = c449ec6f76803e1891357ca2b8b4fcb5b2e5deeff8311622fd92ca9fbf1e6575
 	weak
 [file "_config.yml"]
 	url = https://github.com/devlooped/oss/blob/main/_config.yml
@@ -96,6 +96,11 @@
 	weak
 [file "src/Directory.Build.targets"]
 	url = https://github.com/devlooped/oss/blob/main/src/Directory.Build.targets
-	sha = 33a20db26e47589769284817b271ce67ea9ccfd8
-	etag = 1a3a0151b5771ee97ed8351254ff4c18a0ff568e0df5c33c6830f069bfbb067b
+	sha = a8b208093599263b7f2d1fe3854634c588ea5199
+	etag = 19087699f05396205e6b050d999a43b175bd242f6e8fac86f6df936310178b03
+	weak
+[file ".github/workflows/triage.yml"]
+	url = https://github.com/devlooped/oss/blob/main/.github/workflows/triage.yml
+	sha = 33000c0c4ab4eb4e0e142fa54515b811a189d55c
+	etag = 013a47739e348f06891f37c45164478cca149854e6cd5c5158e6f073f852b61a
 	weak
