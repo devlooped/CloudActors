@@ -2,9 +2,12 @@
 using System.Runtime.Serialization;
 using Devlooped.CloudActors;
 using Moq;
-using Orleans;
 
 namespace TestDomain;
+
+// NOTE: there's NO references or dependencies to any Orleans concepts. Just
+// pure CloudActors interfaces and attributes.
+
 
 public partial record Deposit(decimal Amount) : IActorCommand;
 

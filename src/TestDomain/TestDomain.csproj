@@ -3,15 +3,11 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <!-- CS8785: ignoring Orleans source generator being run due to https://github.com/NuGet/Home/issues/6279 -->
-    <NoWarn>RS1036;CS8785</NoWarn>
+    <NoWarn>RS1036</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Moq" Version="4.20.70" />
-    <!-- See: https://github.com/NuGet/Home/issues/6279. For now, ExcludeAssets doesn't work for analyzers/generators, so we ARE running 
-         the Orleans source generator in this analyzer project itself, even if we don't want/need to. -->
-    <PackageReference Include="Microsoft.Orleans.CodeGenerator" Version="$(OrleansVersion)" IncludeAssets="analyers" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>

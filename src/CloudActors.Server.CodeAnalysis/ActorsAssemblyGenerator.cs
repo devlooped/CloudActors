@@ -48,8 +48,7 @@ public class ActorsAssemblyGenerator : IIncrementalGenerator
 
         foreach (var assembly in assemblies)
         {
-            //[assembly: global::Orleans.ApplicationPartAttribute("TestDomain")]
-            output.AppendLine($"[assembly: global::Orleans.ApplicationPartAttribute(\"{assembly.Name}\")]");
+            output.AppendLine($"[assembly: ApplicationPartAttribute(\"{assembly.Name}\")]");
         }
 
         foreach (var type in assemblies.Select(x => x.GetAllTypes()
@@ -58,12 +57,12 @@ public class ActorsAssemblyGenerator : IIncrementalGenerator
             if (type == null)
                 continue;
 
-            // [assembly: GenerateCodeForDeclaringAssembly(typeof(TestDomain.Account))]
             output.AppendLine($"[assembly: GenerateCodeForDeclaringAssembly(typeof({type.ToDisplayString(FullName)}))]");
         }
 
         var orleans = OrleansGenerator.GenerateCode(options, output.ToString(), "References", ctx.CancellationToken);
 
+        ctx.AddSource($"CloudActors.cs", output.ToString());
         ctx.AddSource($"CloudActors.orleans.cs", orleans);
     }
 }
