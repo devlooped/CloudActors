@@ -66,7 +66,6 @@ class ActorStateFactory(IPersistentStateFactory factory) : IActorStateFactory
         // However, the JournaledGrain base class overrides the OnActivateAsync method and 
         // forces a sync, so we're good since our generated grain does that too.
         //bridge.OnRehydrate(new ActivationContext(new GrainState<TState>(actor)));
-
     }
 
     class ActorPersistentState<TState, TActor> : IActorPersistentState<TState, TActor>
@@ -116,6 +115,7 @@ class ActorStateFactory(IPersistentStateFactory factory) : IActorStateFactory
     {
         public IEnumerable<string> Keys => throw new NotImplementedException();
         public bool TryGetBytes(string key, out ReadOnlySequence<byte> value) => throw new NotImplementedException();
+
         public bool TryGetValue<T>(string key, out T? value)
         {
             if (actor is T typed)

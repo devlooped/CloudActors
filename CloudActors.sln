@@ -17,13 +17,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CloudActors.Server", "src\C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CloudActors.Streamstone", "src\CloudActors.Streamstone\CloudActors.Streamstone.csproj", "{67E7E202-1AC7-477C-AE90-E7D7C04FF6DC}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8A279BF7-3751-48D6-AA48-5DA9E4E79D23}"
-	ProjectSection(SolutionItems) = preProject
-		.editorconfig = .editorconfig
-		src\Directory.props = src\Directory.props
-		readme.md = readme.md
-	EndProjectSection
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestDomain", "src\TestDomain\TestDomain.csproj", "{1D75C6E9-C4E9-44D8-B598-3A2D45C25EE6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CloudActors.Server.CodeAnalysis", "src\CloudActors.Server.CodeAnalysis\CloudActors.Server.CodeAnalysis.csproj", "{68823E7F-269E-4947-8E2B-9905F163C96B}"
