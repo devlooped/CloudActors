@@ -23,7 +23,7 @@
     <PackageReference Include="Microsoft.Orleans.CodeGenerator" Version="$(OrleansVersion)" ExcludeAssets="all" PrivateAssets="all" GeneratePathProperty="true" />
     <PackageReference Include="NuGetizer" Version="1.2.3" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Pack="false" Version="4.8.0" />
-    <PackageReference Include="PolySharp" PrivateAssets="All" Version="1.14.1" />
+    <PackageReference Include="PolySharp" PrivateAssets="All" Version="1.15.0" />
 
     <PackageReference Include="Scriban" Version="5.12.0" Pack="false" IncludeAssets="build" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" PrivateAssets="all" />
