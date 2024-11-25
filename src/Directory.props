@@ -6,7 +6,7 @@
     <RootNamespace>Devlooped.CloudActors</RootNamespace>
     <SignAssembly>false</SignAssembly>
     <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
-    <OrleansVersion>9.0.0</OrleansVersion>
+    <OrleansVersion>9.0.1</OrleansVersion>
   </PropertyGroup>
 
 </Project>
