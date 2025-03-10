@@ -49,10 +49,15 @@ jobs:
         if: env.NUGET_API_KEY != ''  
         run: dotnet nuget push ./bin/**/*.nupkg -s https://api.nuget.org/v3/index.json -k ${{secrets.NUGET_API_KEY}} --skip-duplicate
 
+      - name: ⚙ dotnet
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.x
+
       - name: 🚀 sleet
         env:
           SLEET_CONNECTION: ${{ secrets.SLEET_CONNECTION }}
         if: env.SLEET_CONNECTION != ''
         run: |
-          dotnet tool install -g --version 4.0.18 sleet 
+          dotnet tool update sleet -g --allow-downgrade --version $(curl -s --compressed ${{ vars.SLEET_FEED_URL }} | jq '.["sleet:version"]' -r)        
           sleet push bin --config none -f --verbose -p "SLEET_FEED_CONTAINER=nuget" -p "SLEET_FEED_CONNECTIONSTRING=${{ secrets.SLEET_CONNECTION }}" -p "SLEET_FEED_TYPE=azure" || echo "No packages found"
