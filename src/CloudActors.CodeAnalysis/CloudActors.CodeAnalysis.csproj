@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <AssemblyName>Devlooped.CloudActors.CodeAnalysis</AssemblyName>
@@ -28,7 +28,7 @@
     <PackageReference Include="Scriban" Version="5.12.0" Pack="false" IncludeAssets="build" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" PrivateAssets="all" />
     <PackageReference Include="System.Collections.Immutable" Version="8.0.0" PrivateAssets="all" />
-    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" PrivateAssets="all" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.3" PrivateAssets="all" />
     <PackageReference Include="ThisAssembly.AssemblyInfo" Version="2.0.8" PrivateAssets="all" />
     <PackageReference Include="ThisAssembly.Resources" Version="2.0.8" PrivateAssets="all" Pack="false" />
   </ItemGroup>
