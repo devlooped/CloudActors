@@ -8,9 +8,6 @@ updates:
   schedule:
     interval: daily
   groups:
-    Orleans:
-      patterns:
-        - "Microsoft.Orleans*"
     Azure:
       patterns:
         - "Azure*"
@@ -41,3 +38,6 @@ updates:
     ProtoBuf:
       patterns:
         - "protobuf-*"
+    Spectre:
+      patterns:
+        - "Spectre.Console*"
