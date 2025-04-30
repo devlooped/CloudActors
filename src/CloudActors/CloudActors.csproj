@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <AssemblyName>Devlooped.CloudActors</AssemblyName>
@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Orleans.Serialization.Abstractions" Version="$(OrleansVersion)" />
-    <PackageReference Include="NuGetizer" Version="1.2.3" />
+    <PackageReference Include="NuGetizer" Version="1.2.4" />
     <PackageReference Include="PolySharp" PrivateAssets="All" Version="1.15.0" />
   </ItemGroup>
 
