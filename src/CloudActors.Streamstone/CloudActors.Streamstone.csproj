@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <AssemblyName>Devlooped.CloudActors.Streamstone</AssemblyName>
@@ -11,7 +11,7 @@
   <ItemGroup>
     <PackageReference Include="Devlooped.CloudStorageAccount" Version="1.3.0" />
     <PackageReference Include="Microsoft.Orleans.Runtime" Version="$(OrleansVersion)" />
-    <PackageReference Include="NuGetizer" Version="1.2.3" />
+    <PackageReference Include="NuGetizer" Version="1.2.4" />
     <PackageReference Include="Streamstone" Version="3.0.0" />
   </ItemGroup>
 

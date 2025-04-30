@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <AssemblyName>Devlooped.CloudActors.Server</AssemblyName>
@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NuGetizer" Version="1.2.3" />
+    <PackageReference Include="NuGetizer" Version="1.2.4" />
     <PackageReference Include="Microsoft.Orleans.Server" Version="$(OrleansVersion)" />
   </ItemGroup>
 
