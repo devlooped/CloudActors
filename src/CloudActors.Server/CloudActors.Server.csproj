@@ -14,6 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Orleans.Runtime" Version="9.2.1" />
     <ProjectReference Include="..\CloudActors\CloudActors.csproj" Pack="false" />
     <ProjectReference Include="..\CloudActors.Package\CloudActors.Package.msbuildproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\CloudActors.Server.CodeAnalysis\CloudActors.Server.CodeAnalysis.csproj" ReferenceOutputAssembly="false" />
