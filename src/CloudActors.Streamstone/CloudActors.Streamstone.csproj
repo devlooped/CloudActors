@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.3" />
     <ProjectReference Include="..\CloudActors\CloudActors.csproj" Pack="false" />
     <ProjectReference Include="..\CloudActors.Server\CloudActors.Server.csproj" />
     <ProjectReference Include="..\CloudActors.Package\CloudActors.Package.msbuildproj" ReferenceOutputAssembly="false" />
