@@ -14,6 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Collections.Immutable" Version="9.0.10" />
     <ProjectReference Include="..\CloudActors\CloudActors.csproj" Pack="false" />
     <ProjectReference Include="..\CloudActors.Package\CloudActors.Package.msbuildproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\CloudActors.Server.CodeAnalysis\CloudActors.Server.CodeAnalysis.csproj" ReferenceOutputAssembly="false" />
