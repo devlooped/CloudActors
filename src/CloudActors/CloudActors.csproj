@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Orleans.Serialization.Abstractions" Version="$(OrleansVersion)" />
+    <PackageReference Include="Microsoft.Orleans.Serialization.Abstractions" Version="9.2.1" />
     <PackageReference Include="NuGetizer" Version="1.2.4" />
     <PackageReference Include="PolySharp" PrivateAssets="All" Version="1.15.0" />
   </ItemGroup>
