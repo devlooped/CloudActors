@@ -1,31 +1,13 @@
 ﻿using System;
-using System.Buffers;
-using System.Collections.Generic;
-using System.Diagnostics.Metrics;
-using System.Linq;
 using System.Net;
-using System.Runtime.Serialization;
-using System.Text.Json.Serialization;
-using System.Threading;
 using System.Threading.Tasks;
 using Devlooped;
 using Devlooped.CloudActors;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
-using Moq;
-using Newtonsoft.Json;
-using Orleans;
 using Orleans.Configuration;
-using Orleans.Core;
 using Orleans.Hosting;
-using Orleans.Providers;
-using Orleans.Runtime;
-using Orleans.Runtime.Development;
-using Orleans.Storage;
 using TestDomain;
-using Xunit.Abstractions;
 
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
 
@@ -87,17 +69,7 @@ public class TestAccounts : IAsyncDisposable
                 services.AddCloudActors();
             }).Build();
 
-        //builder.Host.UseOrleans(silo =>
-        //{
-        //    silo.UseDevelopmentClustering(new IPEndPoint(IPAddress.Loopback, 1234))
-        //    .ConfigureEndpoints(IPAddress.Loopback, 1234, 30000);
-        //    silo.AddCloudActors();
-        //});
-
         host.Start();
-
-        //var app = builder.Build();
-        //var task = Task.Run(app.Run);
 
         var bus = host.Services.GetRequiredService<IActorBus>();
 

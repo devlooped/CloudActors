@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Buffers;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -73,7 +73,7 @@ class ActorStateFactory(IPersistentStateFactory factory) : IActorStateFactory
 
         public TState State => persistence.State;
 
-        public string Etag => persistence.Etag;
+        public string Etag => persistence.Etag ?? "";
 
         public bool RecordExists => persistence.RecordExists;
 
@@ -106,7 +106,7 @@ class ActorStateFactory(IPersistentStateFactory factory) : IActorStateFactory
         public IEnumerable<string> Keys => throw new NotImplementedException();
         public bool TryGetBytes(string key, out ReadOnlySequence<byte> value) => throw new NotImplementedException();
 
-        public bool TryGetValue<T>(string key, out T? value)
+        public bool TryGetValue<T>(string key, [NotNullWhen(true)] out T? value)
         {
             if (actor is T typed)
             {

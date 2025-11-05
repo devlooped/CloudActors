@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using System.Net.Mime;
 using System.Threading.Tasks;
 using Devlooped.CloudActors.CodeAnalysis;
 using Microsoft.CodeAnalysis;
@@ -38,7 +37,6 @@ public class CodeFixers
 
         // Run the generator
         driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out var output, out var diagnostics);
-
     }
 
     [Fact]
@@ -98,7 +96,6 @@ public class CodeFixers
 
         await context.RunAsync();
     }
-
 
     [Fact]
     public async Task ReportPartialIndirectMessage()
