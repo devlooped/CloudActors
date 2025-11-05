@@ -9,7 +9,6 @@ using Orleans;
 using Orleans.Runtime;
 using Orleans.Storage;
 using Streamstone;
-using Streamstone.Utility;
 
 namespace Devlooped.CloudActors;
 
@@ -127,8 +126,7 @@ public class StreamstoneStorage : IGrainStorage
 
                 await Stream.WriteAsync(partition,
                     int.TryParse(grainState.ETag, out var version) ? version : 0,
-                    state.Events.Select((e, i) =>
-                    ToEventData(e, stream.Version + i, includes)).ToArray());
+                    [.. state.Events.Select((e, i) => ToEventData(e, stream.Version + i, includes))]);
 
                 grainState.ETag = (stream.Version + state.Events.Count).ToString();
                 grainState.RecordExists = true;

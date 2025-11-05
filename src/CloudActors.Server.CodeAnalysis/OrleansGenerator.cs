@@ -8,8 +8,8 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
-using Orleans;
 using Orleans.CodeGenerator;
+using Orleans.CodeGenerator.Model;
 
 namespace Devlooped.CloudActors;
 
