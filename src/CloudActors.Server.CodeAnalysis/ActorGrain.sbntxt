@@ -20,8 +20,10 @@ public partial class {{ Name }}Grain : Grain, IActorGrain
 {
     readonly IActorPersistentState<{{ Name }}.ActorState, {{ Name }}> storage;
 
-    {{~ if StorageName ~}}
-    public {{ Name }}Grain([PersistentState("{{ StateName }}", "{{ StorageName }}")] IPersistentState<{{ Name }}.ActorState> storage)
+    {{~ if StorageProvider && StateName ~}}
+    public {{ Name }}Grain([PersistentState("{{ StateName }}", "{{ StorageProvider }}")] IPersistentState<{{ Name }}.ActorState> storage)
+    {{~ else if StorageProvider ~}}
+    public {{ Name }}Grain([PersistentState(nameof({{ Name }}), "{{ StorageProvider }}")] IPersistentState<{{ Name }}.ActorState> storage)
     {{~ else if StateName ~}}
     public {{ Name }}Grain([PersistentState("{{ StateName }}")] IPersistentState<{{ Name }}.ActorState> storage)
     {{~ else ~}}

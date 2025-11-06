@@ -44,19 +44,15 @@ public class ActorStateGenerator : IIncrementalGenerator
                 .Select(x => new Member(x.Name, x.Type.GetTypeName(ns)));
 
             var members = props.Concat(fields).ToArray();
-            if (members.Length > 0)
-            {
-                var es = actor.AllInterfaces.Any(x => x.ToDisplayString(FullName) == "Devlooped.CloudActors.IEventSourced");
+            var es = actor.AllInterfaces.Any(x => x.ToDisplayString(FullName) == "Devlooped.CloudActors.IEventSourced");
+            var model = new StateModel(
+                Namespace: ns,
+                Name: actor.Name,
+                Members: members,
+                EventSourced: es);
 
-                var model = new StateModel(
-                    Namespace: ns,
-                    Name: actor.Name,
-                    Members: members,
-                    EventSourced: es);
-
-                var output = template.Render(model, member => member.Name);
-                ctx.AddSource($"{actor.ToFileName()}.State.cs", output);
-            }
+            var output = template.Render(model, member => member.Name);
+            ctx.AddSource($"{actor.ToFileName()}.State.cs", output);
         });
     }
 
