@@ -51,8 +51,9 @@ public class ActorsAssemblyGenerator : IIncrementalGenerator
             output.AppendLine($"[assembly: ApplicationPartAttribute(\"{assembly.Name}\")]");
         }
 
-        foreach (var type in assemblies.Select(x => x.GetAllTypes()
-            .FirstOrDefault(x => x.MetadataName != "<Module>" && x.ContainingType == null && options.Compilation.IsSymbolAccessibleWithin(x, options.Compilation.Assembly))))
+        foreach (var type in assemblies.Select(x => x.GetAllTypes().FirstOrDefault(x =>
+                x.MetadataName != "<Module>" && x.MetadataName != "ActorBusExtensions" && x.MetadataName != "CloudActorsAttribute" &&
+                x.ContainingType == null && options.Compilation.IsSymbolAccessibleWithin(x, options.Compilation.Assembly))))
         {
             if (type == null)
                 continue;

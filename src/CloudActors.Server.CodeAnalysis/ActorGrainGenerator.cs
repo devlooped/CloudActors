@@ -26,16 +26,18 @@ public class ActorGrainGenerator : IIncrementalGenerator
             var attribute = actor.GetAttributes().First(x => x.IsActor());
             var state = default(string);
             var storage = default(string);
-            if (attribute.ConstructorArguments.Length >= 1)
+            if (attribute.ConstructorArguments.Length >= 1 &&
+                !attribute.ConstructorArguments[0].IsNull)
                 state = attribute.ConstructorArguments[0].Value?.ToString() ?? null;
-            if (attribute.ConstructorArguments.Length == 2)
+            if (attribute.ConstructorArguments.Length == 2 &&
+                !attribute.ConstructorArguments[1].IsNull)
                 storage = attribute.ConstructorArguments[1].Value?.ToString() ?? null;
 
             var model = new GrainModel(
                 Namespace: actor.ContainingNamespace.ToDisplayString(),
                 Name: actor.Name,
                 StateName: state,
-                StorageName: storage,
+                StorageProvider: storage,
                 Version: ThisAssembly.Info.InformationalVersion,
                 Queries: actor.GetMembers().OfType<IMethodSymbol>().Where(IsQuery).Select(ToOperation),
                 Commands: actor.GetMembers().OfType<IMethodSymbol>().Where(IsCommand).Select(ToOperation),
@@ -60,7 +62,7 @@ public class ActorGrainGenerator : IIncrementalGenerator
 
     record GrainOperation(string Name, string Type, bool IsAsync);
 
-    record GrainModel(string Namespace, string Name, string? StateName, string? StorageName, string Version,
+    record GrainModel(string Namespace, string Name, string? StateName, string? StorageProvider, string Version,
         IEnumerable<GrainOperation> Queries, IEnumerable<GrainOperation> Commands, IEnumerable<GrainOperation> VoidCommands)
     {
         public bool QueryAsync => Queries.Any(x => x.IsAsync);
