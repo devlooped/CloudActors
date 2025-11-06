@@ -1,7 +1,7 @@
 # Cloud Native Actors
 
 <p align="center">
-  <image src="https://raw.githubusercontent.com/devlooped/CloudActors/main/assets/img/banner.png" alt="Orleans logo" width="480px">
+  <image src="https://raw.githubusercontent.com/devlooped/CloudActors/main/assets/img/banner.png" alt="Orleans logo" width="320px">
 </p>
 
 An opinionated, simplified and uniform Cloud Native actors' library that integrates with Microsoft Orleans.
