@@ -14,12 +14,17 @@ partial class {{ Name }} : IActor<{{ Name }}.ActorState>
 {
     ActorState? state;
 
-    ActorState IActor<ActorState>.GetState() => state ??= new ActorState
+    ActorState IActor<ActorState>.GetState()
     {
+        state ??= new ActorState();
         {{~ for member in Members ~}}
-        {{ member.Name }} = {{ member.Name }},
+        state.{{ member.Name }} = {{ member.Name }};
         {{~ end ~}}
-    };
+        {{~if EventSourced ~}}
+        state.__actor = this;
+        {{~ end ~}}
+        return state;
+    }
 
     ActorState IActor<ActorState>.SetState(ActorState state)
     {

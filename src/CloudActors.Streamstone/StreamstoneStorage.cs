@@ -47,7 +47,7 @@ public class StreamstoneStorage : IGrainStorage
             if (options.AutoSnapshot)
             {
                 // See if we can quickly load from most recent snapshot.
-                var result = await table.GetEntityIfExistsAsync<EventEntity>(rowId, typeof(T).FullName ?? typeof(T).Name);
+                var result = await table.GetEntityIfExistsAsync<EventEntity>(rowId, "State");
                 if (result.HasValue && result.Value is EventEntity entity &&
                     typeof(T).Assembly.GetName() is { } asm &&
                     // We only apply snapshots where major.minor matches the current version, otherwise, 
@@ -116,10 +116,10 @@ public class StreamstoneStorage : IGrainStorage
                         new EventEntity
                         {
                             PartitionKey = table.Name,
-                            RowKey = typeof(T).FullName ?? typeof(T).Name,
+                            RowKey = "State",
                             Data = JsonSerializer.Serialize(grainState.State, options.JsonOptions),
                             DataVersion = new Version(asm.Version?.Major ?? 0, asm.Version?.Minor ?? 0).ToString(),
-                            Type = $"{type.FullName}, {asm.Name}",
+                            Type = $"{type.FullName ?? typeof(T).Name}, {asm.Name}",
                             Version = stream.Version + state.Events.Count
                         }
                     ] : Array.Empty<ITableEntity>();
@@ -208,8 +208,7 @@ public class StreamstoneStorage : IGrainStorage
         };
 
         return new EventData(
-            // This turns off the SS-UID-[id] duplicate event detection rows, since we use 
-            // single threaded 
+            // This turns off the SS-UID-[id] duplicate event detection rows, since we use are single threaded 
             EventId.None,
             EventProperties.From(properties),
             EventIncludes.From(includes.Select(x => Include.InsertOrReplace(x))));
