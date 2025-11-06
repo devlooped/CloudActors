@@ -1,5 +1,30 @@
 # Changelog
 
+## [v0.5.0-beta](https://github.com/devlooped/CloudActors/tree/v0.5.0-beta) (2025-11-06)
+
+[Full Changelog](https://github.com/devlooped/CloudActors/compare/v0.4.0...v0.5.0-beta)
+
+:sparkles: Implemented enhancements:
+
+- Rename interfaces project to Abstractions, Server to CloudActors [\#141](https://github.com/devlooped/CloudActors/pull/141) (@kzu)
+- Allow reading actor state from storage snapshot [\#140](https://github.com/devlooped/CloudActors/pull/140) (@kzu)
+- Add support for IVT builds without warnings, modernize codegen [\#135](https://github.com/devlooped/CloudActors/pull/135) (@kzu)
+- Split interfaces from server/hosting package [\#88](https://github.com/devlooped/CloudActors/pull/88) (@kzu)
+- Leverage Orleans codegen for increased compatiblity [\#70](https://github.com/devlooped/CloudActors/pull/70) (@kzu)
+- Add code fixer for missing \[GenerateSerializer\] diagnostics [\#66](https://github.com/devlooped/CloudActors/pull/66) (@kzu)
+
+:hammer: Other:
+
+- Separate package for interfaces? [\#74](https://github.com/devlooped/CloudActors/issues/74)
+
+:twisted_rightwards_arrows: Merged:
+
+- Remove code fixer for \[GenerateSerializer\] which is unused [\#144](https://github.com/devlooped/CloudActors/pull/144) (@kzu)
+- Adopt OSMF expand and improve the readme documentation [\#143](https://github.com/devlooped/CloudActors/pull/143) (@kzu)
+- Improve Actor attribute allowing provider but no state name [\#137](https://github.com/devlooped/CloudActors/pull/137) (@kzu)
+- Usings and XML doc cleanup/fixes [\#133](https://github.com/devlooped/CloudActors/pull/133) (@kzu)
+- Convert to modern SLNX format [\#128](https://github.com/devlooped/CloudActors/pull/128) (@kzu)
+
 ## [v0.4.0](https://github.com/devlooped/CloudActors/tree/v0.4.0) (2024-06-14)
 
 [Full Changelog](https://github.com/devlooped/CloudActors/compare/v0.3.0...v0.4.0)
