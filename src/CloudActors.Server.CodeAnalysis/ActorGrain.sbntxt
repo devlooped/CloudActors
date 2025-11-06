@@ -12,101 +12,100 @@ using Orleans.Concurrency;
 using Orleans.Runtime;
 using Devlooped.CloudActors;
 
-namespace {{ Namespace }}
+namespace {{ Namespace }};
+
+[GeneratedCode("Devlooped.CloudActors", "{{ Version }}")]
+[CompilerGenerated]
+public partial class {{ Name }}Grain : Grain, IActorGrain
 {
-    [GeneratedCode("Devlooped.CloudActors", "{{ Version }}")]
-    [CompilerGenerated]
-    public partial class {{ Name }}Grain : Grain, IActorGrain
+    readonly IActorPersistentState<{{ Name }}.ActorState, {{ Name }}> storage;
+
+    {{~ if StorageName ~}}
+    public {{ Name }}Grain([PersistentState("{{ StateName }}", "{{ StorageName }}")] IPersistentState<{{ Name }}.ActorState> storage)
+    {{~ else if StateName ~}}
+    public {{ Name }}Grain([PersistentState("{{ StateName }}")] IPersistentState<{{ Name }}.ActorState> storage)
+    {{~ else ~}}
+    public {{ Name }}Grain([PersistentState(nameof({{ Name }}))] IPersistentState<{{ Name }}.ActorState> storage)
+    {{~ end ~}}
+        => this.storage = storage as IActorPersistentState<{{ Name }}.ActorState, {{ Name }}> ?? 
+            throw new ArgumentException("Unsupported persistent state");
+
+    [ReadOnly]
+    public {{ QueryAsync ? "async " : "" }}Task<TResult> QueryAsync<TResult>(IActorQuery<TResult> command)
     {
-        readonly IActorPersistentState<{{ Name }}.ActorState, {{ Name }}> storage;
-
-        {{~ if StorageName ~}}
-        public {{ Name }}Grain([PersistentState("{{ StateName }}", "{{ StorageName }}")] IPersistentState<{{ Name }}.ActorState> storage)
-        {{~ else if StateName ~}}
-        public {{ Name }}Grain([PersistentState("{{ StateName }}")] IPersistentState<{{ Name }}.ActorState> storage)
-        {{~ else ~}}
-        public {{ Name }}Grain([PersistentState(nameof({{ Name }}))] IPersistentState<{{ Name }}.ActorState> storage)
-        {{~ end ~}}
-            => this.storage = storage as IActorPersistentState<{{ Name }}.ActorState, {{ Name }}> ?? 
-                throw new ArgumentException("Unsupported persistent state");
-
-        [ReadOnly]
-        public {{ QueryAsync ? "async " : "" }}Task<TResult> QueryAsync<TResult>(IActorQuery<TResult> command)
+        switch (command)
         {
-            switch (command)
-            {
-                {{~ for query in Queries ~}}
-                case {{ query.Type }} query:
-                    {{~ if query.IsAsync ~}}
-                    return (TResult)(object)await storage.Actor.{{ query.Name }}(query)));
-                    {{~ else if QueryAsync ~}}
-                    return (TResult)(object)storage.Actor.{{ query.Name }}(query);
-                    {{~ else ~}}
-                    return Task.FromResult((TResult)(object)storage.Actor.{{ query.Name }}(query));
-                    {{~ end ~}}
+            {{~ for query in Queries ~}}
+            case {{ query.Type }} query:
+                {{~ if query.IsAsync ~}}
+                return (TResult)(object)await storage.Actor.{{ query.Name }}(query)));
+                {{~ else if QueryAsync ~}}
+                return (TResult)(object)storage.Actor.{{ query.Name }}(query);
+                {{~ else ~}}
+                return Task.FromResult((TResult)(object)storage.Actor.{{ query.Name }}(query));
                 {{~ end ~}}
-                default:
-                    throw new NotSupportedException();
-            }
+            {{~ end ~}}
+            default:
+                throw new NotSupportedException();
         }
-
-        public {{ ExecuteAsync ? "async " : "" }}Task<TResult> ExecuteAsync<TResult>(IActorCommand<TResult> command)
-        {
-            switch (command)
-            {
-                {{~ for command in Commands ~}}
-                case {{ command.Type }} cmd:
-                    {{~ if command.IsAsync ~}}
-                    var result = await storage.Actor.{{ command.Name }}(cmd);
-                    {{~ else ~}}
-                    var result = storage.Actor.{{ command.Name }}(cmd);
-                    {{~ end ~}}
-                    try
-                    {
-                        await storage.WriteStateAsync();
-                    }
-                    catch 
-                    {
-                        await storage.ReadStateAsync();
-                        throw;
-                    }
-                    return (TResult)(object)result;
-                {{~ end ~}}
-                default:
-                    throw new NotSupportedException();
-            }
-        }
-
-        public {{ ExecuteVoidAsync ? "async " : "" }}Task ExecuteAsync(IActorCommand command)
-        {
-            switch (command)
-            {
-                {{~ for command in VoidCommands ~}}
-                case {{ command.Type }} cmd:
-                    {{~ if command.IsAsync ~}}
-                    await storage.Actor.{{ command.Name }}(cmd);
-                    {{~ else ~}}
-                    storage.Actor.{{ command.Name }}(cmd);
-                    {{~ end ~}}
-                    try
-                    {
-                        await storage.WriteStateAsync();
-                    }
-                    catch 
-                    {
-                        await storage.ReadStateAsync();
-                        throw;
-                    }
-                    break;
-                {{~ end ~}}
-                default:
-                    throw new NotSupportedException();
-            }
-        }
-
-        /// <summary>
-        /// Just like the JournaledGrain, upon activation, we read the state from storage.
-        /// </summary>
-        public override Task OnActivateAsync(CancellationToken cancellationToken) => storage.ReadStateAsync();
     }
+
+    public {{ ExecuteAsync ? "async " : "" }}Task<TResult> ExecuteAsync<TResult>(IActorCommand<TResult> command)
+    {
+        switch (command)
+        {
+            {{~ for command in Commands ~}}
+            case {{ command.Type }} cmd:
+                {{~ if command.IsAsync ~}}
+                var result = await storage.Actor.{{ command.Name }}(cmd);
+                {{~ else ~}}
+                var result = storage.Actor.{{ command.Name }}(cmd);
+                {{~ end ~}}
+                try
+                {
+                    await storage.WriteStateAsync();
+                }
+                catch 
+                {
+                    await storage.ReadStateAsync();
+                    throw;
+                }
+                return (TResult)(object)result;
+            {{~ end ~}}
+            default:
+                throw new NotSupportedException();
+        }
+    }
+
+    public {{ ExecuteVoidAsync ? "async " : "" }}Task ExecuteAsync(IActorCommand command)
+    {
+        switch (command)
+        {
+            {{~ for command in VoidCommands ~}}
+            case {{ command.Type }} cmd:
+                {{~ if command.IsAsync ~}}
+                await storage.Actor.{{ command.Name }}(cmd);
+                {{~ else ~}}
+                storage.Actor.{{ command.Name }}(cmd);
+                {{~ end ~}}
+                try
+                {
+                    await storage.WriteStateAsync();
+                }
+                catch 
+                {
+                    await storage.ReadStateAsync();
+                    throw;
+                }
+                break;
+            {{~ end ~}}
+            default:
+                throw new NotSupportedException();
+        }
+    }
+
+    /// <summary>
+    /// Just like the JournaledGrain, upon activation, we read the state from storage.
+    /// </summary>
+    public override Task OnActivateAsync(CancellationToken cancellationToken) => storage.ReadStateAsync();
 }
