@@ -12,6 +12,11 @@ using Streamstone;
 
 namespace Devlooped.CloudActors;
 
+/// <summary>Implements an event-source aware grain storage provider.</summary>
+/// <remarks>
+/// If the grain state implements <see cref="IEventSourced"/>, events will be stored in
+/// streams, otherwise the state will be stored as a single entity per grain.
+/// </remarks>
 public class StreamstoneStorage : IGrainStorage
 {
     // We cache table names to avoid running CreateIfNotExistsAsync on each access.
@@ -19,16 +24,19 @@ public class StreamstoneStorage : IGrainStorage
     readonly CloudStorageAccount storage;
     readonly StreamstoneOptions options;
 
+    /// <summary>Creates a new <see cref="StreamstoneStorage"/> instance.</summary>
     public StreamstoneStorage(CloudStorageAccount storage, StreamstoneOptions? options = default)
         => (this.storage, this.options)
         = (storage, options ?? StreamstoneOptions.Default);
 
+    /// <inheritdoc/>
     public async Task ClearStateAsync<T>(string stateName, GrainId grainId, IGrainState<T> grainState)
     {
         var table = await GetTable(storage, stateName);
         await table.SubmitTransactionAsync([new TableTransactionAction(TableTransactionActionType.Delete, new TableEntity(table.Name, grainId.Key.ToString()!))]);
     }
 
+    /// <inheritdoc/>
     public async Task ReadStateAsync<T>(string stateName, GrainId grainId, IGrainState<T> grainState)
     {
         var table = await GetTable(storage, stateName);
@@ -90,6 +98,7 @@ public class StreamstoneStorage : IGrainStorage
         }
     }
 
+    /// <inheritdoc/>
     public async Task WriteStateAsync<T>(string stateName, GrainId grainId, IGrainState<T> grainState)
     {
         var table = await GetTable(storage, stateName);
