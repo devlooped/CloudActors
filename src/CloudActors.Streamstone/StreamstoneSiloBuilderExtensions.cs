@@ -9,33 +9,23 @@ using Orleans.Runtime.Hosting;
 
 namespace Orleans.Hosting;
 
-/// <summary>
-/// Extensions for configuring Steamstone actor storage.
-/// </summary>
+/// <summary>Extensions for configuring Steamstone actor storage.</summary>
 [EditorBrowsable(EditorBrowsableState.Never)]
 public static class StreamstoneSiloBuilderExtensions
 {
-    /// <summary>
-    /// Adds Streamstone actor storage as the default storage provider.
-    /// </summary>
+    /// <summary>Adds Streamstone actor storage as the default storage provider.</summary>
     public static ISiloBuilder AddStreamstoneActorStorage(this ISiloBuilder builder)
         => builder.AddStreamstoneActorStorage(ProviderConstants.DEFAULT_STORAGE_PROVIDER_NAME);
 
-    /// <summary>
-    /// Adds a named Streamstone actor storage provider.
-    /// </summary>
+    /// <summary>Adds a named Streamstone actor storage provider.</summary>
     public static ISiloBuilder AddStreamstoneActorStorage(this ISiloBuilder builder, string name)
         => builder.ConfigureServices(services => services.AddStreamstoneActorStorage(name, null));
 
-    /// <summary>
-    /// Adds a named Streamstone actor storage provider and provides a configuration action.
-    /// </summary>
+    /// <summary>Adds a named Streamstone actor storage provider and provides a configuration action.</summary>
     public static ISiloBuilder AddStreamstoneActorStorage(this ISiloBuilder builder, string name, Action<StreamstoneOptions> configure)
         => builder.ConfigureServices(services => services.AddStreamstoneActorStorage(name, configure));
 
-    /// <summary>
-    /// Adds a default Streamstone actor storage provider and provides a configuration action.
-    /// </summary>
+    /// <summary>Adds a default Streamstone actor storage provider and provides a configuration action.</summary>
     public static ISiloBuilder AddStreamstoneActorStorage(this ISiloBuilder builder, Action<StreamstoneOptions> configure)
         => builder.ConfigureServices(services => services.AddStreamstoneActorStorage(ProviderConstants.DEFAULT_STORAGE_PROVIDER_NAME, configure));
 

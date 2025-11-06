@@ -6,6 +6,9 @@
     <PackageId>$(AssemblyName)</PackageId>
     <Description>Cloud Native Actors Orleans Hosting</Description>
     <PackageTags>dotnet orleans actor hosting</PackageTags>
+    <PackageLicenseExpression></PackageLicenseExpression>
+    <PackageLicenseFile>OSMFEULA.txt</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,6 +20,10 @@
     <ProjectReference Include="..\CloudActors.Abstractions\CloudActors.Abstractions.csproj" Pack="false" />
     <ProjectReference Include="..\CloudActors.Abstractions.Package\CloudActors.Abstractions.Package.msbuildproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\CloudActors.CodeAnalysis\CloudActors.CodeAnalysis.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\osmfeula.txt" Link="osmfeula.txt" PackagePath="OSMFEULA.txt" />
   </ItemGroup>
 
 </Project>

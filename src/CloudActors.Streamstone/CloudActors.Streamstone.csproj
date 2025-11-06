@@ -6,6 +6,9 @@
     <PackageId>Devlooped.CloudActors.Streamstone</PackageId>
     <Description>Cloud Native Actors: Streamstone storage for Azure Tables</Description>
     <PackageTags>dotnet orleans actor azure table</PackageTags>
+    <PackageLicenseExpression></PackageLicenseExpression>
+    <PackageLicenseFile>OSMFEULA.txt</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +22,10 @@
     <ProjectReference Include="..\CloudActors.Abstractions\CloudActors.Abstractions.csproj" Pack="false" />
     <ProjectReference Include="..\CloudActors\CloudActors.csproj" />
     <ProjectReference Include="..\CloudActors.Abstractions.Package\CloudActors.Abstractions.Package.msbuildproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\osmfeula.txt" Link="osmfeula.txt" PackagePath="OSMFEULA.txt" />
   </ItemGroup>
 
 </Project>
