@@ -9,6 +9,7 @@ public class StreamstoneOptions
     {
         AllowTrailingCommas = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        IncludeFields = true,
         PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
         Converters = { new JsonStringEnumConverter() },
     };

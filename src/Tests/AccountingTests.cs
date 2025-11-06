@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using System.Reflection;
 using System.Threading.Tasks;
 using Devlooped;
 using Devlooped.CloudActors;
@@ -7,6 +8,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Orleans.Configuration;
 using Orleans.Hosting;
+using Orleans.Runtime;
+using Orleans.Storage;
 using TestDomain;
 
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
@@ -72,15 +75,25 @@ public class TestAccounts : IAsyncDisposable
         host.Start();
 
         var bus = host.Services.GetRequiredService<IActorBus>();
+        var storage = host.Services.GetRequiredKeyedService<IGrainStorage>("Default");
 
         await bus.ExecuteAsync("account/1", new Deposit(100));
+        var actor = await storage.ReadActorAsync<Account>("account/1");
+        Assert.Equal(100, actor.Balance);
+
         await bus.ExecuteAsync("account/1", new Withdraw(50));
 
         var balance = await bus.QueryAsync("account/1", new GetBalance());
         Assert.Equal(50, balance);
 
+        actor = await storage.ReadActorAsync<Account, Account.ActorState>("account/1");
+        Assert.Equal(50, actor.Balance);
+
         Assert.Equal(50, await bus.ExecuteAsync("account/1", new Close()));
         Assert.Equal(0, await bus.QueryAsync("account/1", new GetBalance()));
+
+        actor = await storage.ReadActorAsync<Account>("account/1");
+        Assert.Equal(0, actor.Balance);
 
         await host.StopAsync();
     }
