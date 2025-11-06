@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.Build.NoTargets/3.7.0">
+  <PropertyGroup>
+    <PackageId>Devlooped.CloudActors.Abstractions</PackageId>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Description>Cloud Native Actors</Description>
+    <PackageTags>dotnet orleans actor</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="NuGetizer" Version="1.2.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CloudActors.Abstractions.CodeAnalysis\CloudActors.Abstractions.CodeAnalysis.csproj" />
+    <ProjectReference Include="..\CloudActors.Abstractions.CodeFix\CloudActors.Abstractions.CodeFix.csproj" />
+    <ProjectReference Include="..\CloudActors.Abstractions\CloudActors.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

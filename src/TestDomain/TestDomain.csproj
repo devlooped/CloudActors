@@ -11,9 +11,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CloudActors\CloudActors.csproj" />
-    <ProjectReference Include="..\CloudActors.CodeAnalysis\CloudActors.CodeAnalysis.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-    <ProjectReference Include="..\CloudActors.CodeFix\CloudActors.CodeFix.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\CloudActors.Abstractions\CloudActors.Abstractions.csproj" />
+    <ProjectReference Include="..\CloudActors.Abstractions.CodeAnalysis\CloudActors.Abstractions.CodeAnalysis.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\CloudActors.Abstractions.CodeFix\CloudActors.Abstractions.CodeFix.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>

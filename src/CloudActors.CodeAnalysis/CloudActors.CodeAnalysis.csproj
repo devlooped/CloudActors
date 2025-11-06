@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\CloudActors.Server.CodeAnalysis\OrleansGenerator.cs" Link="OrleansGenerator.cs" />
+    <Compile Include="..\CloudActors.Abstractions.CodeAnalysis\AnalysisExtensions.cs" Link="AnalysisExtensions.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,7 +26,6 @@
     <PackageReference Include="PolySharp" PrivateAssets="All" Version="1.15.0" />
 
     <PackageReference Include="Scriban" Version="5.12.0" Pack="false" IncludeAssets="build" />
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" PrivateAssets="all" />
     <PackageReference Include="System.Collections.Immutable" Version="8.0.0" PrivateAssets="all" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" PrivateAssets="all" />
     <PackageReference Include="ThisAssembly.AssemblyInfo" Version="2.0.12" PrivateAssets="all" />
@@ -40,6 +39,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="@(None -&gt; WithMetadataValue('Extension', '.sbntxt'))" Kind="text" />
+    <None Update="Devlooped.CloudActors.targets" PackFolder="build" />
   </ItemGroup>
 
 </Project>
