@@ -8,58 +8,52 @@ using System.CodeDom.Compiler;
 using Orleans;
 using Devlooped.CloudActors;
 
-namespace {{ Namespace }}
+namespace {{ Namespace }};
+
+partial class {{ Name }} : IActor<{{ Name }}.ActorState>
 {
-    partial class {{ Name }} : IActor<{{ Name }}.ActorState>
+    ActorState? state;
+
+    ActorState IActor<ActorState>.GetState() => state ??= new ActorState
     {
-        ActorState? state;
+        {{~ for member in Members ~}}
+        {{ member.Name }} = {{ member.Name }},
+        {{~ end ~}}
+    };
 
-        ActorState IActor<ActorState>.GetState()
-        {
-            state ??= new ActorState();
-            {{~ for member in Members ~}}
-            state.{{ member.Name }} = {{ member.Name }};
-            {{~ end ~}}
-            {{~if EventSourced ~}}
-            state.__actor = this;
-            {{~ end ~}}
-            return state;
-        }
-
-        ActorState IActor<ActorState>.SetState(ActorState state)
-        {
-            this.state = state;
-            {{~ for member in Members ~}}
-            {{ member.Name }} = state.{{ member.Name }};
-            {{~ end ~}}
-            {{~if EventSourced ~}}
-            state.__actor = this;
-            {{~ end ~}}
-            return state;
-        }
-
-        [GeneratedCode("Devlooped.CloudActors", "{{ Version }}")]
-        [GenerateSerializer]
-        public partial class ActorState : IActorState<{{ Name }}>
-        {
-            {{~ index = -1 ~}}
-            {{~ for member in Members ~}}
-            [Id({{ ++index }})]
-            public {{ member.Type }} {{ member.Name }};
-            {{~ end ~}}
-        }
-
+    ActorState IActor<ActorState>.SetState(ActorState state)
+    {
+        this.state = state;
+        {{~ for member in Members ~}}
+        {{ member.Name }} = state.{{ member.Name }};
+        {{~ end ~}}
         {{~if EventSourced ~}}
-        partial class ActorState : IEventSourced 
-        {
-            internal IEventSourced? __actor;
-
-            IReadOnlyList<object> IEventSourced.Events => __actor?.Events ?? Array.Empty<object>();
-
-            void IEventSourced.AcceptEvents() => __actor?.AcceptEvents();
-
-            void IEventSourced.LoadEvents(IEnumerable<object> history) => __actor?.LoadEvents(history);
-        }
-        {{~end~}}
+        state.__actor = this;
+        {{~ end ~}}
+        return state;
     }
+
+    [GeneratedCode("Devlooped.CloudActors", "{{ Version }}")]
+    [GenerateSerializer]
+    public partial class ActorState : IActorState<{{ Name }}>
+    {
+        {{~ index = -1 ~}}
+        {{~ for member in Members ~}}
+        [Id({{ ++index }})]
+        public {{ member.Type }} {{ member.Name }};
+        {{~ end ~}}
+    }
+
+    {{~if EventSourced ~}}
+    partial class ActorState : IEventSourced 
+    {
+        internal IEventSourced? __actor;
+
+        IReadOnlyList<object> IEventSourced.Events => __actor?.Events ?? [];
+
+        void IEventSourced.AcceptEvents() => __actor?.AcceptEvents();
+
+        void IEventSourced.LoadEvents(IEnumerable<object> history) => __actor?.LoadEvents(history);
+    }
+    {{~end~}}
 }

@@ -8,61 +8,60 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Devlooped.CloudActors;
 
-namespace {{ Namespace }}
+namespace {{ Namespace }};
+
+[GeneratedCode("Devlooped.CloudActors", "{{ Version }}")]
+[CompilerGenerated]
+partial class {{ Name }}
 {
-    [GeneratedCode("Devlooped.CloudActors", "{{ Version }}")]
-    [CompilerGenerated]
-    partial class {{ Name }}
+    List<object>? events;
+
+    IReadOnlyList<object> IEventSourced.Events => events ??= new List<object>();
+
+    void IEventSourced.AcceptEvents() => events?.Clear();
+
+    void IEventSourced.LoadEvents(IEnumerable<object> history)
     {
-        List<object>? events;
-
-        IReadOnlyList<object> IEventSourced.Events => events ??= new List<object>();
-
-        void IEventSourced.AcceptEvents() => events?.Clear();
-
-        void IEventSourced.LoadEvents(IEnumerable<object> history)
-        {
-            foreach (var @event in history)
-            {
-                Apply(@event);
-            }
-        }
-
-        /// <summary>
-        /// Applies an event. Invoked automatically when raising or loading events. 
-        /// Do not invoke directly.
-        /// </summary>
-        void Apply(object @event)
-        {
-            switch (@event)
-            {
-                {{~ for event in Events ~}}
-                case {{event}} e:
-                    Apply(e);
-                    break;
-                {{~ end ~}}
-                default:
-                    throw new NotSupportedException();
-            }
-        }
-
-        {{~ for event in Events ~}}
-        partial void Apply({{event}} e);
-        {{~ end ~}}
-
-        /// <summary>
-        /// Raises and applies a new event of the specified type.
-        /// See <see cref="Raise{T}(T)"/>.
-        /// </summary>
-        void Raise<T>() where T : notnull, new() => Raise(new T());
-
-        /// <summary>
-        /// Raises and applies an event.
-        /// </summary>
-        void Raise<T>(T @event) where T : notnull
+        foreach (var @event in history)
         {
             Apply(@event);
-            (events ??= new List<object>()).Add(@event);
         }
+    }
+
+    /// <summary>
+    /// Applies an event. Invoked automatically when raising or loading events. 
+    /// Do not invoke directly.
+    /// </summary>
+    void Apply(object @event)
+    {
+        switch (@event)
+        {
+            {{~ for event in Events ~}}
+            case {{event}} e:
+                Apply(e);
+                break;
+            {{~ end ~}}
+            default:
+                throw new NotSupportedException();
+        }
+    }
+
+    {{~ for event in Events ~}}
+    partial void Apply({{event}} e);
+    {{~ end ~}}
+
+    /// <summary>
+    /// Raises and applies a new event of the specified type.
+    /// See <see cref="Raise{T}(T)"/>.
+    /// </summary>
+    void Raise<T>() where T : notnull, new() => Raise(new T());
+
+    /// <summary>
+    /// Raises and applies an event.
+    /// </summary>
+    void Raise<T>(T @event) where T : notnull
+    {
+        Apply(@event);
+        (events ??= new List<object>()).Add(@event);
     }
 }

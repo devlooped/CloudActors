@@ -29,12 +29,12 @@ public class ActorsAssemblyGenerator : IIncrementalGenerator
                     .Select((x, _) => (IAssemblySymbol)x!)
                     .Collect();
 
-        context.RegisterImplementationSourceOutput(assemblies.Combine(options), GenerateCode);
+        context.RegisterImplementationSourceOutput(options.Combine(assemblies), GenerateCode);
     }
 
-    static void GenerateCode(SourceProductionContext ctx, (ImmutableArray<IAssemblySymbol>, OrleansGeneratorOptions) source)
+    static void GenerateCode(SourceProductionContext ctx, (OrleansGeneratorOptions, ImmutableArray<IAssemblySymbol>) source)
     {
-        var (assemblies, options) = source;
+        var (options, assemblies) = source;
 
         // Don't duplicate any of the already generated code for the current assembly
         options = options with { Compilation = options.Compilation.RemoveAllSyntaxTrees() };
@@ -52,7 +52,7 @@ public class ActorsAssemblyGenerator : IIncrementalGenerator
         }
 
         foreach (var type in assemblies.Select(x => x.GetAllTypes()
-            .FirstOrDefault(x => x.ContainingType == null && options.Compilation.IsSymbolAccessibleWithin(x, options.Compilation.Assembly))))
+            .FirstOrDefault(x => x.MetadataName != "<Module>" && x.ContainingType == null && options.Compilation.IsSymbolAccessibleWithin(x, options.Compilation.Assembly))))
         {
             if (type == null)
                 continue;
