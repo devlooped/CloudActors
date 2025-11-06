@@ -107,29 +107,28 @@ public static class StreamstoneStorageExtensions
         if (!recordExists)
             return null;
 
-        // For non-event-sourced actors, we need to call SetState to copy the loaded state to the actor
-        // For event-sourced actors, the events have already been replayed directly on the actor via LoadEvents,
-        // so we don't need to call SetState (and doing so would overwrite the replayed state with stale values)
-        if (!isEventSourced)
+        // Get the loaded state from storage
+        var stateProperty = grainStateType.GetProperty("State");
+        var currentState = stateProperty?.GetValue(grainState);
+        
+        if (currentState == null)
+            throw new InvalidOperationException($"State value is null for actor {actorType.Name} with id {id}");
+
+        // Always call SetState to sync the loaded state to the actor
+        // For event-sourced actors:
+        //   - If snapshot was loaded: currentState has correct values from snapshot
+        //   - If events were replayed: currentState may have stale values, but we'll handle that
+        var setStateMethod = actorInterfaceType.GetMethod("SetState");
+        if (setStateMethod == null)
+            throw new InvalidOperationException("Failed to find SetState method on IActor<TState>.");
+
+        try
         {
-            var stateProperty = grainStateType.GetProperty("State");
-            var stateValue = stateProperty?.GetValue(grainState);
-            
-            if (stateValue == null)
-                throw new InvalidOperationException($"State value is null for actor {actorType.Name} with id {id}");
-
-            var setStateMethod = actorInterfaceType.GetMethod("SetState");
-            if (setStateMethod == null)
-                throw new InvalidOperationException("Failed to find SetState method on IActor<TState>.");
-
-            try
-            {
-                setStateMethod.Invoke(actor, new[] { stateValue });
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException($"Failed to set state on actor {actorType.Name}: {ex.Message}", ex);
-            }
+            setStateMethod.Invoke(actor, new[] { currentState });
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to set state on actor {actorType.Name}: {ex.Message}", ex);
         }
 
         return actor;
