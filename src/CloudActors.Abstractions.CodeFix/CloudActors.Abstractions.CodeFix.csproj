@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyName>Devlooped.CloudActors.CodeFix</AssemblyName>
+    <AssemblyName>Devlooped.CloudActors.Abstractions.CodeFix</AssemblyName>
     <TargetFramework>netstandard2.0</TargetFramework>
 
     <IsRoslynComponent>true</IsRoslynComponent>
@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CloudActors.CodeAnalysis\CloudActors.CodeAnalysis.csproj" />
+    <ProjectReference Include="..\CloudActors.Abstractions.CodeAnalysis\CloudActors.Abstractions.CodeAnalysis.csproj" />
   </ItemGroup>
 
 </Project>

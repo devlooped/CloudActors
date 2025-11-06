@@ -1,11 +1,11 @@
 <Solution>
+  <Project Path="src/CloudActors.Abstractions.CodeAnalysis/CloudActors.Abstractions.CodeAnalysis.csproj" />
+  <Project Path="src/CloudActors.Abstractions.CodeFix/CloudActors.Abstractions.CodeFix.csproj" />
+  <Project Path="src/CloudActors.Abstractions.Package/CloudActors.Abstractions.Package.msbuildproj" Type="13b669be-bb05-4ddf-9536-439f39a36129" />
   <Project Path="src/CloudActors.CodeAnalysis/CloudActors.CodeAnalysis.csproj" />
-  <Project Path="src/CloudActors.CodeFix/CloudActors.CodeFix.csproj" />
-  <Project Path="src/CloudActors.Package/CloudActors.Package.msbuildproj" Type="13b669be-bb05-4ddf-9536-439f39a36129" />
-  <Project Path="src/CloudActors.Server.CodeAnalysis/CloudActors.Server.CodeAnalysis.csproj" />
-  <Project Path="src/CloudActors.Server/CloudActors.Server.csproj" />
-  <Project Path="src/CloudActors.Streamstone/CloudActors.Streamstone.csproj" />
   <Project Path="src/CloudActors/CloudActors.csproj" />
+  <Project Path="src/CloudActors.Streamstone/CloudActors.Streamstone.csproj" />
+  <Project Path="src/CloudActors.Abstractions/CloudActors.Abstractions.csproj" />
   <Project Path="src/TestDomain/TestDomain.csproj" />
   <Project Path="src/Tests/Tests.csproj" />
 </Solution>
