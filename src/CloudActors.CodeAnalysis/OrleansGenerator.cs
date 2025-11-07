@@ -17,6 +17,8 @@ public record OrleansGeneratorOptions(Compilation Compilation, CSharpParseOption
 {
     public bool IsCloudActorsServer => AnalyzerConfig.TryGetValue("build_property.IsCloudActorsServer", out var value) &&
         bool.TryParse(value, out var isServer) && isServer;
+    public bool ProduceReferenceAssembly => AnalyzerConfig.TryGetValue("build_property.ProduceReferenceAssembly", out var value) &&
+        bool.TryParse(value, out var produceRef) && produceRef;
 }
 
 public static class OrleansGeneratorExtensions
