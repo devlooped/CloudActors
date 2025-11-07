@@ -15,13 +15,17 @@ env:
   VersionLabel: ${{ github.ref }}
   GH_TOKEN: ${{ secrets.GH_TOKEN }}
   MSBUILDTERMINALLOGGER: auto
+  SLEET_FEED_URL: https://api.nuget.org/v3/index.json
 
 jobs:
   publish:
-    runs-on: ubuntu-latest   
+    runs-on: ${{ vars.PUBLISH_AGENT || 'ubuntu-latest' }}
     steps:
       - name: 🤘 checkout
         uses: actions/checkout@v4
+
+      - name: ⚙ dotnet
+        uses: devlooped/actions-dotnet-env@v1
 
       - name: 🙏 build
         run: dotnet build -m:1 -bl:build.binlog
@@ -46,13 +50,9 @@ jobs:
       - name: 🚀 nuget
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-        if: env.NUGET_API_KEY != ''  
-        run: dotnet nuget push ./bin/**/*.nupkg -s https://api.nuget.org/v3/index.json -k ${{secrets.NUGET_API_KEY}} --skip-duplicate
-
-      - name: ⚙ dotnet
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.x
+        if: ${{ env.NUGET_API_KEY != '' && github.event.action != 'prereleased' }}
+        working-directory: bin
+        run: dotnet nuget push *.nupkg -s https://api.nuget.org/v3/index.json -k ${{secrets.NUGET_API_KEY}} --skip-duplicate
 
       - name: 🚀 sleet
         env:
