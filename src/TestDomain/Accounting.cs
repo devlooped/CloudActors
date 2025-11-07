@@ -28,7 +28,11 @@ public enum CloseReason
 
 public partial record Closed(decimal Balance, CloseReason Reason);
 
-public partial record GetBalance() : IActorQuery<decimal>;
+public partial record GetBalance() : IActorQuery<decimal>
+{
+    // optional singleton pattern for stateless records
+    public static GetBalance Default { get; } = new();
+}
 
 [Actor]
 public partial class Account : IEventSourced //, IActor

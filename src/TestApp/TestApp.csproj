@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <Import Project="..\CloudActors.Abstractions.Package\buildTransitive\Devlooped.CloudActors.Abstractions.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Only due to warning from the codefix reference -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.10.0" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\CloudActors.Streamstone\CloudActors.Streamstone.csproj" />
+    <ProjectReference Include="..\CloudActors\CloudActors.csproj" />
+    <ProjectReference Include="..\TestDomain\TestDomain.csproj" />
+    <ProjectReference Include="..\CloudActors.Abstractions.CodeAnalysis\CloudActors.Abstractions.CodeAnalysis.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\CloudActors.Abstractions.CodeFix\CloudActors.Abstractions.CodeFix.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\CloudActors.CodeAnalysis\CloudActors.CodeAnalysis.csproj" OutputItemType="Analyzer" />
+  </ItemGroup>
+
+  <Import Project="..\CloudActors.Abstractions.Package\buildTransitive\Devlooped.CloudActors.Abstractions.targets" />
+  <Import Project="..\CloudActors.CodeAnalysis\Devlooped.CloudActors.targets" />
+</Project>

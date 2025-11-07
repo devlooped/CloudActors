@@ -20,7 +20,7 @@ public class ClusterFixture : IDisposable
         builder.AddClientBuilderConfigurator<ActorBusConfigurator>();
 
         // Cloud actor (instantiation) is only needed on the silo-side.
-        // The UseCloudActors already configures the actor bug, so we don't need 
+        // The UseCloudActors already configures the actor bus, so we don't need 
         // that on the silo side.
         builder.AddSiloBuilderConfigurator<AddCloudActorsConfigurator>();
 
