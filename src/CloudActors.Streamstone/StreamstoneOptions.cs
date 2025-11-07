@@ -21,6 +21,6 @@ public class StreamstoneOptions
     /// <summary>When true, will automatically create a snapshot of the state for easy retrieval.</summary>
     public bool AutoSnapshot { get; set; } = true;
 
-    /// <summary>The settings to use when serializing and deserializing events and snapshot if <see cref="AutoSnapshot"/> is true.</summary>
+    /// <summary>The settings to use when serializing and deserializing events, and snapshot if <see cref="AutoSnapshot"/> is true.</summary>
     public JsonSerializerOptions JsonOptions { get; set; } = options;
 }
