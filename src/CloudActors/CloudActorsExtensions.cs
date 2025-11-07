@@ -1,12 +1,12 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Linq;
-using Microsoft.Extensions.DependencyInjection;
+using Devlooped.CloudActors;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Orleans;
 using Orleans.Runtime;
 
-namespace Devlooped.CloudActors;
+namespace Microsoft.Extensions.DependencyInjection;
 
 [EditorBrowsable(EditorBrowsableState.Never)]
 public static partial class CloudActorsExtensions
