@@ -41,11 +41,21 @@ public class ActorMessageGenerator : IIncrementalGenerator
             foreach (var message in distinct)
                 GenerateCode(ctx, (message, options));
         });
+
+        context.RegisterImplementationSourceOutput(options.Combine(context.CompilationProvider), (ctx, source) =>
+        {
+            var (options, compilation) = source;
+            if (options.ProduceReferenceAssembly)
+                ctx.ReportDiagnostic(Diagnostic.Create(Diagnostics.NoReferenceAssemblies, compilation.Assembly.Locations.FirstOrDefault()));
+        });
     }
 
     static void GenerateCode(SourceProductionContext ctx, (INamedTypeSymbol, OrleansGeneratorOptions) source)
     {
         var (message, options) = source;
+
+        if (options.ProduceReferenceAssembly)
+            return;
 
         var ns = message.ContainingNamespace.ToDisplayString();
         var kind = message.IsRecord ? "record" : "class";

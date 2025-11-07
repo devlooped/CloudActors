@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <!-- We cannot emit our message serializers if the containing project emits a reference assembly -->
+    <!-- See https://github.com/dotnet/orleans/blob/855a18b6662d04eb64911524561ebeb37240e8a2/src/Orleans.CodeGenerator/Diagnostics/ReferenceAssemblyWithGenerateSerializerDiagnostic.cs -->
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+  </PropertyGroup>
+</Project>
