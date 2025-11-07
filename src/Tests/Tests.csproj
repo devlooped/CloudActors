@@ -38,6 +38,10 @@
     <ProjectReference Include="..\TestDomain\TestDomain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Using Include="Xunit"/>
+  </ItemGroup>
+  
   <Import Project="..\CloudActors.CodeAnalysis\Devlooped.CloudActors.targets" />
 
 </Project>
