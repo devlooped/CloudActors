@@ -61,6 +61,9 @@ jobs:
       - name: 🤘 checkout
         uses: actions/checkout@v4
 
+      - name: ⚙ dotnet
+        uses: devlooped/actions-dotnet-env@v1
+
       - name: 🙏 build
         run: dotnet build -m:1 -bl:build.binlog
 
@@ -68,7 +71,7 @@ jobs:
         run: |
           npm install azurite
           npx azurite &
-
+          
       - name: 🧪 test
         run: |
           dotnet tool update -g dotnet-retest
@@ -99,6 +102,9 @@ jobs:
     steps:
       - name: 🤘 checkout
         uses: actions/checkout@v4
+
+      - name: ⚙ dotnet
+        uses: devlooped/actions-dotnet-env@v1
 
       - name: ✓ ensure format
         run: |
