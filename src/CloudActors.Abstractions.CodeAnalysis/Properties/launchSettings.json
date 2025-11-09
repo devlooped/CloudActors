@@ -2,7 +2,7 @@
   "profiles": {
     "CodeAnalysis": {
       "commandName": "DebugRoslynComponent",
-      "targetProject": "..\\TestDomain\\TestDomain.csproj"
+      "targetProject": "..\\TestApp\\TestApp.csproj"
     }
   }
 }
