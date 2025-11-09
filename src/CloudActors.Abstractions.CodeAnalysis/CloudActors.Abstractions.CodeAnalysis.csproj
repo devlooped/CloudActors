@@ -35,7 +35,6 @@
 
   <ItemGroup>
     <Reference Include="$(PkgMicrosoft_Orleans_CodeGenerator)\analyzers\dotnet\cs\Orleans.CodeGenerator.dll" />
-    <PackageFile Include="$(PkgMicrosoft_Orleans_CodeGenerator)\analyzers\dotnet\cs\Orleans.CodeGenerator.dll" PackFolder="$(PackFolder)" />
   </ItemGroup>
 
   <ItemGroup>
