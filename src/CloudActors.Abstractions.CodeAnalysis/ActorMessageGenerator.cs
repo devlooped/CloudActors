@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis;
 namespace Devlooped.CloudActors;
 
 [Generator(LanguageNames.CSharp)]
-public class ActorMessageGenerator : IIncrementalGenerator
+class ActorMessageGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {

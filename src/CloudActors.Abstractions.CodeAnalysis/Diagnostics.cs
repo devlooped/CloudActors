@@ -2,7 +2,7 @@
 
 namespace Devlooped.CloudActors;
 
-public static class Diagnostics
+static class Diagnostics
 {
     /// <summary>DCA001: Actor must be a partial class or record.</summary>
     public static DiagnosticDescriptor MustBePartial { get; } = new(

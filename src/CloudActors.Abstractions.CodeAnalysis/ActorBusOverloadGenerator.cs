@@ -5,7 +5,7 @@ using static Devlooped.CloudActors.AnalysisExtensions;
 namespace Devlooped.CloudActors;
 
 [Generator(LanguageNames.CSharp)]
-public class ActorBusOverloadGenerator : IIncrementalGenerator
+class ActorBusOverloadGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {

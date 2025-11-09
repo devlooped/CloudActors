@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Devlooped.CloudActors;
 
-public static class AnalysisExtensions
+static class AnalysisExtensions
 {
     public static SymbolDisplayFormat FullName { get; } = new(
         typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,

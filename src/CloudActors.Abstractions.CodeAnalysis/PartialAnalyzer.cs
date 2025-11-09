@@ -10,7 +10,7 @@ using static Devlooped.CloudActors.Diagnostics;
 namespace Devlooped.CloudActors;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-public class PartialAnalyzer : DiagnosticAnalyzer
+class PartialAnalyzer : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(MustBePartial);
 

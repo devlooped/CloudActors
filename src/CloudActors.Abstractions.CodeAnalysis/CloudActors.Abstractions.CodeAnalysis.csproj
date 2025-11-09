@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <AssemblyName>Devlooped.CloudActors.Abstractions.CodeAnalysis</AssemblyName>
@@ -41,4 +41,9 @@
     <EmbeddedResource Include="@(None -&gt; WithMetadataValue('Extension', '.sbntxt'))" Kind="text" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Devlooped.CloudActors.Abstractions.CodeFix"/>
+    <InternalsVisibleTo Include="Tests"/>
+  </ItemGroup>
+  
 </Project>

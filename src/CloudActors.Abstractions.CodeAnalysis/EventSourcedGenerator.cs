@@ -3,14 +3,13 @@ using System.Diagnostics;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Scriban;
 using static Devlooped.CloudActors.AnalysisExtensions;
 
 namespace Devlooped.CloudActors;
 
 [Generator(LanguageNames.CSharp)]
-public class EventSourcedGenerator : IIncrementalGenerator
+class EventSourcedGenerator : IIncrementalGenerator
 {
     static readonly Template template = Template.Parse(ThisAssembly.Resources.EventSourced.Text);
 
