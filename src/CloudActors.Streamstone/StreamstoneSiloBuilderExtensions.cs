@@ -13,9 +13,13 @@ namespace Orleans.Hosting;
 [EditorBrowsable(EditorBrowsableState.Never)]
 public static class StreamstoneSiloBuilderExtensions
 {
-    /// <summary>Adds Streamstone actor storage as the default storage provider.</summary>
-    public static ISiloBuilder AddStreamstoneActorStorage(this ISiloBuilder builder)
+    /// <summary>Adds Streamstone actor storage as the default grain storage provider.</summary>
+    public static ISiloBuilder AddStreamstoneActorStorageAsDefault(this ISiloBuilder builder)
         => builder.AddStreamstoneActorStorage(ProviderConstants.DEFAULT_STORAGE_PROVIDER_NAME);
+
+    /// <summary>Adds Streamstone actor storage provider as the default grain storage provider and provides a configuration action.</summary>
+    public static ISiloBuilder AddStreamstoneActorStorageAsDefault(this ISiloBuilder builder, Action<StreamstoneOptions> configure)
+        => builder.ConfigureServices(services => services.AddStreamstoneActorStorage(ProviderConstants.DEFAULT_STORAGE_PROVIDER_NAME, configure));
 
     /// <summary>Adds a named Streamstone actor storage provider.</summary>
     public static ISiloBuilder AddStreamstoneActorStorage(this ISiloBuilder builder, string name)
@@ -24,10 +28,6 @@ public static class StreamstoneSiloBuilderExtensions
     /// <summary>Adds a named Streamstone actor storage provider and provides a configuration action.</summary>
     public static ISiloBuilder AddStreamstoneActorStorage(this ISiloBuilder builder, string name, Action<StreamstoneOptions> configure)
         => builder.ConfigureServices(services => services.AddStreamstoneActorStorage(name, configure));
-
-    /// <summary>Adds a default Streamstone actor storage provider and provides a configuration action.</summary>
-    public static ISiloBuilder AddStreamstoneActorStorage(this ISiloBuilder builder, Action<StreamstoneOptions> configure)
-        => builder.ConfigureServices(services => services.AddStreamstoneActorStorage(ProviderConstants.DEFAULT_STORAGE_PROVIDER_NAME, configure));
 
     internal static IServiceCollection AddStreamstoneActorStorage(
         this IServiceCollection services,
