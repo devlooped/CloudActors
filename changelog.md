@@ -1,5 +1,25 @@
 # Changelog
 
+## [v0.5.0-rc](https://github.com/devlooped/CloudActors/tree/v0.5.0-rc) (2025-11-09)
+
+[Full Changelog](https://github.com/devlooped/CloudActors/compare/v0.5.0-beta...v0.5.0-rc)
+
+:sparkles: Implemented enhancements:
+
+- Switch AddCloudActors namespace to M.E.DI [\#151](https://github.com/devlooped/CloudActors/pull/151) (@kzu)
+- Proper diagnostics when ProduceReferenceAssembly=true, unsupported [\#148](https://github.com/devlooped/CloudActors/pull/148) (@kzu)
+
+:bug: Fixed bugs:
+
+- Do not forcedly pack the Orleans code generator [\#156](https://github.com/devlooped/CloudActors/pull/156) (@kzu)
+- Remove unsupported VB from generators [\#155](https://github.com/devlooped/CloudActors/pull/155) (@kzu)
+- Make sure we don't duplicate Orleans-generated code [\#154](https://github.com/devlooped/CloudActors/pull/154) (@kzu)
+
+:twisted_rightwards_arrows: Merged:
+
+- Minor xml doc clarification [\#152](https://github.com/devlooped/CloudActors/pull/152) (@kzu)
+- Add end to end ASP.NET app that exposes actor over HTTP [\#149](https://github.com/devlooped/CloudActors/pull/149) (@kzu)
+
 ## [v0.5.0-beta](https://github.com/devlooped/CloudActors/tree/v0.5.0-beta) (2025-11-06)
 
 [Full Changelog](https://github.com/devlooped/CloudActors/compare/v0.4.0...v0.5.0-beta)
