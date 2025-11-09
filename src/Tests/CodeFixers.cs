@@ -68,6 +68,55 @@ public class CodeFixers
     }
 
     [Fact]
+    public async Task AddPartialEvent()
+    {
+        var context = new CSharpCodeFixTest<PartialAnalyzer, TypeMustBePartial, DefaultVerifier>();
+        context.CodeFixTestBehaviors |= CodeFixTestBehaviors.SkipLocalDiagnosticCheck;
+        context.ReferenceAssemblies = ReferenceAssemblies.Net.Net80
+            .AddPackages([new PackageIdentity("Devlooped.CloudActors", "0.4.0")]);
+
+        context.TestCode =
+            /* lang=c#-test */
+            """
+            using Devlooped.CloudActors;
+            
+            public record [|Deposited|](decimal Amount);
+
+            [Actor]
+            public partial class MyActor 
+            { 
+                public void Deposit(decimal amount)
+                {
+                    Raise(new Deposited(amount));
+                }
+
+                void Raise<T>(T @event) where T : notnull { }
+            }
+            """;
+
+        context.FixedCode =
+            /* lang=c#-test */
+            """
+            using Devlooped.CloudActors;
+            
+            public partial record Deposited(decimal Amount);
+
+            [Actor]
+            public partial class MyActor 
+            { 
+                public void Deposit(decimal amount)
+                {
+                    Raise(new Deposited(amount));
+                }
+
+                void Raise<T>(T @event) where T : notnull { }
+            }
+            """;
+
+        await context.RunAsync();
+    }
+
+    [Fact]
     public async Task AddPartialMessage()
     {
         var context = new CSharpCodeFixTest<PartialAnalyzer, TypeMustBePartial, DefaultVerifier>();
