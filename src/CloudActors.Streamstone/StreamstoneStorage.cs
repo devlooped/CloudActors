@@ -58,9 +58,7 @@ public class StreamstoneStorage : IGrainStorage
                 var result = await table.GetEntityIfExistsAsync<EventEntity>(rowId, "State");
                 if (result.HasValue && result.Value is EventEntity entity &&
                     typeof(T).Assembly.GetName() is { } asm &&
-                    // We only apply snapshots where major.minor matches the current version, otherwise, 
-                    // we might be losing important business logic changes.
-                    new Version(asm.Version?.Major ?? 0, asm.Version?.Minor ?? 0).ToString() == entity.DataVersion &&
+                    IsCompatible(new Version(asm.Version?.Major ?? 0, asm.Version?.Minor ?? 0), entity.DataVersion) &&
                     entity.Data is string data &&
                     JsonSerializer.Deserialize<T>(data, options.JsonOptions) is { } instance)
                 {
@@ -174,6 +172,19 @@ public class StreamstoneStorage : IGrainStorage
         });
 
         return await getTable;
+    }
+
+    bool IsCompatible(Version assemblyVersion, string? dataVersion)
+    {
+        if (dataVersion == null || !Version.TryParse(dataVersion, out var version))
+            return false;
+
+        return options.SnapshotCompatibility switch
+        {
+            SnapshotVersionCompatibility.Major => assemblyVersion.Major == version.Major,
+            SnapshotVersionCompatibility.Minor => assemblyVersion.Major == version.Major && assemblyVersion.Minor == version.Minor,
+            _ => false,
+        };
     }
 
     class EventEntity : ITableEntity
