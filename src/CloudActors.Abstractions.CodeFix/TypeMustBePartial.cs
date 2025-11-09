@@ -11,7 +11,7 @@ namespace Devlooped.CloudActors.CodeAnalysis;
 [ExportCodeFixProvider(LanguageNames.CSharp)]
 public class TypeMustBePartial : CodeFixProvider
 {
-    public override ImmutableArray<string> FixableDiagnosticIds { get; } = ImmutableArray.Create(Diagnostics.MustBePartial.Id);
+    public override ImmutableArray<string> FixableDiagnosticIds { get; } = [Diagnostics.MustBePartial.Id];
 
     public override FixAllProvider GetFixAllProvider() => WellKnownFixAllProviders.BatchFixer;
 
