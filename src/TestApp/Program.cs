@@ -1,22 +1,29 @@
-using System.Net;
 using Devlooped;
 using Devlooped.CloudActors;
 using Microsoft.AspNetCore.Mvc;
-using Orleans.Configuration;
 using TestDomain;
-
-var siloPort = 11111;
-var gatewayPort = 30000;
-var siloAddress = IPAddress.Loopback;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.UseOrleans(builder => builder
-        .Configure<ClusterOptions>(options => options.ClusterId = "TestApp")
-        .UseDevelopmentClustering(options => options.PrimarySiloEndpoint = new IPEndPoint(siloAddress, siloPort))
-        .ConfigureEndpoints(siloAddress, siloPort, gatewayPort)
-        .AddStreamstoneActorStorage(opt => opt.AutoSnapshot = true)
-    );
+builder.UseOrleans(silo =>
+{
+    if (builder.Environment.IsProduction())
+    {
+        silo.UseAzureStorageClustering(options =>
+        {
+            options.TableServiceClient = new Azure.Data.Tables.TableServiceClient(
+                builder.Configuration["App:Storage"] ??
+                builder.Configuration["AzureWebJobsStorage"] ??
+                throw new InvalidOperationException("Missing either App:Storage or AzureWebJobsStorage connection strings."));
+        });
+    }
+    else
+    {
+        silo.UseLocalhostClustering();
+    }
+
+    silo.AddStreamstoneActorStorageAsDefault(opt => opt.AutoSnapshot = true);
+});
 
 builder.Services.AddSingleton(CloudStorageAccount.DevelopmentStorageAccount);
 builder.Services.AddCloudActors();

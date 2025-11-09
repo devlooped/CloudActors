@@ -66,7 +66,7 @@ public class TestAccounts : IAsyncDisposable
                 .Configure<ClusterOptions>(options => options.ClusterId = "TEST")
                 .UseDevelopmentClustering(options => options.PrimarySiloEndpoint = new IPEndPoint(siloAddress, siloPort))
                 .ConfigureEndpoints(siloAddress, siloPort, gatewayPort)
-                .AddStreamstoneActorStorage(opt => opt.AutoSnapshot = true)
+                .AddStreamstoneActorStorageAsDefault(opt => opt.AutoSnapshot = true)
             )
             .ConfigureServices(services =>
             {

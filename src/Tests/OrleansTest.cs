@@ -59,7 +59,7 @@ public class ClusterFixture : IDisposable
             builder.Services.AddSingleton(CloudStorageAccount.DevelopmentStorageAccount);
             //builder.Services.AddSingleton<IGrainStorage>(sp => sp.GetServiceByName<IGrainStorage>(ProviderConstants.DEFAULT_STORAGE_PROVIDER_NAME));
             //builder.Services.AddSingletonNamedService<IGrainStorage, StreamstoneStorage>(ProviderConstants.DEFAULT_STORAGE_PROVIDER_NAME);
-            builder.AddStreamstoneActorStorage();
+            builder.AddStreamstoneActorStorageAsDefault();
         }
     }
 
