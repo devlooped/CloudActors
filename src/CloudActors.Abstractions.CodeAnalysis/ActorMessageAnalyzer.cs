@@ -9,7 +9,7 @@ using static Devlooped.CloudActors.Diagnostics;
 namespace Devlooped.CloudActors;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-public class ActorMessageAnalyzer : DiagnosticAnalyzer
+class ActorMessageAnalyzer : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(SingleInterfaceRequired, MustNotBeSerializable);
 

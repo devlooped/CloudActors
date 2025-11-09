@@ -3,7 +3,7 @@
 namespace Devlooped.CloudActors;
 
 [Generator(LanguageNames.CSharp)]
-public class CloudActorsGenerator : IIncrementalGenerator
+class CloudActorsAttributeGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
         => context.RegisterImplementationSourceOutput(context.CompilationProvider, (ctx, compilation)

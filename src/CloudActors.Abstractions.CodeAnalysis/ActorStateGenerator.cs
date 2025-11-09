@@ -11,7 +11,7 @@ namespace Devlooped.CloudActors;
 /// retrieval and restoring (memento pattern).
 /// </summary>
 [Generator(LanguageNames.CSharp)]
-public class ActorStateGenerator : IIncrementalGenerator
+class ActorStateGenerator : IIncrementalGenerator
 {
     static readonly Template template = Template.Parse(ThisAssembly.Resources.ActorState.Text);
 

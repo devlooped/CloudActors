@@ -13,7 +13,7 @@ using Orleans.CodeGenerator.Model;
 
 namespace Devlooped.CloudActors;
 
-public record OrleansGeneratorOptions(Compilation Compilation, CSharpParseOptions? ParseOptions, AnalyzerConfigOptions AnalyzerConfig)
+record OrleansGeneratorOptions(Compilation Compilation, CSharpParseOptions? ParseOptions, AnalyzerConfigOptions AnalyzerConfig)
 {
     public bool IsCloudActorsServer => AnalyzerConfig.TryGetValue("build_property.IsCloudActorsServer", out var value) &&
         bool.TryParse(value, out var isServer) && isServer;
@@ -21,7 +21,7 @@ public record OrleansGeneratorOptions(Compilation Compilation, CSharpParseOption
         bool.TryParse(value, out var produceRef) && produceRef;
 }
 
-public static class OrleansGeneratorExtensions
+static class OrleansGeneratorExtensions
 {
     public static IncrementalValueProvider<OrleansGeneratorOptions> GetOrleansOptions(this IncrementalGeneratorInitializationContext context)
         => context.CompilationProvider
@@ -34,30 +34,8 @@ public static class OrleansGeneratorExtensions
 /// Runs the equivalent of the Orleans generator. This allows us to detect the presence of the 
 /// original generator and fail in that case since we might end up with duplicate code.
 /// </summary>
-//[Generator(LanguageNames.CSharp)]
-public class OrleansGenerator : IIncrementalGenerator
+class OrleansGenerator
 {
-    public void Initialize(IncrementalGeneratorInitializationContext context)
-    {
-        var processName = Process.GetCurrentProcess().ProcessName.ToLowerInvariant();
-        if (processName.Contains("devenv") || processName.Contains("servicehub"))
-            return;
-
-        var options = context.GetOrleansOptions();
-
-        context.RegisterImplementationSourceOutput(options, (ctx, orleans) =>
-        {
-            var options = CreateGeneratorOptions(orleans);
-            var generator = new CodeGenerator(
-                orleans.Compilation.WithAssemblyName($"{orleans.Compilation.AssemblyName}.OrleansGenerator"), options);
-            var syntax = generator.GenerateCode(ctx.CancellationToken);
-            var code = syntax.NormalizeWhitespace().ToFullString();
-            var text = SourceText.From(code, Encoding.UTF8);
-
-            ctx.AddSource($"{orleans.Compilation.AssemblyName ?? "assembly"}.orleans.g.cs", text);
-        });
-    }
-
     public static string GenerateCode(OrleansGeneratorOptions orleans, string additionalCode, string? additionalName = default, CancellationToken cancellation = default)
     {
         var options = CreateGeneratorOptions(orleans);

@@ -39,6 +39,7 @@
   <ItemGroup>
     <EmbeddedResource Include="@(None -&gt; WithMetadataValue('Extension', '.sbntxt'))" Kind="text" />
     <None Update="Devlooped.CloudActors.targets" PackFolder="build" />
+    <InternalsVisibleTo Include="Tests"/>
   </ItemGroup>
 
 </Project>

@@ -7,7 +7,7 @@ using static Devlooped.CloudActors.AnalysisExtensions;
 namespace Devlooped.CloudActors;
 
 [Generator(LanguageNames.CSharp)]
-public class ActorGrainGenerator : IIncrementalGenerator
+class ActorGrainGenerator : IIncrementalGenerator
 {
     static readonly Template template = Template.Parse(ThisAssembly.Resources.ActorGrain.Text);
 

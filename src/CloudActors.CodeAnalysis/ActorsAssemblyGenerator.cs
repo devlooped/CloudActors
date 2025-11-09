@@ -16,7 +16,7 @@ namespace Devlooped.CloudActors;
 /// the Orleans.Server package only.
 /// </summary>
 [Generator(LanguageNames.CSharp)]
-public class ActorsAssemblyGenerator : IIncrementalGenerator
+class ActorsAssemblyGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
