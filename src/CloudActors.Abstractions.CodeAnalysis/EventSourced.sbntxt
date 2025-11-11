@@ -14,6 +14,7 @@ namespace {{ Namespace }};
 [CompilerGenerated]
 partial class {{ Name }}
 {
+    /// <summary>List of uncommitted events that have been raised/applied so far.</summary>
     List<object>? events;
 
     IReadOnlyList<object> IEventSourced.Events => events ??= new List<object>();
@@ -50,18 +51,17 @@ partial class {{ Name }}
     partial void Apply({{event}} e);
     {{~ end ~}}
 
-    /// <summary>
-    /// Raises and applies a new event of the specified type.
-    /// See <see cref="Raise{T}(T)"/>.
-    /// </summary>
+    /// <summary>Applies a new event of the specified type. See <see cref="Raise{T}(T)"/>.</summary>
     void Raise<T>() where T : notnull, new() => Raise(new T());
 
-    /// <summary>
-    /// Raises and applies an event.
-    /// </summary>
+    /// <summary>Applies the event and adds it to the list of uncommitted events.</summary>
     void Raise<T>(T @event) where T : notnull
     {
         Apply(@event);
         (events ??= new List<object>()).Add(@event);
+        OnRaised(@event);
     }
+
+    /// <summary>Optional callback invoked after an event has been raised and applied.</summary>
+    partial void OnRaised<T>(T @event) where T : notnull;
 }

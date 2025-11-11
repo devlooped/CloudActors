@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Net;
-using System.Reflection;
 using System.Threading.Tasks;
 using Devlooped;
 using Devlooped.CloudActors;
@@ -8,10 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Orleans.Configuration;
 using Orleans.Hosting;
-using Orleans.Runtime;
 using Orleans.Storage;
 using TestDomain;
-using Xunit;
 
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
 
@@ -26,6 +23,15 @@ public class TestAccounts : IAsyncDisposable
     public async ValueTask DisposeAsync() => await CloudStorageAccount.DevelopmentStorageAccount
         .CreateCloudTableClient()
         .DeleteTableAsync(nameof(Account));
+
+    [Fact]
+    public void ExtendOnRaised()
+    {
+        var account = new Account("account/1");
+        account.Deposit(new(100));
+        Assert.Single(account.Raised);
+        Assert.Contains(typeof(Deposited), account.Raised);
+    }
 
     [Fact]
     public async Task HostedGrain()
