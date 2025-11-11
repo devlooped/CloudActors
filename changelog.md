@@ -1,5 +1,20 @@
 # Changelog
 
+## [v0.5.0-rc.1](https://github.com/devlooped/CloudActors/tree/v0.5.0-rc.1) (2025-11-11)
+
+[Full Changelog](https://github.com/devlooped/CloudActors/compare/v0.5.0-rc...v0.5.0-rc.1)
+
+:sparkles: Implemented enhancements:
+
+- Add callback after Raise happened in IEventSourced implementation [\#161](https://github.com/devlooped/CloudActors/pull/161) (@kzu)
+- Allow relaxing snapshot version compatibility [\#160](https://github.com/devlooped/CloudActors/pull/160) (@kzu)
+- Add AsDefault to Streamstone to follow Orleans conventions [\#157](https://github.com/devlooped/CloudActors/pull/157) (@kzu)
+
+:twisted_rightwards_arrows: Merged:
+
+- Don't expose analyzer and code fixers as public APIs [\#159](https://github.com/devlooped/CloudActors/pull/159) (@kzu)
+- Add serializatoin metadata for event sourcing events too [\#158](https://github.com/devlooped/CloudActors/pull/158) (@kzu)
+
 ## [v0.5.0-rc](https://github.com/devlooped/CloudActors/tree/v0.5.0-rc) (2025-11-09)
 
 [Full Changelog](https://github.com/devlooped/CloudActors/compare/v0.5.0-beta...v0.5.0-rc)
