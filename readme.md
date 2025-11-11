@@ -390,6 +390,39 @@ were different initially before I had the generators in place, and the result af
 was a simplification in many aspects, with less base types in the main library/interfaces 
 project, and more incremental behavior addded as users opt-in to certain features.
 
+## Telemetry and Monitoring
+
+The core implementation of the `IActorBus` is instrumented with `ActivitySource` and 
+`Metric`, providing out of the box support for [Open Telemetry](https://learn.microsoft.com/en-us/dotnet/core/diagnostics/distributed-tracing-instrumentation-walkthroughs)-based monitoring, as well 
+as via [dotnet trace](https://learn.microsoft.com/en-us/dotnet/core/diagnostics/dotnet-trace) 
+and [dotnet counters](https://learn.microsoft.com/en-us/dotnet/core/diagnostics/dotnet-counters).
+
+To export telemetry using [Open Telemetry](https://learn.microsoft.com/en-us/dotnet/core/diagnostics/distributed-tracing-instrumentation-walkthroughs), 
+for example:
+
+```csharp
+using var tracer = Sdk
+    .CreateTracerProviderBuilder()
+    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("ConsoleApp"))
+    .AddSource(source.Name) // other app sources
+    .AddSource("CloudActors")
+    .AddConsoleExporter()
+    .AddZipkinExporter()
+    .AddAzureMonitorTraceExporter(o => o.ConnectionString = config["AppInsights"])
+    .Build();
+```
+
+Collecting traces via [dotnet-trace](https://learn.microsoft.com/en-us/dotnet/core/diagnostics/dotnet-trace):
+
+```shell
+dotnet trace collect --name [PROCESS_NAME] --providers="Microsoft-Diagnostics-DiagnosticSource:::FilterAndPayloadSpecs=[AS]CloudActors,System.Diagnostics.Metrics:::Metrics=CloudActors"
+```
+
+Monitoring metrics via [dotnet-counters](https://learn.microsoft.com/en-us/dotnet/core/diagnostics/dotnet-counters):
+
+```shell
+dotnet counters monitor --process-id [PROCESS_ID] --counters CloudActors
+```
 
 ## How it works
 
