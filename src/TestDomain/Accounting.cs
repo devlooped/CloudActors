@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.Serialization;
 using Devlooped.CloudActors;
 using Moq;
@@ -108,4 +109,8 @@ public partial class Account : IEventSourced //, IActor
         IsClosed = true;
         Reason = e.Reason;
     }
+
+    public List<Type> Raised { get; } = new();
+
+    partial void OnRaised<T>(T @event) where T : notnull => Raised.Add(typeof(T));
 }
