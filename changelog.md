@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.0-rc.2](https://github.com/devlooped/CloudActors/tree/v0.5.0-rc.2) (2025-11-12)
+
+[Full Changelog](https://github.com/devlooped/CloudActors/compare/v0.5.0-rc.1...v0.5.0-rc.2)
+
+:sparkles: Implemented enhancements:
+
+- Instrument the actor bus with standard-ish telemetry [\#162](https://github.com/devlooped/CloudActors/pull/162) (@kzu)
+
 ## [v0.5.0-rc.1](https://github.com/devlooped/CloudActors/tree/v0.5.0-rc.1) (2025-11-11)
 
 [Full Changelog](https://github.com/devlooped/CloudActors/compare/v0.5.0-rc...v0.5.0-rc.1)
