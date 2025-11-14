@@ -27,7 +27,7 @@
 
     <PackageReference Include="Scriban" Version="6.5.0" Pack="false" IncludeAssets="build" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" PrivateAssets="all" />
-    <PackageReference Include="System.Collections.Immutable" Version="8.0.0" PrivateAssets="all" />
+    <PackageReference Include="System.Collections.Immutable" Version="10.0.0" PrivateAssets="all" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.3" PrivateAssets="all" />
     <PackageReference Include="ThisAssembly.AssemblyInfo" Version="2.1.2" PrivateAssets="all" />
     <PackageReference Include="ThisAssembly.Resources" Version="2.1.2" PrivateAssets="all" Pack="false" />
