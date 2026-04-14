@@ -6,10 +6,14 @@ namespace Devlooped.CloudActors;
 
 /// <summary>
 /// Generates typed-ID extension methods for <see cref="IActorBus"/> for actors 
-/// whose primary constructor accepts a non-string <c>IParsable&lt;T&gt;</c> identifier 
-/// (such as StructId types). For each such actor, three overloads are emitted: 
-/// void command, typed command, and query, all formatting the grain ID as 
-/// <c>$"{grainType}/{id}"</c>.
+/// whose primary constructor accepts a non-string typed identifier.
+/// <list type="bullet">
+/// <item>For <b>user-defined</b> ID types (StructId, StronglyTypedId, or any user type 
+/// implementing <c>IParsable&lt;T&gt;</c>): overloads accept the ID type directly.</item>
+/// <item>For <b>primitive</b> ID types (<c>long</c>, <c>Guid</c>, etc.): overloads accept 
+/// the generated nested <c>{Actor}.{Actor}Id</c> wrapper (emitted by 
+/// <see cref="ActorPrimitiveIdGenerator"/>), never the raw primitive.</item>
+/// </list>
 /// </summary>
 [Generator(LanguageNames.CSharp)]
 class ActorIdBusOverloadGenerator : IIncrementalGenerator
@@ -26,14 +30,13 @@ class ActorIdBusOverloadGenerator : IIncrementalGenerator
         context.RegisterSourceOutput(actors.Combine(parsable), (ctx, item) =>
         {
             var (actor, iParsable) = item;
-            if (iParsable is null)
+
+            // Determine what ID type the actor uses and how to generate overloads
+            var idInfo = GetActorIdInfo(actor, iParsable);
+            if (idInfo is null)
                 return;
 
-            var idType = GetTypedIdType(actor, iParsable);
-            if (idType is null)
-                return;
-
-            var idTypeName = idType.ToDisplayString(FullName);
+            var (busIdTypeName, idInterpolation) = idInfo.Value;
             var grainType = actor.Name.ToLowerInvariant();
             var file = $"{actor.ToFileName()}.IdBus.g.cs";
 
@@ -48,26 +51,32 @@ class ActorIdBusOverloadGenerator : IIncrementalGenerator
                     /// <summary>
                     /// Invokes a state-changing command on a <see cref="{{actor.ToDisplayString(FullName)}}"/> actor.
                     /// </summary>
-                    public static Task ExecuteAsync(this IActorBus bus, {{idTypeName}} id, IActorCommand command)
-                        => bus.ExecuteAsync($"{{grainType}}/{id}", command);
+                    public static Task ExecuteAsync(this IActorBus bus, {{busIdTypeName}} id, IActorCommand command)
+                        => bus.ExecuteAsync($"{{grainType}}/{{idInterpolation}}", command);
                 
                     /// <summary>
                     /// Invokes a state-changing command on a <see cref="{{actor.ToDisplayString(FullName)}}"/> actor.
                     /// </summary>
-                    public static Task<TResult> ExecuteAsync<TResult>(this IActorBus bus, {{idTypeName}} id, IActorCommand<TResult> command)
-                        => bus.ExecuteAsync<TResult>($"{{grainType}}/{id}", command);
+                    public static Task<TResult> ExecuteAsync<TResult>(this IActorBus bus, {{busIdTypeName}} id, IActorCommand<TResult> command)
+                        => bus.ExecuteAsync<TResult>($"{{grainType}}/{{idInterpolation}}", command);
                 
                     /// <summary>
                     /// Invokes a read-only query on a <see cref="{{actor.ToDisplayString(FullName)}}"/> actor.
                     /// </summary>
-                    public static Task<TResult> QueryAsync<TResult>(this IActorBus bus, {{idTypeName}} id, IActorQuery<TResult> query)
-                        => bus.QueryAsync<TResult>($"{{grainType}}/{id}", query);
+                    public static Task<TResult> QueryAsync<TResult>(this IActorBus bus, {{busIdTypeName}} id, IActorQuery<TResult> query)
+                        => bus.QueryAsync<TResult>($"{{grainType}}/{{idInterpolation}}", query);
                 }
                 """);
         });
     }
 
-    static ITypeSymbol? GetTypedIdType(INamedTypeSymbol actor, INamedTypeSymbol iParsable)
+    /// <summary>
+    /// Returns the bus parameter type name and the interpolation expression for the ID.
+    /// For primitive IDs: (<c>Actor.ActorId</c>, <c>{id.Id}</c>).
+    /// For user-defined IDs: (<c>UserDefinedId</c>, <c>{id}</c>).
+    /// Returns <c>null</c> for string or unrecognized ID types.
+    /// </summary>
+    static (string BusIdTypeName, string IdInterpolation)? GetActorIdInfo(INamedTypeSymbol actor, INamedTypeSymbol? iParsable)
     {
         var ctor = actor.Constructors
             .Where(c => !c.IsStatic && c.Parameters.Length > 0)
@@ -79,24 +88,34 @@ class ActorIdBusOverloadGenerator : IIncrementalGenerator
 
         var idType = ctor.Parameters[0].Type;
 
-        // String constructors are handled by existing overloads
         if (idType.SpecialType == SpecialType.System_String)
             return null;
 
-        // Check if idType implements IParsable<T> directly
-        var implementsParsable = idType.AllInterfaces.Any(i =>
-            i.IsGenericType &&
-            i.ConstructedFrom.Equals(iParsable, SymbolEqualityComparer.Default));
+        // Primitive types get a generated nested wrapper: {Actor}.{Actor}Id
+        if (ActorPrimitiveIdGenerator.IsPrimitiveType(idType))
+        {
+            var wrapperTypeName = $"{actor.ToDisplayString(FullName)}.{actor.Name}Id";
+            return (wrapperTypeName, "{id.Id}");
+        }
 
-        if (implementsParsable)
-            return idType;
+        // User-defined typed IDs: StructId or IParsable<T> implementations
+        if (iParsable is not null)
+        {
+            var implementsParsable = idType.AllInterfaces.Any(i =>
+                i.IsGenericType &&
+                i.ConstructedFrom.Equals(iParsable, SymbolEqualityComparer.Default));
 
-        // StructId types implement IParsable<T> via a separate generator that runs
-        // in parallel, so we can't see it. Detect IStructId/IStructId<T> by name instead.
+            if (implementsParsable)
+                return (idType.ToDisplayString(FullName), "{id}");
+        }
+
         var isStructId = idType.AllInterfaces.Any(i =>
             i.ContainingNamespace?.Name == "StructId" &&
-            (i.Name == "IStructId"));
+            i.Name == "IStructId");
 
-        return isStructId ? idType : null;
+        if (isStructId)
+            return (idType.ToDisplayString(FullName), "{id}");
+
+        return null;
     }
 }

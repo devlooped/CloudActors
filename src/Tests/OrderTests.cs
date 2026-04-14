@@ -41,26 +41,30 @@ public class TestOrders : IAsyncDisposable
         using var cluster = ClusterFixture.CreateCluster();
         var bus = cluster.ServiceProvider.GetRequiredService<IActorBus>();
 
-        await bus.ExecuteAsync(42L, new SetTotal(99.99m));
+        var orderId = Order.NewId(42L);
 
-        var total = await bus.QueryAsync(42L, GetTotal.Default);
+        await bus.ExecuteAsync(orderId, new SetTotal(99.99m));
+
+        var total = await bus.QueryAsync(orderId, GetTotal.Default);
         Assert.Equal(99.99m, total);
     }
 
     [Fact]
     public async Task LongIdPersistence()
     {
+        var orderId = Order.NewId(100L);
+
         using (var cluster = ClusterFixture.CreateCluster())
         {
             var bus = cluster.ServiceProvider.GetRequiredService<IActorBus>();
-            await bus.ExecuteAsync(100L, new SetTotal(49.99m));
-            Assert.Equal(49.99m, await bus.QueryAsync(100L, GetTotal.Default));
+            await bus.ExecuteAsync(orderId, new SetTotal(49.99m));
+            Assert.Equal(49.99m, await bus.QueryAsync(orderId, GetTotal.Default));
         }
 
         using (var cluster = ClusterFixture.CreateCluster())
         {
             var bus = cluster.ServiceProvider.GetRequiredService<IActorBus>();
-            Assert.Equal(49.99m, await bus.QueryAsync(100L, GetTotal.Default));
+            Assert.Equal(49.99m, await bus.QueryAsync(orderId, GetTotal.Default));
         }
     }
 }

@@ -41,7 +41,7 @@ public class TestItems : IAsyncDisposable
         using var cluster = ClusterFixture.CreateCluster();
         var bus = cluster.ServiceProvider.GetRequiredService<IActorBus>();
 
-        var itemId = Guid.NewGuid();
+        var itemId = Item.NewId();
 
         await bus.ExecuteAsync(itemId, new SetLabel("Widget"));
 
@@ -52,7 +52,7 @@ public class TestItems : IAsyncDisposable
     [Fact]
     public async Task GuidIdPersistence()
     {
-        var itemId = Guid.NewGuid();
+        var itemId = Item.NewId();
 
         using (var cluster = ClusterFixture.CreateCluster())
         {
