@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -56,14 +55,6 @@ class ActorStateFactory(IPersistentStateFactory factory) : IActorStateFactory
             throw;
         }
 
-        // Internally, this causes the StateStorageBridge<T>._grainState to not be 
-        // forcedly constructed via Activator.CreateInstance with a parameterless constructor, 
-        // and instead our "rehydrated" type is used instead.
-        // NOTE: this causes the OnStart on the PersistentState<TState> class to skip invoking 
-        // ReadStateAsync, as it assumes rehydration makes that unnecessary. 
-        // However, the JournaledGrain base class overrides the OnActivateAsync method and 
-        // forces a sync, so we're good since our generated grain does that too.
-        //bridge.OnRehydrate(new ActivationContext(new GrainState<TState>(actor)));
     }
 
     class ActorPersistentState<TState, TActor>(TActor actor, IPersistentState<TState> persistence) : IActorPersistentState<TState, TActor>
@@ -98,24 +89,6 @@ class ActorStateFactory(IPersistentStateFactory factory) : IActorStateFactory
         {
             persistence.State = Actor.GetState();
             return persistence.WriteStateAsync();
-        }
-    }
-
-    class ActivationContext(object actor) : IRehydrationContext
-    {
-        public IEnumerable<string> Keys => throw new NotImplementedException();
-        public bool TryGetBytes(string key, out ReadOnlySequence<byte> value) => throw new NotImplementedException();
-
-        public bool TryGetValue<T>(string key, [NotNullWhen(true)] out T? value)
-        {
-            if (actor is T typed)
-            {
-                value = typed;
-                return true;
-            }
-
-            value = default;
-            return false;
         }
     }
 }

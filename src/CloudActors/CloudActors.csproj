@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <AssemblyName>Devlooped.CloudActors</AssemblyName>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <PackageId>$(AssemblyName)</PackageId>
     <Description>Cloud Native Actors Orleans Hosting</Description>
     <PackageTags>dotnet orleans actor hosting</PackageTags>
