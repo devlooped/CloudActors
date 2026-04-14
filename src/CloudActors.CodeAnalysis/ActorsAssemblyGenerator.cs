@@ -53,6 +53,8 @@ class ActorsAssemblyGenerator : IIncrementalGenerator
 
         foreach (var type in assemblies.Select(x => x.GetAllTypes().FirstOrDefault(x =>
                 x.MetadataName != "<Module>" && x.MetadataName != "ActorBusExtensions" && x.MetadataName != "CloudActorsAttribute" &&
+                !x.MetadataName.Contains("<") && !x.IsGenericType &&
+                x.CanBeReferencedByName &&
                 x.ContainingType == null && options.Compilation.IsSymbolAccessibleWithin(x, options.Compilation.Assembly))))
         {
             if (type == null)

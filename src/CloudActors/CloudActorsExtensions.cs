@@ -14,9 +14,10 @@ public static partial class CloudActorsExtensions
     /// <summary>
     /// Adds the <see cref="IActorBus"/> service and actor activation logic. 
     /// </summary>
-    public static IServiceCollection AddCloudActors(this IServiceCollection services)
+    public static IServiceCollection AddCloudActors(this IServiceCollection services, IActorIdFactory? idFactory = default)
     {
         services.TryAddSingleton<IActorBus>(sp => new OrleansActorBus(sp.GetRequiredService<IGrainFactory>()));
+        services.TryAddSingleton(idFactory ?? ActorIdFactory.Default);
 
         // Attempt to replace the OOB persistence so we don't require a parameterless constructor and always 
         // have actors initialized with a specific id from the grain.
@@ -26,7 +27,9 @@ public static partial class CloudActorsExtensions
             services.Remove(descriptor);
             services.Replace(ServiceDescriptor.Describe(
               typeof(IPersistentStateFactory),
-              s => new ActorStateFactory((IPersistentStateFactory)CreateInstance(s, descriptor)),
+              s => new ActorStateFactory(
+                  (IPersistentStateFactory)CreateInstance(s, descriptor),
+                  s.GetRequiredService<IActorIdFactory>()),
               descriptor.Lifetime
             ));
         }

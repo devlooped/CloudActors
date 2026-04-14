@@ -12,7 +12,7 @@ namespace Devlooped.CloudActors;
 
 interface IActorStateFactory : IPersistentStateFactory { }
 
-class ActorStateFactory(IPersistentStateFactory factory) : IActorStateFactory
+class ActorStateFactory(IPersistentStateFactory factory, IActorIdFactory idFactory) : IActorStateFactory
 {
     public IPersistentState<TState> Create<TState>(IGrainContext context, IPersistentStateConfiguration config)
     {
@@ -37,11 +37,12 @@ class ActorStateFactory(IPersistentStateFactory factory) : IActorStateFactory
         if (!actorIface.IsAssignableFrom(actorType))
             return state;
 
-        if (context.GrainId.Key.ToString() is not object id)
+        if (context.GrainId.Key.ToString() is not { } key)
             return state;
 
         try
         {
+            var id = idFactory.Create(actorType, key);
             if (ActivatorUtilities.CreateInstance(context.ActivationServices, actorType, id) is not { } actor)
                 return state;
 
