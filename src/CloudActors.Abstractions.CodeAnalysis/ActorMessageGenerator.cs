@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Devlooped.CloudActors;
 
@@ -9,44 +11,90 @@ class ActorMessageGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var options = context.GetOrleansOptions();
-        var messages = context.CompilationProvider
-            .SelectMany((x, _) => x.Assembly.GetAllTypes().OfType<INamedTypeSymbol>())
-            .Where(t => t.IsActorMessage())
-            .Where(t => t.IsPartial());
+        var config = context.GetOrleansConfig();
 
-        var additionalTypes = messages.SelectMany((x, _) =>
-            x.GetMembers().OfType<IPropertySymbol>()
-            // Generated serializers only expose public members.
-            .Where(p => p.DeclaredAccessibility == Accessibility.Public)
-            .Select(p => p.Type)
-            .OfType<INamedTypeSymbol>()
-            .Where(t => t.IsPartial())
-            .Concat(x.GetMembers()
-            .OfType<IMethodSymbol>()
-            // Generated serializers only expose public members.
-            .Where(m => m.DeclaredAccessibility == Accessibility.Public)
-            .SelectMany(m => m.Parameters)
-            .Select(p => p.Type)
-            .OfType<INamedTypeSymbol>()))
-            // We already generate separately for actor messages.
-            .Where(t => !t.IsActorMessage() && t.IsPartial())
-            .Collect();
+        var messages = context.SyntaxProvider.CreateSyntaxProvider(
+            predicate: static (node, _) =>
+                node is TypeDeclarationSyntax tds &&
+                tds.BaseList?.Types.Count > 0,
+            transform: static (ctx, ct) =>
+            {
+                if (ctx.SemanticModel.GetDeclaredSymbol(ctx.Node, ct) is not INamedTypeSymbol type)
+                    return null;
 
-        context.RegisterImplementationSourceOutput(messages.Combine(options), (ctx, source) => ctx.GenerateCode(source));
-        context.RegisterImplementationSourceOutput(additionalTypes.Combine(options), (ctx, source) =>
+                if (!type.IsActorMessage() || !type.IsPartial())
+                    return null;
+
+                var voidCommand = ctx.SemanticModel.Compilation.GetTypeByMetadataName("Devlooped.CloudActors.IActorCommand");
+                var command = ctx.SemanticModel.Compilation.GetTypeByMetadataName("Devlooped.CloudActors.IActorCommand`1");
+                var query = ctx.SemanticModel.Compilation.GetTypeByMetadataName("Devlooped.CloudActors.IActorQuery`1");
+
+                return ModelExtractors.ExtractActorMessageModel(type, voidCommand, command, query);
+            })
+            .Where(static x => x != null)
+            .Select(static (x, _) => x!.Value)
+            .WithTrackingName(TrackingNames.MessageModels);
+
+        // Generate [GenerateSerializer] for each message and its additional types
+        var messagesWithConfig = messages.Combine(config);
+
+        context.RegisterImplementationSourceOutput(
+            messagesWithConfig.Combine(context.CompilationProvider).Combine(context.ParseOptionsProvider),
+            (ctx, source) =>
+            {
+                var (((model, config), compilation), parseOptions) = source;
+
+                if (config.ProduceReferenceAssembly)
+                    return;
+
+                // Generate for the message itself
+                GenerateSerializable(ctx, model.Name, model.Namespace, model.FullName, model.IsRecord, config, compilation, parseOptions as CSharpParseOptions);
+
+                // Generate for additional types referenced by the message
+                var seen = new HashSet<string>();
+                foreach (var additional in model.AdditionalTypes.AsImmutableArray())
+                {
+                    if (seen.Add(additional.FullName))
+                        GenerateSerializable(ctx, additional.Name, additional.Namespace, additional.FullName, additional.IsRecord, config, compilation, parseOptions as CSharpParseOptions);
+                }
+            });
+
+        // Report diagnostic for ProduceReferenceAssembly
+        context.RegisterImplementationSourceOutput(config.Combine(context.CompilationProvider), (ctx, source) =>
         {
-            var (messages, options) = source;
-            var distinct = new HashSet<INamedTypeSymbol>(messages, SymbolEqualityComparer.Default);
-            foreach (var message in distinct)
-                ctx.GenerateCode((message, options));
-        });
-
-        context.RegisterImplementationSourceOutput(options.Combine(context.CompilationProvider), (ctx, source) =>
-        {
-            var (options, compilation) = source;
-            if (options.ProduceReferenceAssembly)
+            var (config, compilation) = source;
+            if (config.ProduceReferenceAssembly)
                 ctx.ReportDiagnostic(Diagnostic.Create(Diagnostics.NoReferenceAssemblies, compilation.Assembly.Locations.FirstOrDefault()));
         });
+    }
+
+    static void GenerateSerializable(
+        SourceProductionContext ctx, string name, string ns, string fullName, bool isRecord,
+        OrleansConfig config, Compilation compilation, CSharpParseOptions? parseOptions)
+    {
+        var kind = isRecord ? "record" : "class";
+        var output =
+            $$"""
+                // <auto-generated/>
+
+                using System.CodeDom.Compiler;
+                using Orleans;
+
+                namespace {{ns}}
+                {
+                    [GeneratedCode("Devlooped.CloudActors", "{{ThisAssembly.Info.InformationalVersion}}")]
+                    [GenerateSerializer]
+                    partial {{kind}} {{name}};
+                }
+                """;
+
+        var fileName = fullName.Replace('+', '.');
+        ctx.AddSource($"{fileName}.Serializable.cs", output);
+
+        if (config.IsCloudActorsServer)
+        {
+            var orleans = OrleansGenerator.GenerateCode(compilation, parseOptions, config, output, name, ctx.CancellationToken);
+            ctx.AddSource($"{fileName}.Serializable.orleans.cs", orleans);
+        }
     }
 }

@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Scriban;
 using static Devlooped.CloudActors.AnalysisExtensions;
 
@@ -17,71 +18,48 @@ class ActorStateGenerator : IIncrementalGenerator
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var actors = context.CompilationProvider
-            .SelectMany((x, _) => x.Assembly.GetAllTypes().OfType<INamedTypeSymbol>())
-            .Where(x => x.GetAttributes().Any(x => x.IsActor()));
+        var actors = context.SyntaxProvider.CreateSyntaxProvider(
+            predicate: static (node, _) =>
+                node is ClassDeclarationSyntax cds &&
+                cds.AttributeLists.Count > 0,
+            transform: static (ctx, ct) =>
+            {
+                if (ctx.SemanticModel.GetDeclaredSymbol(ctx.Node, ct) is not INamedTypeSymbol symbol)
+                    return null;
+
+                if (!symbol.IsActor())
+                    return null;
+
+                var iParsable = ctx.SemanticModel.Compilation.GetTypeByMetadataName("System.IParsable`1");
+                var guidType = ctx.SemanticModel.Compilation.GetTypeByMetadataName("System.Guid");
+                var hasCreateVersion7 = guidType?.GetMembers("CreateVersion7")
+                    .OfType<IMethodSymbol>()
+                    .Any(m => m.IsStatic && m.Parameters.Length == 0) == true;
+
+                return ModelExtractors.ExtractActorModel(symbol, iParsable, hasCreateVersion7);
+            })
+            .Where(static x => x != null)
+            .Select(static (x, _) => x!.Value)
+            .WithTrackingName(TrackingNames.StateModels);
 
         context.RegisterImplementationSourceOutput(actors, (ctx, actor) =>
         {
-            var ns = actor.ContainingNamespace.ToDisplayString();
+            var members = actor.Properties.AsImmutableArray()
+                .AddRange(actor.Fields.AsImmutableArray())
+                .Select(m => new { m.Name, m.Type })
+                .ToArray();
 
-            var props = actor.GetMembers()
-                .OfType<IPropertySymbol>()
-                .Where(x =>
-                    x.CanBeReferencedByName &&
-                    !x.IsIndexer &&
-                    !x.IsAbstract &&
-                    x.SetMethod != null)
-                .Select(x => new Member(x.Name, x.Type.GetTypeName(ns)));
-
-            var fields = actor.GetMembers()
-                .OfType<IFieldSymbol>()
-                .Where(x =>
-                    x.CanBeReferencedByName &&
-                    !x.IsConst &&
-                    !x.IsStatic &&
-                    !x.IsReadOnly)
-                .Select(x => new Member(x.Name, x.Type.GetTypeName(ns)));
-
-            var members = props.Concat(fields).ToArray();
-            var es = actor.AllInterfaces.Any(x => x.ToDisplayString(FullName) == "Devlooped.CloudActors.IEventSourced");
-            var model = new StateModel(
-                Namespace: ns,
-                Name: actor.Name,
-                Members: members,
-                EventSourced: es);
+            var model = new
+            {
+                actor.Namespace,
+                actor.Name,
+                Members = members,
+                actor.IsEventSourced,
+                Version = ThisAssembly.Info.InformationalVersion
+            };
 
             var output = template.Render(model, member => member.Name);
-            ctx.AddSource($"{actor.ToFileName()}.State.cs", output);
+            ctx.AddSource($"{actor.FileName}.State.cs", output);
         });
     }
-
-    record Member(string Name, string TypeName)
-    {
-        public string Type => TypeName switch
-        {
-            "System.String" => "string",
-            "System.Int32" => "int",
-            "System.Int64" => "long",
-            "System.Boolean" => "bool",
-            "System.Single" => "float",
-            "System.Double" => "double",
-            "System.Decimal" => "decimal",
-            "System.DateTime" => "DateTime",
-            "System.Guid" => "Guid",
-            "System.TimeSpan" => "TimeSpan",
-            "System.Byte" => "byte",
-            "System.Byte[]" => "byte[]",
-            "System.Char" => "char",
-            "System.UInt32" => "uint",
-            "System.UInt64" => "ulong",
-            "System.SByte" => "sbyte",
-            "System.UInt16" => "ushort",
-            "System.Int16" => "short",
-            "System.Object" => "object",
-            _ => TypeName
-        };
-    }
-
-    record StateModel(string Namespace, string Name, IEnumerable<Member> Members, bool EventSourced, string Version = ThisAssembly.Info.InformationalVersion);
 }

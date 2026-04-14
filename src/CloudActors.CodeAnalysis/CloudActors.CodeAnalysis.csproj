@@ -16,6 +16,9 @@
 
   <ItemGroup>
     <Compile Include="..\CloudActors.Abstractions.CodeAnalysis\AnalysisExtensions.cs" Link="AnalysisExtensions.cs" />
+    <Compile Include="..\CloudActors.Abstractions.CodeAnalysis\EquatableArray.cs" Link="EquatableArray.cs" />
+    <Compile Include="..\CloudActors.Abstractions.CodeAnalysis\TrackingNames.cs" Link="TrackingNames.cs" />
+    <Compile Include="..\CloudActors.Abstractions.CodeAnalysis\CacheableModels.cs" Link="CacheableModels.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -28,6 +28,14 @@ static class OrleansGeneratorExtensions
             .Combine(context.AnalyzerConfigOptionsProvider.Select((x, _) => x.GlobalOptions))
             .Combine(context.ParseOptionsProvider)
             .Select((x, _) => new OrleansGeneratorOptions(x.Left.Left, x.Right as CSharpParseOptions, x.Left.Right));
+
+    /// <summary>
+    /// Gets a string-only <see cref="OrleansConfig"/> suitable for incremental pipeline values.
+    /// </summary>
+    public static IncrementalValueProvider<OrleansConfig> GetOrleansConfig(this IncrementalGeneratorInitializationContext context)
+        => context.AnalyzerConfigOptionsProvider
+            .Select((x, _) => ModelExtractors.ExtractOrleansConfig(x.GlobalOptions))
+            .WithTrackingName(TrackingNames.OrleansConfig);
 }
 
 /// <summary>
@@ -36,12 +44,12 @@ static class OrleansGeneratorExtensions
 /// </summary>
 class OrleansGenerator
 {
-    public static string GenerateCode(OrleansGeneratorOptions orleans, string additionalCode, string? additionalName = default, CancellationToken cancellation = default)
+    public static string GenerateCode(Compilation compilation, CSharpParseOptions? parseOptions, OrleansConfig config, string additionalCode, string? additionalName = default, CancellationToken cancellation = default)
     {
-        var options = CreateGeneratorOptions(orleans);
+        var options = CreateGeneratorOptions(config);
 
-        var additionalSyntax = CSharpSyntaxTree.ParseText(additionalCode, orleans.ParseOptions);
-        var compilation = orleans.Compilation.AddSyntaxTrees(additionalSyntax);
+        var additionalSyntax = CSharpSyntaxTree.ParseText(additionalCode, parseOptions);
+        compilation = compilation.AddSyntaxTrees(additionalSyntax);
 
         if (additionalName == null)
         {
@@ -76,30 +84,34 @@ class OrleansGenerator
             """;
     }
 
-    static CodeGeneratorOptions CreateGeneratorOptions(OrleansGeneratorOptions orleans)
+    // Keep old signature for backward compat during transition
+    public static string GenerateCode(OrleansGeneratorOptions orleans, string additionalCode, string? additionalName = default, CancellationToken cancellation = default)
+        => GenerateCode(orleans.Compilation, orleans.ParseOptions, ModelExtractors.ExtractOrleansConfig(orleans.AnalyzerConfig), additionalCode, additionalName, cancellation);
+
+    static CodeGeneratorOptions CreateGeneratorOptions(OrleansConfig config)
     {
         var options = new CodeGeneratorOptions();
-        if (orleans.AnalyzerConfig.TryGetValue("build_property.orleans_immutableattributes", out var immutableAttributes) && immutableAttributes is { Length: > 0 })
+        if (config.ImmutableAttributes is { Length: > 0 } immutableAttributes)
         {
             options.ImmutableAttributes.AddRange([.. immutableAttributes.Split([';'], StringSplitOptions.RemoveEmptyEntries)]);
         }
 
-        if (orleans.AnalyzerConfig.TryGetValue("build_property.orleans_aliasattributes", out var aliasAttributes) && aliasAttributes is { Length: > 0 })
+        if (config.AliasAttributes is { Length: > 0 } aliasAttributes)
         {
             options.AliasAttributes.AddRange([.. aliasAttributes.Split([';'], StringSplitOptions.RemoveEmptyEntries)]);
         }
 
-        if (orleans.AnalyzerConfig.TryGetValue("build_property.orleans_idattributes", out var idAttributes) && idAttributes is { Length: > 0 })
+        if (config.IdAttributes is { Length: > 0 } idAttributes)
         {
             options.IdAttributes.AddRange([.. idAttributes.Split([';'], StringSplitOptions.RemoveEmptyEntries)]);
         }
 
-        if (orleans.AnalyzerConfig.TryGetValue("build_property.orleans_generateserializerattributes", out var generateSerializerAttributes) && generateSerializerAttributes is { Length: > 0 })
+        if (config.GenerateSerializerAttributes is { Length: > 0 } generateSerializerAttributes)
         {
             options.GenerateSerializerAttributes.AddRange([.. generateSerializerAttributes.Split([';'], StringSplitOptions.RemoveEmptyEntries)]);
         }
 
-        if (orleans.AnalyzerConfig.TryGetValue("build_property.orleans_generatefieldids", out var generateFieldIds) && generateFieldIds is { Length: > 0 })
+        if (config.GenerateFieldIds is { Length: > 0 } generateFieldIds)
         {
             if (Enum.TryParse(generateFieldIds, out GenerateFieldIds fieldIdOption))
             {
@@ -107,10 +119,9 @@ class OrleansGenerator
             }
         }
 
-        if (orleans.AnalyzerConfig.TryGetValue("build_property.orleansgeneratecompatibilityinvokers", out var generateCompatInvokersValue)
-            && bool.TryParse(generateCompatInvokersValue, out var genCompatInvokers))
+        if (config.GenerateCompatibilityInvokers)
         {
-            options.GenerateCompatibilityInvokers = genCompatInvokers;
+            options.GenerateCompatibilityInvokers = true;
         }
 
         return options;

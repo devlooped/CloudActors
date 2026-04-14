@@ -8,6 +8,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Testing.Verifiers.XUnit" Version="1.1.2" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
     <PackageReference Include="Microsoft.Orleans.Server" Version="$(OrleansVersion)" />
@@ -15,9 +17,18 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CloudActors.Abstractions\CloudActors.Abstractions.csproj" />
-    <ProjectReference Include="..\CloudActors.Abstractions.CodeAnalysis\CloudActors.Abstractions.CodeAnalysis.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\CloudActors\CloudActors.csproj" />
+    <!-- Analyzer references (for source generation on this project) -->
+    <ProjectReference Include="..\CloudActors.Abstractions.CodeAnalysis\CloudActors.Abstractions.CodeAnalysis.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\CloudActors.CodeAnalysis\CloudActors.CodeAnalysis.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <!-- Library reference to analyzer assembly for incrementality tests (DLL only, no transitive deps) -->
+  <ItemGroup>
+    <Reference Include="Devlooped.CloudActors.Abstractions.CodeAnalysis">
+      <HintPath>..\CloudActors.Abstractions.CodeAnalysis\bin\$(Configuration)\netstandard2.0\Devlooped.CloudActors.Abstractions.CodeAnalysis.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>
