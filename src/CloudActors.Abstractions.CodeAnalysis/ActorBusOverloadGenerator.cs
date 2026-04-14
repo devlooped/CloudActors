@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Devlooped.CloudActors.AnalysisExtensions;
 
 namespace Devlooped.CloudActors;
@@ -9,64 +10,82 @@ class ActorBusOverloadGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var source = context.CompilationProvider.SelectMany((x, _) => x.Assembly.GetAllTypes().OfType<INamedTypeSymbol>())
-            .Where(t => t.IsActorMessage())
-            .Combine(context.CompilationProvider
-            .Select((c, _) => new
-            {
-                VoidCommand = c.GetTypeByMetadataName("Devlooped.CloudActors.IActorCommand"),
-                Command = c.GetTypeByMetadataName("Devlooped.CloudActors.IActorCommand`1"),
-                Query = c.GetTypeByMetadataName("Devlooped.CloudActors.IActorQuery`1"),
-            }));
+        var interfaces = context.CompilationProvider
+            .Select((c, _) => (
+                VoidCommand: c.GetTypeByMetadataName("Devlooped.CloudActors.IActorCommand")?.ToDisplayString(FullName),
+                Command: c.GetTypeByMetadataName("Devlooped.CloudActors.IActorCommand`1")?.ToDisplayString(FullName),
+                Query: c.GetTypeByMetadataName("Devlooped.CloudActors.IActorQuery`1")?.ToDisplayString(FullName)))
+            .WithTrackingName(TrackingNames.BusInterfaces);
 
-        context.RegisterSourceOutput(source, (ctx, item) =>
+        var messages = context.SyntaxProvider.CreateSyntaxProvider(
+            predicate: static (node, _) =>
+                node is TypeDeclarationSyntax tds &&
+                tds.BaseList?.Types.Count > 0,
+            transform: static (ctx, ct) =>
+            {
+                if (ctx.SemanticModel.GetDeclaredSymbol(ctx.Node, ct) is not INamedTypeSymbol type)
+                    return default;
+
+                if (!type.IsActorMessage())
+                    return default;
+
+                var voidCommand = ctx.SemanticModel.Compilation.GetTypeByMetadataName("Devlooped.CloudActors.IActorCommand");
+                var command = ctx.SemanticModel.Compilation.GetTypeByMetadataName("Devlooped.CloudActors.IActorCommand`1");
+                var query = ctx.SemanticModel.Compilation.GetTypeByMetadataName("Devlooped.CloudActors.IActorQuery`1");
+
+                return ModelExtractors.ExtractActorMessageModel(type, voidCommand, command, query);
+            })
+            .Where(static x => x != null)
+            .Select(static (x, _) => x!.Value)
+            .WithTrackingName(TrackingNames.BusOverloads);
+
+        context.RegisterSourceOutput(messages, (ctx, model) =>
         {
-            if (item.Right.VoidCommand is null || item.Right.Command is null || item.Right.Query is null)
-                return;
+            var file = $"{model.FileName}.g.cs";
 
-            var file = $"{item.Left.ToFileName()}.g.cs";
-
-            if (item.Left.AllInterfaces.Contains(item.Right.VoidCommand, SymbolEqualityComparer.Default))
+            switch (model.Kind)
             {
-                ctx.AddSource(file,
-                    $$"""
-                    using System.Threading.Tasks;
-                    using Devlooped.CloudActors;
-                                        
-                    static partial class ActorBusExtensions
-                    {
-                        public static Task ExecuteAsync(this IActorBus bus, string id, {{item.Left.ToDisplayString(FullName)}} command)
-                            => bus.ExecuteAsync(id, (IActorCommand)command);
-                    }
-                    """);
-            }
-            else if (item.Left.AllInterfaces.FirstOrDefault(x => x.IsGenericType && x.ConstructedFrom.Equals(item.Right.Command, SymbolEqualityComparer.Default)) is INamedTypeSymbol command)
-            {
-                ctx.AddSource(file,
-                    $$"""
-                    using System.Threading.Tasks;
-                    using Devlooped.CloudActors;
+                case ActorMessageKind.VoidCommand:
+                    ctx.AddSource(file,
+                        $$"""
+                        using System.Threading.Tasks;
+                        using Devlooped.CloudActors;
+                                            
+                        static partial class ActorBusExtensions
+                        {
+                            public static Task ExecuteAsync(this IActorBus bus, string id, {{model.FullName}} command)
+                                => bus.ExecuteAsync(id, (IActorCommand)command);
+                        }
+                        """);
+                    break;
 
-                    static partial class ActorBusExtensions
-                    {
-                        public static Task<{{command.TypeArguments[0].ToDisplayString(FullName)}}> ExecuteAsync(this IActorBus bus, string id, {{item.Left.ToDisplayString(FullName)}} command)
-                            => bus.ExecuteAsync<{{command.TypeArguments[0].ToDisplayString(FullName)}}>(id, command);
-                    }
-                    """);
-            }
-            else if (item.Left.AllInterfaces.FirstOrDefault(x => x.IsGenericType && x.ConstructedFrom.Equals(item.Right.Query, SymbolEqualityComparer.Default)) is INamedTypeSymbol query)
-            {
-                ctx.AddSource(file,
-                    $$"""
-                    using System.Threading.Tasks;
-                    using Devlooped.CloudActors;
+                case ActorMessageKind.Command:
+                    ctx.AddSource(file,
+                        $$"""
+                        using System.Threading.Tasks;
+                        using Devlooped.CloudActors;
 
-                    static partial class ActorBusExtensions
-                    {
-                        public static Task<{{query.TypeArguments[0].ToDisplayString(FullName)}}> QueryAsync(this IActorBus bus, string id, {{item.Left.ToDisplayString(FullName)}} query)
-                            => bus.QueryAsync<{{query.TypeArguments[0].ToDisplayString(FullName)}}>(id, query);
-                    }
-                    """);
+                        static partial class ActorBusExtensions
+                        {
+                            public static Task<{{model.ReturnTypeFullName}}> ExecuteAsync(this IActorBus bus, string id, {{model.FullName}} command)
+                                => bus.ExecuteAsync<{{model.ReturnTypeFullName}}>(id, command);
+                        }
+                        """);
+                    break;
+
+                case ActorMessageKind.Query:
+                    ctx.AddSource(file,
+                        $$"""
+                        using System.Threading.Tasks;
+                        using Devlooped.CloudActors;
+
+                        static partial class ActorBusExtensions
+                        {
+                            public static Task<{{model.ReturnTypeFullName}}> QueryAsync(this IActorBus bus, string id, {{model.FullName}} query)
+                                => bus.QueryAsync<{{model.ReturnTypeFullName}}>(id, query);
+                        }
+                        """);
+                    break;
             }
         });
     }

@@ -45,6 +45,7 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Devlooped.CloudActors.Abstractions.CodeFix" />
     <InternalsVisibleTo Include="Tests" />
+    <InternalsVisibleTo Include="Tests.CodeAnalysis" />
     <InternalsVisibleTo Include="Tests.CodeFix" />
   </ItemGroup>
   

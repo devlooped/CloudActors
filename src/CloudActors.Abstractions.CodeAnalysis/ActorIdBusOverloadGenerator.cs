@@ -1,5 +1,6 @@
 using System.Linq;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Devlooped.CloudActors.AnalysisExtensions;
 
 namespace Devlooped.CloudActors;
@@ -7,38 +8,60 @@ namespace Devlooped.CloudActors;
 /// <summary>
 /// Generates typed-ID extension methods for <see cref="IActorBus"/> for actors 
 /// whose primary constructor accepts a non-string typed identifier.
-/// <list type="bullet">
-/// <item>For <b>user-defined</b> ID types (StructId, StronglyTypedId, or any user type 
-/// implementing <c>IParsable&lt;T&gt;</c>): overloads accept the ID type directly.</item>
-/// <item>For <b>primitive</b> ID types (<c>long</c>, <c>Guid</c>, etc.): overloads accept 
-/// the generated nested <c>{Actor}.{Actor}Id</c> wrapper (emitted by 
-/// <see cref="ActorPrimitiveIdGenerator"/>), never the raw primitive.</item>
-/// </list>
 /// </summary>
 [Generator(LanguageNames.CSharp)]
 class ActorIdBusOverloadGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var actors = context.CompilationProvider
-            .SelectMany((x, _) => x.Assembly.GetAllTypes().OfType<INamedTypeSymbol>())
-            .Where(t => t.IsActor());
+        var actors = context.SyntaxProvider.CreateSyntaxProvider(
+            predicate: static (node, _) =>
+                node is ClassDeclarationSyntax cds &&
+                cds.AttributeLists.Count > 0,
+            transform: static (ctx, ct) =>
+            {
+                if (ctx.SemanticModel.GetDeclaredSymbol(ctx.Node, ct) is not INamedTypeSymbol symbol)
+                    return (ActorIdBusOverloadModel?)null;
 
-        var parsable = context.CompilationProvider
-            .Select((c, _) => c.GetTypeByMetadataName("System.IParsable`1"));
+                if (!symbol.IsActor())
+                    return null;
 
-        context.RegisterSourceOutput(actors.Combine(parsable), (ctx, item) =>
+                var iParsable = ctx.SemanticModel.Compilation.GetTypeByMetadataName("System.IParsable`1");
+                var guidType = ctx.SemanticModel.Compilation.GetTypeByMetadataName("System.Guid");
+                var hasCreateVersion7 = guidType?.GetMembers("CreateVersion7")
+                    .OfType<IMethodSymbol>()
+                    .Any(m => m.IsStatic && m.Parameters.Length == 0) == true;
+
+                var model = ModelExtractors.ExtractActorModel(symbol, iParsable, hasCreateVersion7);
+                if (model is null)
+                    return null;
+
+                var actor = model.Value;
+                // Skip actors with no typed ID
+                if (actor.IdTypeFullName is null)
+                    return null;
+
+                // Determine bus parameter type and interpolation
+                if (actor.IsPrimitiveId)
+                {
+                    var wrapperTypeName = $"{actor.FullName}.{actor.Name}Id";
+                    return new ActorIdBusOverloadModel(actor.Name, actor.FullName, wrapperTypeName, "{id.Id}");
+                }
+                else if (actor.IsTypedId)
+                {
+                    return new ActorIdBusOverloadModel(actor.Name, actor.FullName, actor.IdTypeFullName, "{id}");
+                }
+
+                return null;
+            })
+            .Where(static x => x != null)
+            .Select(static (x, _) => x!.Value)
+            .WithTrackingName(TrackingNames.ActorIdOverloads);
+
+        context.RegisterSourceOutput(actors, (ctx, model) =>
         {
-            var (actor, iParsable) = item;
-
-            // Determine what ID type the actor uses and how to generate overloads
-            var idInfo = GetActorIdInfo(actor, iParsable);
-            if (idInfo is null)
-                return;
-
-            var (busIdTypeName, idInterpolation) = idInfo.Value;
-            var grainType = actor.Name.ToLowerInvariant();
-            var file = $"{actor.ToFileName()}.IdBus.g.cs";
+            var grainType = model.ActorName.ToLowerInvariant();
+            var file = $"{model.ActorFullName.Replace('+', '.')}.IdBus.g.cs";
 
             ctx.AddSource(file,
                 $$"""
@@ -49,73 +72,24 @@ class ActorIdBusOverloadGenerator : IIncrementalGenerator
                 static partial class ActorBusExtensions
                 {
                     /// <summary>
-                    /// Invokes a state-changing command on a <see cref="{{actor.ToDisplayString(FullName)}}"/> actor.
+                    /// Invokes a state-changing command on a <see cref="{{model.ActorFullName}}"/> actor.
                     /// </summary>
-                    public static Task ExecuteAsync(this IActorBus bus, {{busIdTypeName}} id, IActorCommand command)
-                        => bus.ExecuteAsync($"{{grainType}}/{{idInterpolation}}", command);
+                    public static Task ExecuteAsync(this IActorBus bus, {{model.BusIdTypeName}} id, IActorCommand command)
+                        => bus.ExecuteAsync($"{{grainType}}/{{model.IdInterpolation}}", command);
                 
                     /// <summary>
-                    /// Invokes a state-changing command on a <see cref="{{actor.ToDisplayString(FullName)}}"/> actor.
+                    /// Invokes a state-changing command on a <see cref="{{model.ActorFullName}}"/> actor.
                     /// </summary>
-                    public static Task<TResult> ExecuteAsync<TResult>(this IActorBus bus, {{busIdTypeName}} id, IActorCommand<TResult> command)
-                        => bus.ExecuteAsync<TResult>($"{{grainType}}/{{idInterpolation}}", command);
+                    public static Task<TResult> ExecuteAsync<TResult>(this IActorBus bus, {{model.BusIdTypeName}} id, IActorCommand<TResult> command)
+                        => bus.ExecuteAsync<TResult>($"{{grainType}}/{{model.IdInterpolation}}", command);
                 
                     /// <summary>
-                    /// Invokes a read-only query on a <see cref="{{actor.ToDisplayString(FullName)}}"/> actor.
+                    /// Invokes a read-only query on a <see cref="{{model.ActorFullName}}"/> actor.
                     /// </summary>
-                    public static Task<TResult> QueryAsync<TResult>(this IActorBus bus, {{busIdTypeName}} id, IActorQuery<TResult> query)
-                        => bus.QueryAsync<TResult>($"{{grainType}}/{{idInterpolation}}", query);
+                    public static Task<TResult> QueryAsync<TResult>(this IActorBus bus, {{model.BusIdTypeName}} id, IActorQuery<TResult> query)
+                        => bus.QueryAsync<TResult>($"{{grainType}}/{{model.IdInterpolation}}", query);
                 }
                 """);
         });
-    }
-
-    /// <summary>
-    /// Returns the bus parameter type name and the interpolation expression for the ID.
-    /// For primitive IDs: (<c>Actor.ActorId</c>, <c>{id.Id}</c>).
-    /// For user-defined IDs: (<c>UserDefinedId</c>, <c>{id}</c>).
-    /// Returns <c>null</c> for string or unrecognized ID types.
-    /// </summary>
-    static (string BusIdTypeName, string IdInterpolation)? GetActorIdInfo(INamedTypeSymbol actor, INamedTypeSymbol? iParsable)
-    {
-        var ctor = actor.Constructors
-            .Where(c => !c.IsStatic && c.Parameters.Length > 0)
-            .OrderBy(c => c.Parameters.Length)
-            .FirstOrDefault();
-
-        if (ctor is null)
-            return null;
-
-        var idType = ctor.Parameters[0].Type;
-
-        if (idType.SpecialType == SpecialType.System_String)
-            return null;
-
-        // Primitive types get a generated nested wrapper: {Actor}.{Actor}Id
-        if (ActorPrimitiveIdGenerator.IsPrimitiveType(idType))
-        {
-            var wrapperTypeName = $"{actor.ToDisplayString(FullName)}.{actor.Name}Id";
-            return (wrapperTypeName, "{id.Id}");
-        }
-
-        // User-defined typed IDs: StructId or IParsable<T> implementations
-        if (iParsable is not null)
-        {
-            var implementsParsable = idType.AllInterfaces.Any(i =>
-                i.IsGenericType &&
-                i.ConstructedFrom.Equals(iParsable, SymbolEqualityComparer.Default));
-
-            if (implementsParsable)
-                return (idType.ToDisplayString(FullName), "{id}");
-        }
-
-        var isStructId = idType.AllInterfaces.Any(i =>
-            i.ContainingNamespace?.Name == "StructId" &&
-            i.Name == "IStructId");
-
-        if (isStructId)
-            return (idType.ToDisplayString(FullName), "{id}");
-
-        return null;
     }
 }

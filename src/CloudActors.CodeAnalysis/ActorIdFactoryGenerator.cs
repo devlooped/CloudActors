@@ -8,39 +8,37 @@ namespace Devlooped.CloudActors;
 
 /// <summary>
 /// Generates a compile-time <c>IActorIdFactory</c> implementation that maps actor types 
-/// to their typed-ID <c>Parse</c> calls without any runtime reflection. Also emits an 
-/// <c>AddCloudActors</c> extension method overload with 
-/// <c>[OverloadResolutionPriority(1)]</c> that registers the generated factory and 
-/// delegates to the library's original registration.
+/// to their typed-ID <c>Parse</c> calls without any runtime reflection.
 /// </summary>
 [Generator(LanguageNames.CSharp)]
 class ActorIdFactoryGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var iParsable = context.CompilationProvider
-            .Select((c, _) => c.GetTypeByMetadataName("System.IParsable`1"));
-
-        var actors = context.CompilationProvider
-            .SelectMany((x, _) => x.GetAllTypes())
-            .Where(t => t.IsActor());
-
-        var actorsWithIds = actors.Combine(iParsable)
-            .Select((item, _) =>
+        // Use CompilationProvider to discover actors across all referenced assemblies
+        var actorsWithIds = context.CompilationProvider
+            .Select(static (compilation, _) =>
             {
-                var (actor, parsable) = item;
-                var idInfo = GetTypedIdInfo(actor, parsable);
-                if (idInfo is null)
-                    return default;
-
-                return new ActorIdEntry(
-                    actor.ToDisplayString(FullName),
-                    idInfo.Value.IdTypeName);
+                var iParsable = compilation.GetTypeByMetadataName("System.IParsable`1");
+                var builder = ImmutableArray.CreateBuilder<ActorIdEntry>();
+                foreach (var type in compilation.GetAllTypes())
+                {
+                    if (!type.IsGenericType && type.IsActor())
+                    {
+                        var idInfo = GetTypedIdInfo(type, iParsable);
+                        if (idInfo is not null)
+                        {
+                            builder.Add(new ActorIdEntry(
+                                type.ToDisplayString(FullName),
+                                idInfo.Value.IdTypeName));
+                        }
+                    }
+                }
+                return builder.ToImmutable();
             })
-            .Where(x => x.ActorTypeName is not null)
-            .Collect();
+            .WithTrackingName(TrackingNames.ActorIdEntries);
 
-        context.RegisterImplementationSourceOutput(actorsWithIds, GenerateFactory);
+        context.RegisterImplementationSourceOutput(actorsWithIds, (ctx, entries) => GenerateFactory(ctx, entries));
     }
 
     static void GenerateFactory(SourceProductionContext ctx, ImmutableArray<ActorIdEntry> entries)

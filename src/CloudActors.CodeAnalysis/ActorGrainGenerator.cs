@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Scriban;
 using static Devlooped.CloudActors.AnalysisExtensions;
 
@@ -13,60 +14,61 @@ class ActorGrainGenerator : IIncrementalGenerator
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var options = context.GetOrleansOptions();
+        var config = context.GetOrleansConfig();
 
+        // Use CompilationProvider to discover actors across all referenced assemblies
         var actors = context.CompilationProvider
-            .SelectMany((x, _) => x.GetAllTypes())
-            .Where(t => t.IsActor());
+            .Select(static (compilation, _) =>
+            {
+                var iParsable = compilation.GetTypeByMetadataName("System.IParsable`1");
+                var guidType = compilation.GetTypeByMetadataName("System.Guid");
+                var hasCreateVersion7 = guidType?.GetMembers("CreateVersion7")
+                    .OfType<IMethodSymbol>()
+                    .Any(m => m.IsStatic && m.Parameters.Length == 0) == true;
 
-        context.RegisterImplementationSourceOutput(actors.Combine(options), (ctx, source) =>
-        {
-            var (actor, options) = source;
+                var builder = ImmutableArray.CreateBuilder<ActorModel>();
+                foreach (var type in compilation.GetAllTypes())
+                {
+                    if (!type.IsGenericType && type.IsActor())
+                    {
+                        var model = ModelExtractors.ExtractActorModel(type, iParsable, hasCreateVersion7);
+                        if (model.HasValue)
+                            builder.Add(model.Value);
+                    }
+                }
+                return new EquatableArray<ActorModel>(builder.ToImmutable());
+            })
+            .WithTrackingName(TrackingNames.GrainModels);
 
-            var attribute = actor.GetAttributes().First(x => x.IsActor());
-            var state = default(string);
-            var storage = default(string);
-            if (attribute.ConstructorArguments.Length >= 1 &&
-                !attribute.ConstructorArguments[0].IsNull)
-                state = attribute.ConstructorArguments[0].Value?.ToString() ?? null;
-            if (attribute.ConstructorArguments.Length == 2 &&
-                !attribute.ConstructorArguments[1].IsNull)
-                storage = attribute.ConstructorArguments[1].Value?.ToString() ?? null;
+        context.RegisterImplementationSourceOutput(
+            actors.Combine(config).Combine(context.CompilationProvider).Combine(context.ParseOptionsProvider),
+            (ctx, source) =>
+            {
+                var (((actorModels, config), compilation), parseOptions) = source;
 
-            var model = new GrainModel(
-                Namespace: actor.ContainingNamespace.ToDisplayString(),
-                Name: actor.Name,
-                StateName: state,
-                StorageProvider: storage,
-                Version: ThisAssembly.Info.InformationalVersion,
-                Queries: actor.GetMembers().OfType<IMethodSymbol>().Where(IsQuery).Select(ToOperation),
-                Commands: actor.GetMembers().OfType<IMethodSymbol>().Where(IsCommand).Select(ToOperation),
-                VoidCommands: actor.GetMembers().OfType<IMethodSymbol>().Where(IsVoidCommand).Select(ToOperation));
+                foreach (var actor in actorModels.AsImmutableArray())
+                {
+                    var model = new
+                    {
+                        actor.Namespace,
+                        actor.Name,
+                        actor.StateName,
+                        actor.StorageProvider,
+                        Version = ThisAssembly.Info.InformationalVersion,
+                        Queries = actor.Queries.AsImmutableArray().Select(q => new { q.Name, q.Type, q.IsAsync }).ToArray(),
+                        Commands = actor.Commands.AsImmutableArray().Select(c => new { c.Name, c.Type, c.IsAsync }).ToArray(),
+                        VoidCommands = actor.VoidCommands.AsImmutableArray().Select(v => new { v.Name, v.Type, v.IsAsync }).ToArray(),
+                        QueryAsync = actor.Queries.AsImmutableArray().Any(q => q.IsAsync),
+                        ExecuteAsync = actor.Commands.AsImmutableArray().Any(),
+                        ExecuteVoidAsync = actor.VoidCommands.AsImmutableArray().Any(),
+                    };
 
-            var output = template.Render(model, member => member.Name);
-            var orleans = OrleansGenerator.GenerateCode(options, output, actor.Name, ctx.CancellationToken);
+                    var output = template.Render(model, member => member.Name);
+                    var orleans = OrleansGenerator.GenerateCode(compilation, parseOptions as CSharpParseOptions, config, output, actor.Name, ctx.CancellationToken);
 
-            ctx.AddSource($"{actor.ToFileName()}.cs", output);
-            ctx.AddSource($"{actor.ToFileName()}.orleans.cs", orleans);
-        });
-    }
-
-    static GrainOperation ToOperation(IMethodSymbol method) => new(
-        method.Name,
-        method.Parameters[0].Type.ToDisplayString(FullName),
-        method.ReturnType.ToDisplayString(FullName).StartsWith("System.Threading.Tasks.Task"));
-
-    static bool IsQuery(IMethodSymbol method) => method.Parameters.Length == 1 && method.Parameters[0].Type.IsActorQuery();
-    static bool IsCommand(IMethodSymbol method) => method.Parameters.Length == 1 && method.Parameters[0].Type.IsActorCommand();
-    static bool IsVoidCommand(IMethodSymbol method) => method.Parameters.Length == 1 && method.Parameters[0].Type.IsActorVoidCommand();
-
-    record GrainOperation(string Name, string Type, bool IsAsync);
-
-    record GrainModel(string Namespace, string Name, string? StateName, string? StorageProvider, string Version,
-        IEnumerable<GrainOperation> Queries, IEnumerable<GrainOperation> Commands, IEnumerable<GrainOperation> VoidCommands)
-    {
-        public bool QueryAsync => Queries.Any(x => x.IsAsync);
-        public bool ExecuteAsync => Commands.Any();
-        public bool ExecuteVoidAsync => VoidCommands.Any();
+                    ctx.AddSource($"{actor.FileName}.cs", output);
+                    ctx.AddSource($"{actor.FileName}.orleans.cs", orleans);
+                }
+            });
     }
 }

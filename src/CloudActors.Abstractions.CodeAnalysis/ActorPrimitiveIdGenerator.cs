@@ -1,5 +1,6 @@
 using System.Linq;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Devlooped.CloudActors.AnalysisExtensions;
 
 namespace Devlooped.CloudActors;
@@ -15,39 +16,41 @@ class ActorPrimitiveIdGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var actors = context.CompilationProvider
-            .SelectMany((x, _) => x.Assembly.GetAllTypes().OfType<INamedTypeSymbol>())
-            .Where(t => t.IsActor());
-
-        var actorsWithCompilation = actors.Combine(context.CompilationProvider);
-
-        context.RegisterSourceOutput(actorsWithCompilation, (ctx, pair) =>
-        {
-            var (actor, compilation) = pair;
-            var idType = GetPrimitiveIdType(actor);
-            if (idType is null)
-                return;
-
-            var idTypeName = idType.ToDisplayString(FullName);
-            var ns = actor.ContainingNamespace.IsGlobalNamespace
-                ? null
-                : actor.ContainingNamespace.ToDisplayString();
-
-            var file = $"{actor.ToFileName()}.PrimitiveId.g.cs";
-
-            var nsOpen = ns is null ? "" : $"namespace {ns};\n\n";
-
-            // For Guid IDs, emit a parameterless NewId() that generates a new value.
-            var parameterlessNewId = "";
-            if (idType.ToDisplayString(FullName) == "System.Guid")
+        var actors = context.SyntaxProvider.CreateSyntaxProvider(
+            predicate: static (node, _) =>
+                node is ClassDeclarationSyntax cds &&
+                cds.AttributeLists.Count > 0,
+            transform: static (ctx, ct) =>
             {
-                var guidType = compilation.GetTypeByMetadataName("System.Guid");
+                if (ctx.SemanticModel.GetDeclaredSymbol(ctx.Node, ct) is not INamedTypeSymbol symbol)
+                    return null;
+
+                if (!symbol.IsActor())
+                    return null;
+
+                var iParsable = ctx.SemanticModel.Compilation.GetTypeByMetadataName("System.IParsable`1");
+                var guidType = ctx.SemanticModel.Compilation.GetTypeByMetadataName("System.Guid");
                 var hasCreateVersion7 = guidType?.GetMembers("CreateVersion7")
                     .OfType<IMethodSymbol>()
                     .Any(m => m.IsStatic && m.Parameters.Length == 0) == true;
 
-                var guidFactory = hasCreateVersion7 ? "System.Guid.CreateVersion7()" : "System.Guid.NewGuid()";
+                return ModelExtractors.ExtractActorModel(symbol, iParsable, hasCreateVersion7);
+            })
+            .Where(static x => x != null && x.Value.IsPrimitiveId)
+            .Select(static (x, _) => x!.Value)
+            .WithTrackingName(TrackingNames.PrimitiveIdModels);
 
+        context.RegisterSourceOutput(actors, (ctx, actor) =>
+        {
+            var idTypeName = actor.IdTypeFullName!;
+            var ns = actor.Namespace;
+            var file = $"{actor.FileName}.PrimitiveId.g.cs";
+            var nsOpen = $"namespace {ns};\n\n";
+
+            var parameterlessNewId = "";
+            if (idTypeName == "System.Guid")
+            {
+                var guidFactory = actor.HasGuidCreateVersion7 ? "System.Guid.CreateVersion7()" : "System.Guid.NewGuid()";
                 parameterlessNewId = $$"""
 
 
@@ -79,31 +82,6 @@ class ActorPrimitiveIdGenerator : IIncrementalGenerator
                 }
                 """);
         });
-    }
-
-    /// <summary>
-    /// Returns the first ctor parameter's type if it is a primitive/BCL value type 
-    /// (not string, not a user-defined typed ID).
-    /// </summary>
-    internal static ITypeSymbol? GetPrimitiveIdType(INamedTypeSymbol actor)
-    {
-        var ctor = actor.Constructors
-            .Where(c => !c.IsStatic && c.Parameters.Length > 0)
-            .OrderBy(c => c.Parameters.Length)
-            .FirstOrDefault();
-
-        if (ctor is null)
-            return null;
-
-        var idType = ctor.Parameters[0].Type;
-
-        if (idType.SpecialType == SpecialType.System_String)
-            return null;
-
-        if (IsPrimitiveType(idType))
-            return idType;
-
-        return null;
     }
 
     /// <summary>

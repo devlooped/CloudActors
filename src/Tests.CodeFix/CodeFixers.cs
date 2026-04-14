@@ -1,12 +1,13 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
+using Devlooped.CloudActors;
 using Devlooped.CloudActors.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
 
-namespace Devlooped.CloudActors;
+namespace Tests;
 
 public class CodeFixers
 {

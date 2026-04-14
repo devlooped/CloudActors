@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Scriban;
 using static Devlooped.CloudActors.AnalysisExtensions;
 
@@ -15,45 +15,115 @@ class EventSourcedGenerator : IIncrementalGenerator
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var options = context.GetOrleansOptions();
-        var actors = context.CompilationProvider.SelectMany((x, _) => x.Assembly.GetAllTypes().OfType<INamedTypeSymbol>())
-            .Where(x => x.GetAttributes().Any(a => a.IsActor()) && x.AllInterfaces.Any(i => i.ToDisplayString(FullName) == "Devlooped.CloudActors.IEventSourced"))
-            .Combine(context.CompilationProvider.Select((c, _) => c.GetTypeByMetadataName("Devlooped.CloudActors.IEventSourced")))
-            .Where(x => x.Right != null && !x.Right
-                // Only if users haven't already implemented *any* members of the interface
-                .GetMembers()
-                .Select(es => x.Left.FindImplementationForInterfaceMember(es))
-                .Where(x => x != null)
-                .Any())
-            .Select((x, _) => x.Left)
-            .Combine(context.CompilationProvider.Combine(context.ParseOptionsProvider));
+        var config = context.GetOrleansConfig();
 
-        context.RegisterSourceOutput(actors.Combine(options), (ctx, source) =>
-        {
-            var ((actor, (compilation, parse)), options) = source;
-            var ns = actor.ContainingNamespace.ToDisplayString();
-            var model = new EventSourcedModel(
-                Namespace: ns,
-                Name: actor.Name,
-                []);
+        var actors = context.SyntaxProvider.CreateSyntaxProvider(
+            predicate: static (node, _) =>
+                node is ClassDeclarationSyntax cds &&
+                cds.AttributeLists.Count > 0 &&
+                cds.BaseList?.Types.Count > 0,
+            transform: static (ctx, ct) =>
+            {
+                if (ctx.SemanticModel.GetDeclaredSymbol(ctx.Node, ct) is not INamedTypeSymbol symbol)
+                    return (EventSourcedModel?)null;
 
-            var output = template.Render(model, member => member.Name);
-            compilation = compilation.AddSyntaxTrees(CSharpSyntaxTree.ParseText(output, parse as CSharpParseOptions));
-            var symbol = compilation.GetTypeByMetadataName(actor.ToDisplayString(FullName));
-            Debug.Assert(symbol != null);
+                if (!symbol.IsActor())
+                    return null;
 
-            var syntax = symbol!.DeclaringSyntaxReferences.First();
-            var events = EventLocator.FindRaisedEvents(compilation, syntax.SyntaxTree);
+                if (!symbol.AllInterfaces.Any(i => i.ToDisplayString(FullName) == "Devlooped.CloudActors.IEventSourced"))
+                    return null;
 
-            model = model with { Events = events.Select(e => e.GetTypeName(ns)) };
-            output = template.Render(model, member => member.Name);
+                // Skip if the user has already implemented any IEventSourced members
+                var esInterface = ctx.SemanticModel.Compilation.GetTypeByMetadataName("Devlooped.CloudActors.IEventSourced");
+                if (esInterface != null && esInterface.GetMembers()
+                    .Select(m => symbol.FindImplementationForInterfaceMember(m))
+                    .Any(impl => impl != null))
+                    return null;
 
-            ctx.AddSource($"{actor.ToFileName()}.g.cs", output);
+                return new EventSourcedModel(
+                    Namespace: symbol.ContainingNamespace.ToDisplayString(),
+                    Name: symbol.Name,
+                    FullName: symbol.ToDisplayString(FullName),
+                    Events: default);
+            })
+            .Where(static x => x != null)
+            .Select(static (x, _) => x!.Value)
+            .WithTrackingName(TrackingNames.EventSourcedModels);
 
-            foreach (var ev in events)
-                ctx.GenerateCode((ev, options));
-        });
+        context.RegisterSourceOutput(
+            actors.Combine(context.CompilationProvider).Combine(context.ParseOptionsProvider).Combine(config),
+            (ctx, source) =>
+            {
+                var (((model, compilation), parseOptions), config) = source;
+                var ns = model.Namespace;
+
+                // First render with empty events to get the Raise<T>() method
+                var initial = template.Render(new { model.Namespace, model.Name, Events = System.Array.Empty<string>(), Version = ThisAssembly.Info.InformationalVersion }, member => member.Name);
+                compilation = compilation.AddSyntaxTrees(CSharpSyntaxTree.ParseText(initial, parseOptions as CSharpParseOptions));
+
+                var symbol = compilation.GetTypeByMetadataName(model.FullName);
+                Debug.Assert(symbol != null);
+
+                var syntax = symbol!.DeclaringSyntaxReferences.First();
+                var events = EventLocator.FindRaisedEvents(compilation, syntax.SyntaxTree);
+
+                var eventNames = events.Select(e => e.GetTypeName(ns)).ToArray();
+                var output = template.Render(new { model.Namespace, model.Name, Events = eventNames, Version = ThisAssembly.Info.InformationalVersion }, member => member.Name);
+
+                ctx.AddSource($"{model.FullName.Replace('+', '.')}.g.cs", output);
+
+                // Generate [GenerateSerializer] for each event type
+                if (config.IsCloudActorsServer)
+                {
+                    foreach (var ev in events)
+                    {
+                        var evNs = ev.ContainingNamespace.ToDisplayString();
+                        var kind = ev.IsRecord ? "record" : "class";
+                        var evOutput =
+                            $$"""
+                            // <auto-generated/>
+                            using System.CodeDom.Compiler;
+                            using Orleans;
+
+                            namespace {{evNs}}
+                            {
+                                [GeneratedCode("Devlooped.CloudActors", "{{ThisAssembly.Info.InformationalVersion}}")]
+                                [GenerateSerializer]
+                                partial {{kind}} {{ev.Name}};
+                            }
+                            """;
+
+                        var evFileName = ev.ToDisplayString(FullName).Replace('+', '.');
+                        ctx.AddSource($"{evFileName}.Serializable.cs", evOutput);
+
+                        var orleans = OrleansGenerator.GenerateCode(compilation, parseOptions as CSharpParseOptions, config, evOutput, ev.Name, ctx.CancellationToken);
+                        ctx.AddSource($"{evFileName}.Serializable.orleans.cs", orleans);
+                    }
+                }
+                else
+                {
+                    foreach (var ev in events)
+                    {
+                        var evNs = ev.ContainingNamespace.ToDisplayString();
+                        var kind = ev.IsRecord ? "record" : "class";
+                        var evOutput =
+                            $$"""
+                            // <auto-generated/>
+                            using System.CodeDom.Compiler;
+                            using Orleans;
+
+                            namespace {{evNs}}
+                            {
+                                [GeneratedCode("Devlooped.CloudActors", "{{ThisAssembly.Info.InformationalVersion}}")]
+                                [GenerateSerializer]
+                                partial {{kind}} {{ev.Name}};
+                            }
+                            """;
+
+                        var evFileName = ev.ToDisplayString(FullName).Replace('+', '.');
+                        ctx.AddSource($"{evFileName}.Serializable.cs", evOutput);
+                    }
+                }
+            });
     }
-
-    record EventSourcedModel(string Namespace, string Name, IEnumerable<string> Events, string Version = ThisAssembly.Info.InformationalVersion);
 }
