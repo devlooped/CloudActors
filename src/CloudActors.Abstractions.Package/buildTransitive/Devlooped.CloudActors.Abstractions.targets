@@ -22,7 +22,7 @@
     <PropertyGroup>
       <_CloudActorsSkillRepoRoot>@(_CloudActorsSkillSourceRoot)</_CloudActorsSkillRepoRoot>
       <!-- Fall back to solution directory if no git root was found -->
-      <_CloudActorsSkillRepoRoot Condition="'$(_CloudActorsSkillRepoRoot)' == ''">$(SolutionDir)</_CloudActorsSkillRepoRoot>
+      <_CloudActorsSkillRepoRoot Condition="'$(_CloudActorsSkillRepoRoot)' == '' and '$(SolutionDir)' != '' and '$(SolutionDir)' != '*Undefined*'">$(SolutionDir)</_CloudActorsSkillRepoRoot>
     </PropertyGroup>
 
     <Copy SourceFiles="$(MSBuildThisFileDirectory)..\skills\cloudactors\SKILL.md"
