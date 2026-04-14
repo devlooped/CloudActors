@@ -9,8 +9,9 @@
     <NoWarn>RS1036;CS8785</NoWarn>
 
     <PackFolder>analyzers/dotnet/roslyn4.8/cs</PackFolder>
-    <!-- See https://github.com/scriban/scriban#source-embedding -->
+    <!-- See https://scriban.github.io/docs/getting-started/#source-embedding -->
     <PackageScribanIncludeSource>true</PackageScribanIncludeSource>
+    <PolySharpIncludeRuntimeSupportedAttributes>true</PolySharpIncludeRuntimeSupportedAttributes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,7 +26,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Pack="false" Version="4.8.0" />
     <PackageReference Include="PolySharp" PrivateAssets="All" Version="1.15.0" />
 
-    <PackageReference Include="Scriban" Version="6.5.2" Pack="false" IncludeAssets="build" />
+    <PackageReference Include="Scriban" Version="7.1.0" Pack="false" IncludeAssets="build" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" PrivateAssets="all" />
     <PackageReference Include="System.Collections.Immutable" Version="8.0.0" PrivateAssets="all" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.3" PrivateAssets="all" />
@@ -42,8 +43,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="Devlooped.CloudActors.Abstractions.CodeFix"/>
-    <InternalsVisibleTo Include="Tests"/>
+    <InternalsVisibleTo Include="Devlooped.CloudActors.Abstractions.CodeFix" />
+    <InternalsVisibleTo Include="Tests" />
+    <InternalsVisibleTo Include="Tests.CodeFix" />
   </ItemGroup>
   
 </Project>

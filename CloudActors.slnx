@@ -9,4 +9,6 @@
   <Project Path="src/TestApp/TestApp.csproj" Id="457888dc-4899-458c-b5ca-44f01d88be72" />
   <Project Path="src/TestDomain/TestDomain.csproj" />
   <Project Path="src/Tests/Tests.csproj" />
+  <Project Path="src/Tests.CodeAnalysis/Tests.CodeAnalysis.csproj" />
+  <Project Path="src/Tests.CodeFix/Tests.CodeFix.csproj" />
 </Solution>
