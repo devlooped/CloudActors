@@ -45,7 +45,7 @@ class ActorPrimitiveIdGenerator : IIncrementalGenerator
             var idTypeName = actor.IdTypeFullName!;
             var ns = actor.Namespace;
             var file = $"{actor.FileName}.PrimitiveId.g.cs";
-            var nsOpen = $"namespace {ns};\n\n";
+            var nsOpen = ns.Length > 0 ? $"namespace {ns};\n\n" : "";
 
             var parameterlessNewId = "";
             if (idTypeName == "System.Guid")
