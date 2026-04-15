@@ -35,7 +35,7 @@ Inject `IActorBus` anywhere in the application to interact with actors.
 
 ### Messages
 
-Messages (command or query) are plain records (or classes) implementing one of three marker interfaces:
+Messages (command or query) are plain records (or classes) implementing one of three marker interfaces (all derive from `IActorMessage`):
 
 ```csharp
 public partial record Deposit(decimal Amount) : IActorCommand;           // void command
@@ -84,7 +84,7 @@ public partial class Account(string id) // id injected by the framework
 ```
 
 Key rules:
-- Class must be annotated with `[Actor]`
+- Class must be annotated with `[Actor]` and must be `partial`
 - Constructor receives the `string id` as first parameter (injected automatically)
 - Methods handle messages by matching a single parameter of the message type
 - Method names are free — the source generator maps by parameter type
@@ -121,6 +121,14 @@ public partial class Account : IEventSourced  // not implemented — code-genera
 The source generator provides `Raise<T>(event)` and routes events to matching `Apply(TEvent)` methods.
 
 Completion in your editor will provide the relevant Apply methods to implement as soon as you type `partial ` and trigger completion.
+
+There is also an optional post-raise callback:
+
+```csharp
+partial void OnRaised<T>(T @event) where T : notnull;
+```
+
+Implement this to react generically to any raised event (e.g. for logging or tracking).
 
 ### Actor IDs
 
@@ -187,6 +195,17 @@ The `AddCloudActors()` extension:
 - Registers all generated Orleans grains (one per actor type)
 - Registers `IActorBus` in DI
 - Wires up typed ID resolution via `IActorIdFactory`
+- Wraps `IPersistentStateFactory` with `ActorStateFactory` so actors receive their typed ID in the constructor
+
+## Reading Actors from Storage
+
+For testing or server-side code that needs to inspect actor state directly (bypassing the bus), use `GrainStorageExtensions`:
+
+```csharp
+var actor = await grainStorage.ReadActorAsync<Account>("account/42");
+```
+
+This reads state from `IGrainStorage`, instantiates the actor, and restores its state.
 
 ## Code Generation
 
