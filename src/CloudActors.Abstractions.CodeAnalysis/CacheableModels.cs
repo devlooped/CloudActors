@@ -143,10 +143,6 @@ record struct EventSourcedModel(
 record struct OrleansConfig(
     bool IsCloudActorsServer,
     bool ProduceReferenceAssembly,
-    string? ImmutableAttributes,
-    string? AliasAttributes,
-    string? IdAttributes,
-    string? GenerateSerializerAttributes,
     string? GenerateFieldIds,
     bool GenerateCompatibilityInvokers) : IEquatable<OrleansConfig>;
 
@@ -376,10 +372,6 @@ static class ModelExtractors
         var produceRef = options.TryGetValue("build_property.ProduceReferenceAssembly", out var pv) &&
             bool.TryParse(pv, out var pr) && pr;
 
-        options.TryGetValue("build_property.orleans_immutableattributes", out var immutable);
-        options.TryGetValue("build_property.orleans_aliasattributes", out var alias);
-        options.TryGetValue("build_property.orleans_idattributes", out var id);
-        options.TryGetValue("build_property.orleans_generateserializerattributes", out var genSerializer);
         options.TryGetValue("build_property.orleans_generatefieldids", out var genFieldIds);
 
         var genCompatInvokers = false;
@@ -387,7 +379,7 @@ static class ModelExtractors
             bool.TryParse(gci, out var gciBool))
             genCompatInvokers = gciBool;
 
-        return new OrleansConfig(isServer, produceRef, immutable, alias, id, genSerializer, genFieldIds, genCompatInvokers);
+        return new OrleansConfig(isServer, produceRef, genFieldIds, genCompatInvokers);
     }
 
     /// <summary>

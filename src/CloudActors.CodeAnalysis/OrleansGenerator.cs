@@ -91,26 +91,6 @@ class OrleansGenerator
     static CodeGeneratorOptions CreateGeneratorOptions(OrleansConfig config)
     {
         var options = new CodeGeneratorOptions();
-        if (config.ImmutableAttributes is { Length: > 0 } immutableAttributes)
-        {
-            options.ImmutableAttributes.AddRange([.. immutableAttributes.Split([';'], StringSplitOptions.RemoveEmptyEntries)]);
-        }
-
-        if (config.AliasAttributes is { Length: > 0 } aliasAttributes)
-        {
-            options.AliasAttributes.AddRange([.. aliasAttributes.Split([';'], StringSplitOptions.RemoveEmptyEntries)]);
-        }
-
-        if (config.IdAttributes is { Length: > 0 } idAttributes)
-        {
-            options.IdAttributes.AddRange([.. idAttributes.Split([';'], StringSplitOptions.RemoveEmptyEntries)]);
-        }
-
-        if (config.GenerateSerializerAttributes is { Length: > 0 } generateSerializerAttributes)
-        {
-            options.GenerateSerializerAttributes.AddRange([.. generateSerializerAttributes.Split([';'], StringSplitOptions.RemoveEmptyEntries)]);
-        }
-
         if (config.GenerateFieldIds is { Length: > 0 } generateFieldIds)
         {
             if (Enum.TryParse(generateFieldIds, out GenerateFieldIds fieldIdOption))
