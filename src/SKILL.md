@@ -50,11 +50,11 @@ public partial record GetBalance() : IActorQuery<decimal>;                // rea
 
 ### Actors
 
-Actors are plain C# classes annotated with `[Actor]`. No base class or interface required:
+Actors are plain C# (partial) classes annotated with `[Actor]`. No base class or interface required:
 
 ```csharp
 [Actor]
-public class Account
+public partial class Account
 {
     public Account(string id) => Id = id;   // id injected by the framework
 
