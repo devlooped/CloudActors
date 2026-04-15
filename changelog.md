@@ -1,5 +1,30 @@
 # Changelog
 
+## [v1.0.0-alpha](https://github.com/devlooped/CloudActors/tree/v1.0.0-alpha) (2026-04-15)
+
+[Full Changelog](https://github.com/devlooped/CloudActors/compare/v0.5.0-rc.2...v1.0.0-alpha)
+
+:sparkles: Implemented enhancements:
+
+- Implement package-level skill consumable by agents [\#194](https://github.com/devlooped/CloudActors/pull/194) (@kzu)
+- Make source generators properly incremental [\#193](https://github.com/devlooped/CloudActors/pull/193) (@kzu)
+- Add comprehensive support for structured ids [\#191](https://github.com/devlooped/CloudActors/pull/191) (@kzu)
+
+:bug: Fixed bugs:
+
+- Fix  global namespace cases [\#205](https://github.com/devlooped/CloudActors/pull/205) (@kzu)
+
+:hammer: Other:
+
+- Add comprehensive AGENTS.md implementation reference [\#203](https://github.com/devlooped/CloudActors/issues/203)
+
+:twisted_rightwards_arrows: Merged:
+
+- Clarify automatic state persistence behavior [\#208](https://github.com/devlooped/CloudActors/pull/208) (@kzu)
+- Update readme for Streamstone support [\#206](https://github.com/devlooped/CloudActors/pull/206) (@kzu)
+- Add comprehensive AGENTS.md implementation reference [\#204](https://github.com/devlooped/CloudActors/pull/204) (@Copilot)
+- Fall back to SolutionDir when git root is unavailable for skill copy [\#195](https://github.com/devlooped/CloudActors/pull/195) (@Copilot)
+
 ## [v0.5.0-rc.2](https://github.com/devlooped/CloudActors/tree/v0.5.0-rc.2) (2025-11-12)
 
 [Full Changelog](https://github.com/devlooped/CloudActors/compare/v0.5.0-rc.1...v0.5.0-rc.2)
