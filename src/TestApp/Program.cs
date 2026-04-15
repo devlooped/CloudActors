@@ -12,9 +12,8 @@ builder.UseOrleans(silo =>
         silo.UseAzureStorageClustering(options =>
         {
             options.TableServiceClient = new Azure.Data.Tables.TableServiceClient(
-                builder.Configuration["App:Storage"] ??
-                builder.Configuration["AzureWebJobsStorage"] ??
-                throw new InvalidOperationException("Missing either App:Storage or AzureWebJobsStorage connection strings."));
+                builder.Configuration["AzureStorage"] ??
+                builder.Configuration["AzureWebJobsStorage"]);
         });
     }
     else
@@ -25,7 +24,12 @@ builder.UseOrleans(silo =>
     silo.AddStreamstoneActorStorageAsDefault(opt => opt.AutoSnapshot = true);
 });
 
-builder.Services.AddSingleton(CloudStorageAccount.DevelopmentStorageAccount);
+builder.Services.AddSingleton(
+    builder.Environment.IsDevelopment() ?
+    CloudStorageAccount.DevelopmentStorageAccount :
+    CloudStorageAccount.Parse(builder.Configuration.GetConnectionString("AzureStorage") ??
+    throw new ArgumentException("Missing required AzureStorage connection string.")));
+
 builder.Services.AddCloudActors();
 
 var app = builder.Build();
