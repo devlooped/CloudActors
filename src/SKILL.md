@@ -54,11 +54,9 @@ Actors are plain C# (partial) classes annotated with `[Actor]`. No base class or
 
 ```csharp
 [Actor]
-public partial class Account
+public partial class Account(string id) // id injected by the framework
 {
-    public Account(string id) => Id = id;   // id injected by the framework
-
-    public string Id { get; }
+    public string Id { get; } = id;
     public decimal Balance { get; private set; }
     public bool IsClosed { get; private set; }
 
@@ -207,7 +205,7 @@ Consumers of the actors (e.g. API controllers) should also reference the class l
 
 ## Conventions
 
-- Actor classes must be `partial`
+- Actor classes must be `partial` and typically use primary constructor for the id.
 - Actor message types should be `partial record` (allows source generators to extend them)
 - Actor IDs are strings at the Orleans level; typed IDs are helpers on top
 - Use `IActorCommand` for state-changing operations, `IActorQuery` for reads
