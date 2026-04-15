@@ -177,8 +177,10 @@ Add CloudActors to an Orleans silo:
 builder.Host.UseOrleans(silo =>
 {
     silo.UseLocalhostClustering();
-    silo.AddCloudActors();   // registers generated grains, actor bus, and activation features
 });
+
+// 👇 registers generated grains, actor bus and activation features
+builder.Services.AddCloudActors(); 
 ```
 
 The `AddCloudActors()` extension:
