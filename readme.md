@@ -117,7 +117,7 @@ public partial class Account(string id)    // 👈 no need for parameterless con
     public Task DepositAsync(Deposit command)   // 👈 but can also use any name you like
     {
         // validate command
-        Balance +-= command.Amount;
+        Balance += command.Amount;
         return Task.CompletedTask;
     }
 
@@ -177,56 +177,30 @@ hold all state properties (and fields), and implement (explicitly) an `IActor<TS
 interface to allow getting/setting the instance state.
 
 This provides seamless integration with Orleans' recommended `IPersistentState<T>` 
-injection mechanism, as shown in the generated grain above.
+injection mechanism used by the generated grain.
 
-The generated state class for the above `Account` actor looks like this:
+The generator produces a nested `ActorState` record for the above `Account` actor, 
+capturing its mutable state as an Orleans-serializable snapshot:
+
 ```csharp
-partial class Account : IActor<Account.ActorState>
+[GeneratedCode("Devlooped.CloudActors")]
+[GenerateSerializer]
+public partial class ActorState : IActorState<Account>
 {
-    ActorState? state;
-
-    ActorState IActor<ActorState>.GetState()
-    {
-        state ??= new ActorState();
-        state.Balance = Balance;
-        state.IsClosed = IsClosed;
-        state.Reason = Reason;
-        return state;
-    }
-
-    ActorState IActor<ActorState>.SetState(ActorState state)
-    {
-        this.state = state;
-        Balance = state.Balance;
-        IsClosed = state.IsClosed;
-        Reason = state.Reason;
-        return state;
-    }
-
-    [GeneratedCode("Devlooped.CloudActors")]
-    [GenerateSerializer]
-    public partial class ActorState : IActorState<Account>
-    {
-        [Id(0)]
-        public decimal Balance;
-        [Id(1)]
-        public bool IsClosed;
-        [Id(2)]
-        public CloseReason Reason;
-    }
+    [Id(0)] public decimal Balance;
+    [Id(1)] public bool IsClosed;
+    [Id(2)] public CloseReason Reason;
 }
 ```
 
 This is a sort of typed [Memento pattern](https://grokipedia.com/page/Memento_pattern) which allows 
 the Orleans state persistence mechanisms to read and write the actor state without requiring 
-any additional code from the developer. 
+any additional code from the developer.
 
 > [!NOTE]
-> This code is automatically guaranteed to be in sync with the actor's properties and fields, 
-> since it's generated at compile time. 
-
-The explicit implementation of `IActor<TState>` also ensures that the actor's public API is not 
-polluted with these methods.
+> The generated `ActorState` is always in sync with the actor's mutable members because it is 
+> regenerated at compile time. State is read from storage on activation and written after each 
+> successful command — with an automatic rollback (re-read) if the write fails.
 
 ## Event Sourcing
 
@@ -246,13 +220,13 @@ The sample [Streamstone](https://github.com/yevhen/Streamstone)-based grain stor
 invoke `LoadEvents` with the events from the stream (if found), and `AcceptEvents` will be 
 invoked after the grain is saved, so it can clear the events list.
 
-Optimistic concurrency is implemented by exposing the stream version as the `IGranState.ETag` 
+Optimistic concurrency is implemented by exposing the stream version as the `IGrainState.ETag` 
 and parsing it when persisting to ensure consistency.
 
 Users are free to implement this interface in any way they deem fit, but the library provides 
 a default implementation if the interface is inherited but not implemented. The generated 
 implementation provides a `Raise<T>(@event)` method for the actor's methods to raise events, 
-and invokes provided `Apply(@event)` methods to apply the events to the state. The generator 
+and invokes provided `Apply(@event)` methods to apply the events to mutate state. The generator 
 assumes this convention, using the single parameter to every `Apply` method on the actor as 
 the switch to route events (either when raised or loaded from storage).
 
@@ -300,7 +274,7 @@ public partial class Account : IEventSourced  // 👈 interface is *not* impleme
 
     public decimal Query(GetBalance _) => Balance;
 
-    // 👇 generated generic Apply dispatches to each based on event type
+    // 👇 generated generic Apply(object) dispatches to each based on event type with no reflection
 
     partial void Apply(Deposited @event) => Balance += @event.Amount;
 
@@ -319,78 +293,104 @@ public partial class Account : IEventSourced  // 👈 interface is *not* impleme
 > By generating the partial `Apply` methods, the generator allows users to implement only the 
 > event types they care about, without needing to provide an empty implementation for the rest.
 
-Note how the interface has no implementation in the actor itself. The implementation 
-provided by the generator looks like the following:
+When `IEventSourced` is inherited without being implemented, the generator provides the full
+wiring: `Raise<T>(event)` / `Raise<T>()` methods that apply the event and record it in the 
+pending events list, a type-switched `Apply(object)` dispatcher, and `partial void` declarations
+for each event type raised. There is also an optional hook for post-raise callbacks:
 
 ```csharp
-partial class Account
-{
-    List<object>? events;
-
-    IReadOnlyList<object> IEventSourced.Events => events ??= new List<object>();
-
-    void IEventSourced.AcceptEvents() => events?.Clear();
-
-    void IEventSourced.LoadEvents(IEnumerable<object> history)
-    {
-        foreach (var @event in history)
-        {
-            Apply(@event);
-        }
-    }
-
-    /// <summary>
-    /// Applies an event. Invoked automatically when raising or loading events. 
-    /// Do not invoke directly.
-    /// </summary>
-    void Apply(object @event)
-    {
-        switch (@event)
-        {
-            case Tests.Deposited e:
-                Apply(e);
-                break;
-            case Tests.Withdrawn e:
-                Apply(e);
-                break;
-            case Tests.Closed e:
-                Apply(e);
-                break;
-            default:
-                throw new NotSupportedException();
-        }
-    }
-
-    partial void Apply(Deposited e);
-    partial void Apply(Withdrawn e);
-    partial void Apply(Closed e);
-
-    /// <summary>
-    /// Raises and applies a new event of the specified type.
-    /// See <see cref="Raise{T}(T)"/>.
-    /// </summary>
-    void Raise<T>() where T : notnull, new() => Raise(new T());
-
-    /// <summary>
-    /// Raises and applies an event.
-    /// </summary>
-    void Raise<T>(T @event) where T : notnull
-    {
-        Apply(@event);
-        (events ??= new List<object>()).Add(@event);
-    }
-}
+// Invoked after every Raise<T>(event) call — implement to react to raised events.
+partial void OnRaised<T>(T @event) where T : notnull;
 ```
 
 > [!NOTE]
 > Note how there's no dynamic dispatch here 💯.
 
-An important colorary of this project is that the design of a library and particularly 
+An important corollary of this project is that the design of a library and particularly 
 its implementation details, will vary greatly if it can assume source generators will 
 play a role in its consumption. In this particular case, many design decisions 
 were different initially before I had the generators in place, and the result afterwards 
 was a simplification in many aspects, with less base types in the main library/interfaces 
-project, and more incremental behavior addded as users opt-in to certain features.
+project, and more incremental behavior added as users opt-in to certain features.
+
+## Typed Actor IDs
+
+Instead of identifying actors with plain strings, you can use strongly-typed IDs.
+
+### Primitive IDs
+
+When the first constructor parameter is a primitive BCL value type (e.g. `long`, `Guid`), 
+the generator produces a nested `{Actor}Id` wrapper struct and a `NewId` factory method:
+
+```csharp
+[Actor]
+public partial class Order(long id)
+{
+    public long Id => id;
+    // ...
+}
+
+// Generated:
+//   public readonly record struct OrderId(long Id);
+//   public static OrderId NewId(long id) => new(id);
+```
+
+For `Guid` IDs a parameterless `NewId()` is also generated, using `Guid.CreateVersion7()` 
+on .NET 9+ or `Guid.NewGuid()` on earlier runtimes.
+
+### Structured IDs
+
+Any strongly-typed ID library that generates `IParsable<TSelf>` and `IFormattable` on the ID 
+type works out of the box. The most popular choices include:
+
+- [StructId](https://www.nuget.org/packages/StructId) — single-line `IStructId<T>` declaration, source-generated
+- [StronglyTypedId](https://www.nuget.org/packages/StronglyTypedId) — attribute-driven, supports multiple backing types
+- [Vogen](https://www.nuget.org/packages/Vogen) — value-object generator with validation support
+
+CloudActors detects these types automatically: if the actor's first constructor parameter 
+implements `IParsable<T>`, it is treated as the typed ID and the generator produces typed 
+`IActorBus` overloads for it — no extra configuration required.
+
+Here is an example using [StructId](https://www.nuget.org/packages/StructId):
+
+```csharp
+// Just declare the struct — StructId generates all the boilerplate
+public readonly partial record struct ProductId : IStructId<Guid>;
+
+[Actor]
+public partial class Product(ProductId id)
+{
+    public ProductId Id => id;
+
+    public decimal Price { get; private set; }
+
+    public void Execute(SetPrice command) => Price = command.Price;
+
+    public decimal Query(GetPrice _) => Price;
+}
+```
+
+```csharp
+var id = new ProductId(Guid.CreateVersion7()); // or ProductId.New()
+
+await bus.ExecuteAsync(id, new SetPrice(9.99m));
+var price = await bus.QueryAsync(id, new GetPrice());
+```
+
+### Typed Bus Overloads
+
+For any actor with a typed ID (primitive or structured), the generator produces typed 
+`IActorBus` extension overloads so you never have to format the ID string manually:
+
+```csharp
+// Instead of:
+await bus.ExecuteAsync("order/42", new PlaceOrder(...));
+
+// You can use the typed overload:
+await bus.ExecuteAsync(new OrderId(42), new PlaceOrder(...));
+```
+
+The ID is always stored and routed as `"{actortype}/{id}"` (e.g. `"order/42"`, `"product/..."`).
 
 ## Telemetry and Monitoring
 
@@ -432,141 +432,34 @@ The library uses source generators to generate the grain classes. It's easy to i
 generated code by setting the `EmitCompilerGeneratedFiles` property to `true` in the project 
 and inspecting the `obj` folder.
 
-For the above actor, the generated grain looks like this:
+For each `[Actor]` class the generator produces a partial `{Name}Grain : Grain` class that:
 
-```csharp
-public partial class AccountGrain : Grain, IActorGrain
-{
-    // 👇 uses recommended injected state approach
-    readonly IActorPersistentState<Account.ActorState, Account> storage;
+- Injects `IPersistentState<ActorState>` and reads it on activation
+- Routes incoming `IActorCommand` / `IActorCommand<TResult>` / `IActorQuery<TResult>` to the 
+  exact method you defined on your actor — preserving your method name and sync/async signature
+- After every command writes the new state to storage; on failure, rolls back by re-reading
+- Marks `QueryAsync` with `[ReadOnly]` so Orleans handles it as a concurrent read
 
-    // 👇 use [Actor("stateName", "storageProvider")] on actor to customize this
-    public AccountGrain([PersistentState(nameof(Account))] IPersistentState<Account.ActorState> storage)
-        => this.storage = storage as IActorPersistentState<Account.ActorState, Account> ?? 
-            throw new ArgumentException("Unsupported persistent state");
-
-    [ReadOnly]
-    public Task<TResult> QueryAsync<TResult>(IActorQuery<TResult> command)
-    {
-        switch (command)
-        {
-            case Tests.GetBalance query:
-                return Task.FromResult((TResult)(object)storage.Actor.Query(query));
-            default:
-                throw new NotSupportedException();
-        }
-    }
-
-    public async Task<TResult> ExecuteAsync<TResult>(IActorCommand<TResult> command)
-    {
-        switch (command)
-        {
-            case Tests.Close cmd:
-                var result = await storage.Actor.CloseAsync(cmd);
-                try
-                {
-                    await storage.WriteStateAsync();
-                }
-                catch 
-                {
-                    await storage.ReadStateAsync(); // 👈 rollback state on failure
-                    throw;
-                }
-                return (TResult)(object)result;
-            default:
-                throw new NotSupportedException();
-        }
-    }
-
-    public async Task ExecuteAsync(IActorCommand command)
-    {
-        switch (command)
-        {
-            case Tests.Deposit cmd:
-                await storage.Actor.DepositAsync(cmd);
-                try
-                {
-                    await storage.WriteStateAsync();
-                }
-                catch 
-                {
-                    await storage.ReadStateAsync();
-                    throw;
-                }
-                break;
-            case Tests.Withdraw cmd:
-                storage.Actor.Execute(cmd);
-                try
-                {
-                    await storage.WriteStateAsync();
-                }
-                catch 
-                {
-                    await storage.ReadStateAsync();
-                    throw;
-                }
-                break;
-            case Tests.Close cmd:
-                await storage.Actor.CloseAsync(cmd);
-                try
-                {
-                    await storage.WriteStateAsync();
-                }
-                catch 
-                {
-                    await storage.ReadStateAsync();
-                    throw;
-                }
-                break;
-            default:
-                throw new NotSupportedException();
-        }
-    }
-}
-```
-
-Note how the grain is a partial class, so you can add your own methods to it. The generated
-code also uses whichever method names (and overloads) you used in your actor class to handle 
-the incoming messages, so it doesn't impose any particular naming convention.
+Because the grain is `partial`, you can extend it with your own members in a separate file 
+if needed.
 
 > [!NOTE]
-> Note how there's no dynamic dispatch here either 💯.
+> Note how there's no dynamic dispatch 💯. Message routing is a compile-time `switch` on the 
+> concrete message type, generated by the source generator directly from your actor's methods.
 
-Since the grain metadata/registry is generated by a source generator, and source generators 
-[can't depend on other generated code](https://github.com/dotnet/roslyn/issues/57239) the 
-type metadata won't be available automatically, even if we generate types inheriting from 
-`Grain` which is typically enough. For that reason, a separate generator emits the 
-`AddCloudActors` extension method, which properly registers these types with Orleans. The 
-generated extension method looks like the following (usage shown already above when 
-configuring Orleans):
+Since source generators [can't depend on other generated code](https://github.com/dotnet/roslyn/issues/57239),
+grain types are registered with Orleans through assembly-level attributes (`ApplicationPartAttribute` 
+and `GenerateCodeForDeclaringAssembly`) emitted by the generator into the silo/host project — 
+no manual grain type registration is needed.
 
-```csharp
-namespace Orleans.Runtime
-{
-    public static class CloudActorsExtensions
-    {
-        public static ISiloBuilder AddCloudActors(this ISiloBuilder builder)
-        {
-            builder.Configure<GrainTypeOptions>(options => 
-            {
-                // 👇 registers each generated grain type
-                options.Classes.Add(typeof(Tests.AccountGrain));
-            });
+The `services.AddCloudActors()` call (generated as an extension on `IServiceCollection`) registers:
 
-            builder.ConfigureServices(services =>
-            {
-                // 👇 registers IActorBus and actor activation features
-                services.AddCloudActors();
-            });
-
-            return builder;
-        }
-    }
-}
-```
+- `IActorBus` → `OrleansActorBus`  
+- `IActorIdFactory` → a compile-time factory that parses typed actor IDs without reflection  
+- Replaces `IPersistentStateFactory` with a wrapper that passes the typed ID to the actor constructor  
 
 Finally, in order to improve discoverability for consumers of the `IActorBus` interface,
-extension method overloads will be generated that surface the available actor messages 
+extension method overloads are generated that surface the available actor messages 
 as non-generic overloads, such as:
 
 ![execute overloads](https://raw.githubusercontent.com/devlooped/CloudActors/main/assets/img/command-overloads.png?raw=true)
