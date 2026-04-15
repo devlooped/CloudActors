@@ -100,11 +100,9 @@ The actor, for its part, only needs the `[Actor]` attribute to be recognized as 
 
 ```csharp
 [Actor]
-public class Account    // 👈 no need to inherit or implement anything by default
+public partial class Account(string id)    // 👈 no need for parameterless constructor or inheriting anything by default
 {
-    public Account(string id) => Id = id;       // 👈 no need for parameterless constructor
-
-    public string Id { get; }
+    public string Id { get; } = id;
     public decimal Balance { get; private set; }
     public bool IsClosed { get; private set; }
     public CloseReason Reason { get; private set; }
@@ -147,9 +145,12 @@ public class Account    // 👈 no need to inherit or implement anything by defa
 }
 ```
 
-> NOTE: properties with private setters do not need any additional attributes in order 
-> to be properly deserialized when reading the latest state from storage. A source generator 
-> encapsulates all state for use in (de)serialization operations.
+> NOTE: no attributes are needed anywhere for state persistence — only the `[Actor]` attribute 
+> on the class itself is required. The source generator automatically includes in persisted state:
+> all properties that have a setter (regardless of accessibility — `public`, `private`, etc.), and 
+> all non-`const`, non-`static`, non-`readonly` instance fields. Get-only properties and `readonly` 
+> fields are excluded, as they are expected to be initialized via the constructor or derived from 
+> other state.
 
 On the hosting side, an `AddCloudActors` extension method is provided to register the 
 automatically generated grains to route invocations to the actors:
@@ -160,9 +161,10 @@ var builder = WebApplication.CreateSlimBuilder(args);
 builder.Host.UseOrleans(silo =>
 {
     silo.UseLocalhostClustering();
-    // 👇 registers generated grains, actor bus and activation features
-    silo.AddCloudActors(); 
 });
+
+// 👇 registers generated grains, actor bus and activation features
+builder.Services.AddCloudActors(); 
 ```
 
 ## State Deserialization
