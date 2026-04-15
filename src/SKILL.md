@@ -152,7 +152,7 @@ Instead of raw `string` IDs (or other primitive types), actors can use typed IDs
 
 ```csharp
 [Actor]
-public class Product(ProductId id) // typed ID injected
+public partial class Product(ProductId id) // typed ID injected
 {
     public ProductId Id { get; } = id;
     // ...
@@ -199,14 +199,16 @@ The library uses Roslyn source generators. When building a project that referenc
 
 ## Requirements
 
-The actors should be defined in a class library that references `Devlooped.CloudActors.Abstractions`. The hosting project (e.g. the Orleans silo) should reference that class library and call `AddCloudActors()` in the Orleans configuration, and reference the `Devlooped.CloudActors` package. 
+The actors should be defined in a class library that references `Devlooped.CloudActors.Abstractions`. 
+The hosting project (e.g. the Orleans silo) should reference that class library and call `AddCloudActors()` in the Orleans configuration, 
+and reference the `Devlooped.CloudActors` package. 
 
 Consumers of the actors (e.g. API controllers) should also reference the class library to get access to the message types and `IActorBus`.
 
 ## Conventions
 
+- Actor classes must be `partial`
 - Actor message types should be `partial record` (allows source generators to extend them)
-- Actor classes should be `partial` when using event sourcing
 - Actor IDs are strings at the Orleans level; typed IDs are helpers on top
 - Use `IActorCommand` for state-changing operations, `IActorQuery` for reads
 - The `[Actor]` attribute accepts optional `stateName` and `storageProvider` parameters
