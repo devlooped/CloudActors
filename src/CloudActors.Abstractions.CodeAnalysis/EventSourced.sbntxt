@@ -8,7 +8,9 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Devlooped.CloudActors;
 
+{{~ if Namespace ~}}
 namespace {{ Namespace }};
+{{~ end ~}}
 
 [GeneratedCode("Devlooped.CloudActors", "{{ Version }}")]
 [CompilerGenerated]

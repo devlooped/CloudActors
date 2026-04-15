@@ -4,8 +4,6 @@
 #:property PublishAot=false
 #:property IsPackable=false
 
-using System;
-using System.IO;
 using Mono.Cecil;
 
 if (args.Length < 2)
@@ -29,7 +27,7 @@ if (typeToRemove != null)
 }
 else
 {
-    Console.WriteLine($"Type '{typeName}' not found.");
+    Console.WriteLine($"Type '{typeName}' not found in '{assemblyPath}'.");
 }
 
 return 0;

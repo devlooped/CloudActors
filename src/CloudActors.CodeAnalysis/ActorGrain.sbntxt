@@ -12,7 +12,9 @@ using Orleans.Concurrency;
 using Orleans.Runtime;
 using Devlooped.CloudActors;
 
+{{~ if Namespace ~}}
 namespace {{ Namespace }};
+{{~ end ~}}
 
 [GeneratedCode("Devlooped.CloudActors", "{{ Version }}")]
 [CompilerGenerated]

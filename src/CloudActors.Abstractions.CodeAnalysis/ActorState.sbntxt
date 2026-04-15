@@ -8,7 +8,9 @@ using System.CodeDom.Compiler;
 using Orleans;
 using Devlooped.CloudActors;
 
+{{~ if Namespace ~}}
 namespace {{ Namespace }};
+{{~ end ~}}
 
 partial class {{ Name }} : IActor<{{ Name }}.ActorState>
 {

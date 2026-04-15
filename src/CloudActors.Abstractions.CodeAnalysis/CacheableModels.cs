@@ -185,7 +185,7 @@ static class ModelExtractors
         if (attribute.ConstructorArguments.Length == 2 && !attribute.ConstructorArguments[1].IsNull)
             storage = attribute.ConstructorArguments[1].Value?.ToString();
 
-        var ns = actor.ContainingNamespace.ToDisplayString();
+        var ns = actor.ContainingNamespace.IsGlobalNamespace ? "" : actor.ContainingNamespace.ToDisplayString();
         var isEventSourced = actor.AllInterfaces.Any(x => x.ToDisplayString(FullName) == "Devlooped.CloudActors.IEventSourced");
 
         // Extract members for state
@@ -332,7 +332,7 @@ static class ModelExtractors
             returnType = queryIface.TypeArguments[0].ToDisplayString(FullName);
         }
 
-        var ns = type.ContainingNamespace.ToDisplayString();
+        var ns = type.ContainingNamespace.IsGlobalNamespace ? "" : type.ContainingNamespace.ToDisplayString();
 
         // Collect additional types from public members that need serialization
         var additionalTypes = type.GetMembers().OfType<IPropertySymbol>()
@@ -349,7 +349,7 @@ static class ModelExtractors
                 .Where(t => !t.IsActorMessage() && t.IsPartial()))
             .Select(t => new SerializableTypeModel(
                 t.Name,
-                t.ContainingNamespace.ToDisplayString(),
+                t.ContainingNamespace.IsGlobalNamespace ? "" : t.ContainingNamespace.ToDisplayString(),
                 t.ToDisplayString(FullName),
                 t.IsRecord))
             .Distinct()
