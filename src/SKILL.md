@@ -166,7 +166,10 @@ await bus.ExecuteAsync(new ProductId("p1"), new UpdatePrice(9.99m));
 await bus.QueryAsync<decimal>(new ProductId("p1"), new GetPrice());
 ```
 
-Typed IDs must be `IParsable<T>/IFormattable` for the framework to convert to/from string.
+Typed IDs must be `IParsable<T>/IFormattable` for the framework to convert to/from string. Virtually 
+all structured id packages will automatically generate implementations of these interfaces automatically.
+
+If StructId package is used, load and use its `structid` skill.
 
 ## Setup and Hosting (Orleans)
 
