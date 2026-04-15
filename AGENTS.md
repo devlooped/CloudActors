@@ -51,14 +51,15 @@ public interface IActorBus
 - **QueryAsync** — read-only operation (maps to `[ReadOnly]` Orleans grain method)
 - `id` is a string like `"account/42"`; typed-ID overloads are generated per actor
 
-Each public method has a hidden `[OverloadResolutionPriority(1)]` overload with `[CallerMemberName]`, `[CallerFilePath]`, and `[CallerLineNumber]` parameters used for automatic OpenTelemetry telemetry capture (see `Telemetry.cs`).
+The three public methods are **default interface methods** that delegate to hidden `[OverloadResolutionPriority(1)]` overloads with `[CallerMemberName]`, `[CallerFilePath]`, and `[CallerLineNumber]` parameters used for automatic OpenTelemetry telemetry capture (see `Telemetry.cs`).
 
 ### Message interfaces
 
 ```csharp
-IActorCommand            // void command (state-changing, no return value)
-IActorCommand<TResult>   // state-changing command with return value
-IActorQuery<TResult>     // read-only query
+IActorMessage            // base marker interface for all messages
+IActorCommand            // void command (state-changing, no return value) — extends IActorMessage
+IActorCommand<TResult>   // state-changing command with return value — extends IActorCommand
+IActorQuery<TResult>     // read-only query — extends IActorMessage
 ```
 
 Actor messages should be `partial record` types (required for source generators to add `[GenerateSerializer]`).
@@ -104,9 +105,39 @@ Usage inside an Orleans silo configuration:
 builder.Host.UseOrleans(silo =>
 {
     silo.UseLocalhostClustering();
-    silo.AddCloudActors();
 });
+
+// registers IActorBus, IActorIdFactory, and wraps IPersistentStateFactory
+builder.Services.AddCloudActors();
 ```
+
+### IActorGrain
+
+Internal interface implemented by all generated grain classes (`IGrainWithStringKey`):
+
+```csharp
+Task ExecuteAsync(IActorCommand command);
+Task<TResult> ExecuteAsync<TResult>(IActorCommand<TResult> command);
+Task<TResult> QueryAsync<TResult>(IActorQuery<TResult> query);
+```
+
+`OrleansActorBus` resolves grains via `IGrainFactory.GetGrain<IActorGrain>(GrainId.Parse(id))`.
+
+### GrainStorageExtensions
+
+Public extension methods on `IGrainStorage` for reading actor instances directly from storage (bypassing the bus):
+
+```csharp
+// Infers TState from IActor<TState> via reflection
+Task<TActor> ReadActorAsync<TActor>(this IGrainStorage storage, string id, IActorIdFactory? idFactory = null);
+
+// Explicit state type for direct invocation
+Task<TActor> ReadActorAsync<TActor, TState>(this IGrainStorage storage, string id, IActorIdFactory? idFactory = null)
+    where TActor : IActor<TState>
+    where TState : IActorState<TActor>, new();
+```
+
+Reads state from `IGrainStorage`, instantiates the actor with its typed ID (via `IActorIdFactory`), and restores state via `SetState()`. Useful for testing or server-side code that needs to inspect actor state without going through the bus.
 
 ### Telemetry
 
@@ -124,7 +155,7 @@ Emits OpenTelemetry spans (using `ActivitySource`) and metrics (using `Meter`) f
 
 | Package | Generators | Runs in |
 |---------|-----------|---------|
-| `CloudActors.Abstractions.CodeAnalysis` | `ActorStateGenerator`, `ActorMessageGenerator`, `ActorIdBusOverloadGenerator`, `ActorBusOverloadGenerator`, `ActorPrimitiveIdGenerator`, `EventSourcedGenerator`, `SerializableGenerator`, `CloudActorsAttributeGenerator` | Actor domain class library |
+| `CloudActors.Abstractions.CodeAnalysis` | `ActorStateGenerator`, `ActorMessageGenerator`, `ActorIdBusOverloadGenerator`, `ActorBusOverloadGenerator`, `ActorPrimitiveIdGenerator`, `EventSourcedGenerator`, `CloudActorsAttributeGenerator` | Actor domain class library |
 | `CloudActors.CodeAnalysis` | `ActorGrainGenerator`, `ActorIdFactoryGenerator`, `ActorsAssemblyGenerator` | Orleans silo / host project |
 
 ### Incremental pipeline conventions
@@ -193,10 +224,11 @@ For `[Actor]` classes that list `IEventSourced` in their base type list **withou
 
 Template: `EventSourced.sbntxt`
 
-### ActorMessageGenerator / SerializableGenerator
+### ActorMessageGenerator
 
 - Validates messages are `partial` (for `[GenerateSerializer]` generation)
 - Emits `[GenerateSerializer]` on message types and any referenced partial types
+- Uses the `SerializableGenerator` helper (static class, not a generator itself) to produce the `[GenerateSerializer]` output and Orleans `.orleans.cs` file when running in server mode
 
 ### OrleansGenerator
 
@@ -235,13 +267,17 @@ An optional event-store-aware `IGrainStorage` implementation backed by [Streamst
 - For regular actors: state is stored as a single JSON entity
 - **Auto-snapshot**: when `StreamstoneOptions.AutoSnapshot = true`, each write also atomically upserts a `"State"` row with the serialized current state. On load, if the snapshot is version-compatible with the assembly, it is used directly (no event replay needed)
 - **Version compatibility**: controlled by `SnapshotVersionCompatibility` (Major or Minor)
-- Register with `AddStreamstoneActorStorage(connectionString)` on `ISiloBuilder`
+- Register via extension methods on `ISiloBuilder`:
+  - `AddStreamstoneActorStorageAsDefault()` — registers as the default grain storage provider
+  - `AddStreamstoneActorStorageAsDefault(Action<StreamstoneOptions> configure)` — with configuration
+  - `AddStreamstoneActorStorage(string name)` — registers a named provider
+  - `AddStreamstoneActorStorage(string name, Action<StreamstoneOptions> configure)` — named with configuration
 
 ---
 
 ## Key Conventions
 
-- Actor classes should be `partial` when using event sourcing (required by the generator)
+- Actor classes must always be `partial` (required by the state generator; DCA001 enforces this)
 - Actor message types must be `partial record` (or `partial class`)
 - Do not add `[GenerateSerializer]` manually — generated automatically
 - Do not set `<ProduceReferenceAssembly>true</ProduceReferenceAssembly>` in actor projects

@@ -40,7 +40,7 @@ with a uniform API to access actors: Execute and Query.
 These uniform operations receive a message (a.k.a. command or query) and 
 optionally return a result. Consumers always use the same API to invoke 
 operations on actors, and the combination of the actor id and the message 
-consitute enough information to route the message to the right actor.
+constitute enough information to route the message to the right actor.
 
 Actors can be implemented as plain CLR objects, with no need to inherit 
 from any base class or implement any interface. The Orleans plumbing of 
