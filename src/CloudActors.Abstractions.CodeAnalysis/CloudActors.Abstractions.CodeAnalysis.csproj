@@ -38,6 +38,14 @@
     <Reference Include="$(PkgMicrosoft_Orleans_CodeGenerator)\analyzers\dotnet\cs\Orleans.CodeGenerator.dll" />
   </ItemGroup>
 
+  <!-- NuGet issue https://github.com/NuGet/Home/issues/6279: ExcludeAssets="all" doesn't prevent analyzer registration.
+       Explicitly remove the Orleans generator so it doesn't run (and crash) in this project. -->
+  <Target Name="RemoveOrleansGeneratorFromAnalyzers" AfterTargets="ResolvePackageDependenciesForBuild">
+    <ItemGroup>
+      <Analyzer Remove="$(PkgMicrosoft_Orleans_CodeGenerator)\analyzers\dotnet\cs\Orleans.CodeGenerator.dll" />
+    </ItemGroup>
+  </Target>
+
   <ItemGroup>
     <EmbeddedResource Include="@(None -&gt; WithMetadataValue('Extension', '.sbntxt'))" Kind="text" />
   </ItemGroup>
