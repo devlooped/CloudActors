@@ -40,22 +40,22 @@ public class TestAccounts : IAsyncDisposable
         {
             var bus = cluster.ServiceProvider.GetRequiredService<IActorBus>();
 
-            await bus.ExecuteAsync("account/1", new Deposit(100));
-            await bus.ExecuteAsync("account/1", new Withdraw(50));
+            await bus.ExecuteAsync(Account.NewId("1"), new Deposit(100));
+            await bus.ExecuteAsync(Account.NewId("1"), new Withdraw(50));
 
-            var balance = await bus.QueryAsync("account/1", GetBalance.Default);
+            var balance = await bus.QueryAsync(Account.NewId("1"), GetBalance.Default);
             Assert.Equal(50, balance);
 
-            Assert.Equal(50, await bus.ExecuteAsync("account/1", new Close(CloseReason.Customer)));
+            Assert.Equal(50, await bus.ExecuteAsync(Account.NewId("1"), new Close(CloseReason.Customer)));
 
-            Assert.Equal(0, await bus.QueryAsync("account/1", GetBalance.Default));
+            Assert.Equal(0, await bus.QueryAsync(Account.NewId("1"), GetBalance.Default));
         }
 
         // Force re-activation of grain.
         using (var cluster = ClusterFixture.CreateCluster())
         {
             var bus = cluster.ServiceProvider.GetRequiredService<IActorBus>();
-            Assert.Equal(0, await bus.QueryAsync("account/1", GetBalance.Default));
+            Assert.Equal(0, await bus.QueryAsync(Account.NewId("1"), GetBalance.Default));
         }
     }
 
@@ -85,20 +85,21 @@ public class TestAccounts : IAsyncDisposable
         var bus = host.Services.GetRequiredService<IActorBus>();
         var storage = host.Services.GetRequiredKeyedService<IGrainStorage>("Default");
 
+        // Composite key is still usable, but we can also use the strongly typed API.
         await bus.ExecuteAsync("account/1", new Deposit(100));
         var actor = await storage.ReadActorAsync<Account>("account/1");
         Assert.Equal(100, actor.Balance);
 
-        await bus.ExecuteAsync("account/1", new Withdraw(50));
+        await bus.ExecuteAsync(Account.NewId("1"), new Withdraw(50));
 
-        var balance = await bus.QueryAsync("account/1", GetBalance.Default);
+        var balance = await bus.QueryAsync(Account.NewId("1"), GetBalance.Default);
         Assert.Equal(50, balance);
 
         actor = await storage.ReadActorAsync<Account, Account.ActorState>("account/1");
         Assert.Equal(50, actor.Balance);
 
-        Assert.Equal(50, await bus.ExecuteAsync("account/1", new Close()));
-        Assert.Equal(0, await bus.QueryAsync("account/1", GetBalance.Default));
+        Assert.Equal(50, await bus.ExecuteAsync(Account.NewId("1"), new Close()));
+        Assert.Equal(0, await bus.QueryAsync(Account.NewId("1"), GetBalance.Default));
 
         actor = await storage.ReadActorAsync<Account>("account/1");
         Assert.Equal(0, actor.Balance);

@@ -20,9 +20,9 @@ public class TestCustomers(ITestOutputHelper output, ClusterFixture fixture)
 
         var address = new Address("One Redmond Way", "Redmond", "WA", "98052");
 
-        await bus.ExecuteAsync("customer/asdf", new SetAddress(address));
+        await bus.ExecuteAsync(Customer.NewId("asdf"), new SetAddress(address));
 
-        var saved = await bus.QueryAsync("customer/asdf", new GetAddress());
+        var saved = await bus.QueryAsync(Customer.NewId("asdf"), new GetAddress());
 
         Assert.NotNull(address);
         Assert.Equal(address, saved);

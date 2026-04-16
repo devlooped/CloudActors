@@ -156,7 +156,7 @@ Emits OpenTelemetry spans (using `ActivitySource`) and metrics (using `Meter`) f
 
 | Package | Generators | Runs in |
 |---------|-----------|---------|
-| `CloudActors.Abstractions.CodeAnalysis` | `ActorStateGenerator`, `ActorMessageGenerator`, `ActorIdBusOverloadGenerator`, `ActorBusOverloadGenerator`, `ActorPrimitiveIdGenerator`, `EventSourcedGenerator`, `CloudActorsAttributeGenerator` | Actor domain class library |
+| `CloudActors.Abstractions.CodeAnalysis` | `ActorStateGenerator`, `ActorMessageGenerator`, `ActorBusOverloadGenerator`, `ActorPrimitiveIdGenerator`, `EventSourcedGenerator`, `CloudActorsAttributeGenerator` | Actor domain class library |
 | `CloudActors.CodeAnalysis` | `ActorGrainGenerator`, `ActorIdFactoryGenerator`, `ActorsAssemblyGenerator` | Orleans silo / host project |
 
 ### Incremental pipeline conventions
@@ -201,20 +201,30 @@ Filters out generic types (`!x.IsGenericType`) and internal/special types to avo
 
 Uses `CompilationProvider.Select` to discover all actors with typed IDs and generates an `IActorIdFactory` implementation registered via `[ModuleInitializer]` through `ActorIdFactory.Generated`.
 
-### ActorIdBusOverloadGenerator (`CloudActors.Abstractions.CodeAnalysis`)
+### ActorBusOverloadGenerator (`CloudActors.Abstractions.CodeAnalysis`)
 
-Generates typed `IActorBus` extension methods for actors with non-string IDs. Two cases:
-- **Primitive ID** (e.g. `long`, `Guid`): uses the generated `{Actor}.{Actor}Id` wrapper type
-- **Typed ID** (e.g. `ProductId`): uses the actual ID type directly
+Generates strongly-typed, **actor-specific** `IActorBus` extension methods. For each actor, only the messages it actually handles (via declared handler methods) get typed overloads. Uses `CreateSyntaxProvider` to find `[Actor]` classes in the current project.
 
-To avoid `CS0111`, overloads are **only generated for ID types used by exactly one actor**. If two actors share the same underlying primitive type, no typed overloads are emitted.
+ID parameter type depends on the actor's ID:
+- **String or primitive ID** (`string`, `long`, `Guid`, …): uses the generated `{Actor}.{Actor}Id` wrapper; routes to `$"actortype/{id.Id}"`. All actors whose first constructor parameter is a BCL primitive or `string` go through this path — there are never plain `string` bus overloads.
+- **Typed ID** (`IParsable<T>` / `IStructId<T>`): uses the ID type directly; routes to `$"actortype/{id}"`.
+- **No recognized ID**: no overloads are emitted (unreachable for any valid `[Actor]` class).
+
+One file per actor (`{Actor}.Bus.g.cs`) containing all its overloads:
+- Void command → `Task ExecuteAsync(IActorBus, Id, Msg)`
+- Command with return → `Task<T> ExecuteAsync(IActorBus, Id, Msg)`
+- Query → `Task<T> QueryAsync(IActorBus, Id, Msg)`
+
+**Important**: `IActorCommand<T>` extends `IActorCommand`, so message types implementing `IActorCommand<T>` satisfy both `IsActorCommand()` (generic) and `IsActorVoidCommand()` (non-generic). The `voidCommands` extraction explicitly excludes types that also pass `IsActorCommand()` to keep the two buckets mutually exclusive.
 
 ### ActorPrimitiveIdGenerator (`CloudActors.Abstractions.CodeAnalysis`)
 
-For actors whose primary constructor takes a primitive BCL value type (e.g. `long`, `Guid`), generates:
-- A nested `readonly record struct {Actor}Id(T Id)` wrapper
-- A static `NewId(T id)` factory method
-- For `Guid` IDs: an additional parameterless `NewId()` that calls `Guid.CreateVersion7()` (if available on the runtime) or `Guid.NewGuid()`
+For actors whose primary constructor takes **any BCL primitive or `string`** (e.g. `string`, `long`, `Guid`), generates a nested typed wrapper and factory:
+- `readonly record struct {Actor}Id(T Id)` — e.g. `AccountId(string Id)`, `OrderId(long Id)`
+- `static {Actor}Id NewId(T id)` factory method
+- For `Guid` IDs only: an additional parameterless `NewId()` using `Guid.CreateVersion7()` (.NET 9+) or `Guid.NewGuid()`
+
+This covers **all** actors with BCL-typed constructor IDs, including string-keyed ones. A string actor like `Account(string id)` gets `Account.AccountId(string Id)` and `Account.NewId("1")`, ensuring callers cannot accidentally pass a raw prefixed grain key (`"account/1"`) to the wrong actor.
 
 ### EventSourcedGenerator (`CloudActors.Abstractions.CodeAnalysis`)
 
@@ -243,11 +253,12 @@ Helper that discovers and invokes the STJ (`System.Text.Json`) source generator 
 
 ## Typed Actor IDs
 
-Actors can use non-string IDs in three ways:
+Every actor has a strongly-typed ID — CloudActors never emits plain `string` bus overloads. The ID flavor depends on the actor's constructor:
 
-1. **Primitive ID** (`long`, `Guid`, etc.): A nested `{Actor}Id` wrapper struct is generated; `NewId()` helper is available.
-2. **Typed ID** via `IParsable<T>` / `IFormattable`: The ID type (e.g. `ProductId`) is used directly. Typed `IActorBus` extension overloads are generated.
-3. **StructId**: Types implementing `IStructId` (from the [StructId](https://github.com/devlooped/StructId) package) are detected automatically.
+1. **BCL primitive or string** (`string`, `long`, `Guid`, …): `ActorPrimitiveIdGenerator` generates a nested `{Actor}Id(T Id)` wrapper struct. Both `Account(string id)` and `Order(long id)` fall into this category; callers use `Account.NewId("1")` / `Order.NewId(42)`.
+2. **Structured / library ID** (`IParsable<T>` / `IStructId<T>`): The ID type is used directly in bus overloads (e.g. `ProductId`). Works automatically with [StructId](https://github.com/devlooped/StructId), StronglyTypedId, Vogen, etc.
+
+All actors have typed IDs, providing compile-time safety against passing the wrong message to the wrong actor.
 
 ID format stored in Orleans: `"{actortype}/{id}"` (e.g. `"account/42"`, `"product/p1"`).
 

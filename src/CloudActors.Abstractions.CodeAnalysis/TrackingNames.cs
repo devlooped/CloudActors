@@ -10,13 +10,8 @@ static class TrackingNames
     public const string Actors = nameof(Actors);
     public const string ActorMessages = nameof(ActorMessages);
 
-    // ActorBusOverloadGenerator
+    // ActorBusOverloadGenerator (unified per-actor bus overloads)
     public const string BusOverloads = nameof(BusOverloads);
-    public const string BusInterfaces = nameof(BusInterfaces);
-
-    // ActorIdBusOverloadGenerator
-    public const string ActorIdOverloads = nameof(ActorIdOverloads);
-    public const string ParsableType = nameof(ParsableType);
 
     // ActorMessageGenerator
     public const string MessageModels = nameof(MessageModels);

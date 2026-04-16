@@ -42,26 +42,25 @@ app.MapPost("/account", async (IActorBus bus) =>
 
 app.MapGet("/account/{id}", async (string id, IActorBus bus) =>
 {
-    var balance = await bus.QueryAsync($"account/{id.Trim('"')}", GetBalance.Default);
+    var balance = await bus.QueryAsync(Account.NewId(id.Trim('"')), GetBalance.Default);
     return Results.Ok(balance);
 });
 
 app.MapMethods("/account/{id}", ["PUT", "POST"], async (string id, [FromBody] decimal amount, IActorBus bus) =>
 {
-    id = id.Trim('"');
-    //var amount = decimal.Parse(text);
+    var accountId = Account.NewId(id.Trim('"'));
     if (amount > 0)
-        await bus.ExecuteAsync($"account/{id}", new Deposit(amount));
+        await bus.ExecuteAsync(accountId, new Deposit(amount));
     else if (amount < 0)
-        await bus.ExecuteAsync($"account/{id}", new Withdraw(-amount));
+        await bus.ExecuteAsync(accountId, new Withdraw(-amount));
 
-    var balance = await bus.QueryAsync($"account/{id}", GetBalance.Default);
+    var balance = await bus.QueryAsync(accountId, GetBalance.Default);
     return Results.Ok(balance);
 });
 
 app.MapDelete("/account/{id}", async (string id, IActorBus bus) =>
 {
-    var balance = await bus.ExecuteAsync($"account/{id.Trim('"')}", new Close(CloseReason.Customer));
+    var balance = await bus.ExecuteAsync(Account.NewId(id.Trim('"')), new Close(CloseReason.Customer));
     return Results.Ok(balance);
 });
 

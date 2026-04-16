@@ -1,7 +1,6 @@
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using static Devlooped.CloudActors.AnalysisExtensions;
 
 namespace Devlooped.CloudActors;
 
@@ -42,13 +41,31 @@ class ActorPrimitiveIdGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput(actors, (ctx, actor) =>
         {
-            var idTypeName = actor.IdTypeFullName!;
+            // Normalize System.* full names to C# keywords for cleaner generated code
+            var idTypeName = actor.IdTypeFullName! switch
+            {
+                "System.String" => "string",
+                "System.Boolean" => "bool",
+                "System.Byte" => "byte",
+                "System.Char" => "char",
+                "System.Decimal" => "decimal",
+                "System.Double" => "double",
+                "System.Int16" => "short",
+                "System.Int32" => "int",
+                "System.Int64" => "long",
+                "System.SByte" => "sbyte",
+                "System.Single" => "float",
+                "System.UInt16" => "ushort",
+                "System.UInt32" => "uint",
+                "System.UInt64" => "ulong",
+                var t => t
+            };
             var ns = actor.Namespace;
             var file = $"{actor.FileName}.PrimitiveId.g.cs";
             var nsOpen = ns.Length > 0 ? $"namespace {ns};\n\n" : "";
 
             var parameterlessNewId = "";
-            if (idTypeName == "System.Guid")
+            if (actor.IdTypeFullName == "System.Guid")
             {
                 var guidFactory = actor.HasGuidCreateVersion7 ? "System.Guid.CreateVersion7()" : "System.Guid.NewGuid()";
                 parameterlessNewId = $$"""

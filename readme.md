@@ -315,7 +315,35 @@ project, and more incremental behavior added as users opt-in to certain features
 
 ## Typed Actor IDs
 
-Instead of identifying actors with plain strings, you can use strongly-typed IDs.
+All actors get a strongly-typed IDs for free — CloudActors emits proper typed overloads so 
+you never have to use raw `string` composite keys for bus calls, which prevents accidentally 
+passing the wrong ID format (e.g. `"account/1"` vs. `"1"`).
+
+### String IDs
+
+When the actor's first constructor parameter is `string`, the generator produces a `{Actor}Id` 
+wrapper struct so callers use type-safe IDs against the bus, while getting useful completion from 
+overloads exposing the applicable messages the actor can handle:
+
+```csharp
+[Actor]
+public partial class Account(string id)
+{
+    public string Id { get; } = id;
+    // ...
+}
+
+// Generated:
+//   public readonly record struct AccountId(string Id);
+//   public static AccountId NewId(string id) => new(id);
+```
+
+```csharp
+var id = Account.NewId("1");
+
+await bus.ExecuteAsync(id, new Deposit(100));
+var balance = await bus.QueryAsync(id, GetBalance.Default);
+```
 
 ### Primitive IDs
 
@@ -379,18 +407,20 @@ var price = await bus.QueryAsync(id, new GetPrice());
 
 ### Typed Bus Overloads
 
-For any actor with a typed ID (primitive or structured), the generator produces typed 
-`IActorBus` extension overloads so you never have to format the ID string manually:
+For every actor, the generator produces typed `IActorBus` extension overloads — one per 
+handled message — so you can never accidentally pass the wrong message to the wrong actor:
 
 ```csharp
-// Instead of:
-await bus.ExecuteAsync("order/42", new PlaceOrder(...));
-
-// You can use the typed overload:
+// Only valid messages for Order are available via OrderId:
 await bus.ExecuteAsync(new OrderId(42), new PlaceOrder(...));
+
+// Compile error: Deposit is not a valid message for Order
+await bus.ExecuteAsync(new OrderId(42), new Deposit(100)); // ❌
 ```
 
-The ID is always stored and routed as `"{actortype}/{id}"` (e.g. `"order/42"`, `"product/..."`).
+The ID is always routed as `"{actortype}/{id}"` (e.g. `"order/42"`, `"product/..."`) 
+as expected by Orleans, but the typed overloads shield you from that detail and provide 
+type safety.
 
 ## Telemetry and Monitoring
 
