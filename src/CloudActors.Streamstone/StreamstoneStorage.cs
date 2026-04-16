@@ -41,6 +41,7 @@ public class StreamstoneStorage : IGrainStorage
     {
         var table = await GetTable(storage, stateName);
         var rowId = grainId.Key.ToString();
+        var jsonOptions = GetJsonOptions(grainState);
 
         if (grainState.State is IEventSourced state)
         {
@@ -60,7 +61,7 @@ public class StreamstoneStorage : IGrainStorage
                     typeof(T).Assembly.GetName() is { } asm &&
                     IsCompatible(new Version(asm.Version?.Major ?? 0, asm.Version?.Minor ?? 0), entity.DataVersion) &&
                     entity.Data is string data &&
-                    JsonSerializer.Deserialize<T>(data, options.JsonOptions) is { } instance)
+                    JsonSerializer.Deserialize<T>(data, jsonOptions) is { } instance)
                 {
                     // Since auto-snapshotting is performed automatically and atomically on 
                     // every write, we don't need to replay any further events.
@@ -76,7 +77,7 @@ public class StreamstoneStorage : IGrainStorage
                 return;
 
             // TODO: should we always re-create the state instance?
-            state.LoadEvents(entities.Events.Select(ToDomainEvent));
+            state.LoadEvents(entities.Events.Select(e => ToDomainEvent(e, jsonOptions)));
             grainState.ETag = stream.Stream.Version.ToString();
             grainState.RecordExists = true;
         }
@@ -87,7 +88,7 @@ public class StreamstoneStorage : IGrainStorage
                 result.Value is not EventEntity entity ||
                 entity.Data is not string data ||
                 // TODO: how to deal with versioning in this case?
-                JsonSerializer.Deserialize<T>(data, options.JsonOptions) is not { } instance)
+                JsonSerializer.Deserialize<T>(data, jsonOptions) is not { } instance)
                 return;
 
             grainState.State = instance;
@@ -103,6 +104,7 @@ public class StreamstoneStorage : IGrainStorage
         var rowId = grainId.Key.ToString();
         var type = typeof(T);
         var asm = typeof(T).Assembly.GetName();
+        var jsonOptions = GetJsonOptions(grainState);
 
         if (grainState.State is IEventSourced state)
         {
@@ -124,7 +126,7 @@ public class StreamstoneStorage : IGrainStorage
                         {
                             PartitionKey = table.Name,
                             RowKey = "State",
-                            Data = JsonSerializer.Serialize(grainState.State, options.JsonOptions),
+                            Data = JsonSerializer.Serialize(grainState.State, jsonOptions),
                             DataVersion = new Version(asm.Version?.Major ?? 0, asm.Version?.Minor ?? 0).ToString(),
                             Type = $"{type.FullName ?? typeof(T).Name}, {asm.Name}",
                             Version = stream.Version + state.Events.Count
@@ -133,7 +135,7 @@ public class StreamstoneStorage : IGrainStorage
 
                 await Stream.WriteAsync(partition,
                     int.TryParse(grainState.ETag, out var version) ? version : 0,
-                    [.. state.Events.Select((e, i) => ToEventData(e, stream.Version + i, includes))]);
+                    [.. state.Events.Select((e, i) => ToEventData(e, stream.Version + i, jsonOptions, includes))]);
 
                 grainState.ETag = (stream.Version + state.Events.Count).ToString();
                 grainState.RecordExists = true;
@@ -151,7 +153,7 @@ public class StreamstoneStorage : IGrainStorage
                 PartitionKey = table.Name,
                 RowKey = rowId!,
                 ETag = new ETag(grainState.ETag),
-                Data = JsonSerializer.Serialize(grainState.State, options.JsonOptions),
+                Data = JsonSerializer.Serialize(grainState.State, jsonOptions),
                 DataVersion = new Version(asm.Version?.Major ?? 0, asm.Version?.Minor ?? 0).ToString(),
                 Type = $"{type.FullName}, {asm.Name}",
             })]);
@@ -160,6 +162,9 @@ public class StreamstoneStorage : IGrainStorage
             grainState.RecordExists = true;
         }
     }
+
+    JsonSerializerOptions GetJsonOptions<T>(IGrainState<T> grainState)
+        => (grainState.State as IActorState)?.JsonOptions ?? options.JsonOptions;
 
     async Task<TableClient> GetTable(CloudStorageAccount storage, string name)
     {
@@ -200,7 +205,7 @@ public class StreamstoneStorage : IGrainStorage
         public int? Version { get; set; }
     }
 
-    object ToDomainEvent(EventEntity entity)
+    static object ToDomainEvent(EventEntity entity, JsonSerializerOptions jsonOptions)
     {
         if (entity.Data == null)
             throw new InvalidOperationException();
@@ -209,10 +214,10 @@ public class StreamstoneStorage : IGrainStorage
 
         // TODO: handle version mismatch between type and entity.DataVersion
 
-        return JsonSerializer.Deserialize(entity.Data, type, options.JsonOptions)!;
+        return JsonSerializer.Deserialize(entity.Data, type, jsonOptions)!;
     }
 
-    EventData ToEventData(object e, int version, params ITableEntity[] includes)
+    static EventData ToEventData(object e, int version, JsonSerializerOptions jsonOptions, params ITableEntity[] includes)
     {
         var type = e.GetType();
         var asm = type.Assembly.GetName();
@@ -220,7 +225,7 @@ public class StreamstoneStorage : IGrainStorage
         // convenient for quickly glancing at the data.
         var properties = new
         {
-            Data = JsonSerializer.Serialize(e, options.JsonOptions),
+            Data = JsonSerializer.Serialize(e, jsonOptions),
             DataVersion = new Version(asm.Version?.Major ?? 0, asm.Version?.Minor ?? 0).ToString(),
             // Visualizing the event id in the table as a column is useful for querying
             Type = $"{e.GetType().FullName}, {e.GetType().Assembly.GetName().Name}",

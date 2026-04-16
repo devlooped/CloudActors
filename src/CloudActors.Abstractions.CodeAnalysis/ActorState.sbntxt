@@ -5,6 +5,8 @@
 using System;
 using System.Collections.Generic;
 using System.CodeDom.Compiler;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Orleans;
 using Devlooped.CloudActors;
 
@@ -48,6 +50,25 @@ partial class {{ Name }} : IActor<{{ Name }}.ActorState>
         {{~ for member in Members ~}}
         [Id({{ ++index }})]
         public {{ member.Type }} {{ member.Name }};
+        {{~ end ~}}
+
+        {{~ if HasJsonContext ~}}
+        JsonSerializerOptions? IActorState.JsonOptions => ActorJsonContext.Default.Options;
+
+        [JsonSourceGenerationOptions(
+            AllowTrailingCommas = true,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            IncludeFields = true,
+            PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
+            UseStringEnumConverter = true)]
+        [JsonSerializable(typeof(ActorState))]
+        {{~ for stype in StateTypes ~}}
+        [JsonSerializable(typeof({{ stype.Type }}))]
+        {{~ end ~}}
+        {{~ for etype in EventTypes ~}}
+        [JsonSerializable(typeof({{ etype }}))]
+        {{~ end ~}}
+        partial class ActorJsonContext : JsonSerializerContext { }
         {{~ end ~}}
     }
 
