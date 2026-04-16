@@ -20,7 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CloudActors.Abstractions\CloudActors.Abstractions.csproj" Pack="false" />
-    <ProjectReference Include="..\CloudActors\CloudActors.csproj" />
+    <ProjectReference Include="..\CloudActors.Hosting\CloudActors.Hosting.csproj" />
     <ProjectReference Include="..\CloudActors.Abstractions.Package\CloudActors.Abstractions.Package.msbuildproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 

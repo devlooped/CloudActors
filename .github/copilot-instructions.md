@@ -4,6 +4,10 @@
 
 ## Working Effectively
 
+### Planning
+
+Write plans under .github/plans/[yyyy-mm-dd]-[short-description].md for easier inspection by the user.
+
 ### Essential Build Commands
 - **Restore dependencies**: `dotnet restore`
 

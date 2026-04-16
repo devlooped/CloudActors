@@ -15,13 +15,13 @@
   
   <ItemGroup>
     <ProjectReference Include="..\CloudActors.Streamstone\CloudActors.Streamstone.csproj" />
-    <ProjectReference Include="..\CloudActors\CloudActors.csproj" />
+    <ProjectReference Include="..\CloudActors.Hosting\CloudActors.Hosting.csproj" />
     <ProjectReference Include="..\TestDomain\TestDomain.csproj" />
     <ProjectReference Include="..\CloudActors.Abstractions.CodeAnalysis\CloudActors.Abstractions.CodeAnalysis.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\CloudActors.Abstractions.CodeFix\CloudActors.Abstractions.CodeFix.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-    <ProjectReference Include="..\CloudActors.CodeAnalysis\CloudActors.CodeAnalysis.csproj" OutputItemType="Analyzer" />
+    <ProjectReference Include="..\CloudActors.Hosting.CodeAnalysis\CloudActors.Hosting.CodeAnalysis.csproj" OutputItemType="Analyzer" />
   </ItemGroup>
 
   <Import Project="..\CloudActors.Abstractions.Package\buildTransitive\Devlooped.CloudActors.Abstractions.targets" />
-  <Import Project="..\CloudActors.CodeAnalysis\Devlooped.CloudActors.targets" />
+  <Import Project="..\CloudActors.Hosting.CodeAnalysis\Devlooped.CloudActors.targets" />
 </Project>

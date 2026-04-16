@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.Build.NoTargets/3.7.0">
   <PropertyGroup>
-    <PackageId>Devlooped.CloudActors.Abstractions</PackageId>
+    <PackageId>Devlooped.CloudActors</PackageId>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Description>Core abstractions, message interfaces, and source generators for defining Cloud Native Actors.</Description>
+    <Description>Simplified, opinionated cloud-native actor library for .NET with uniform message-passing over Microsoft Orleans.</Description>
     <PackageTags>dotnet orleans actor</PackageTags>
     <PackageLicenseExpression></PackageLicenseExpression>
     <PackageLicenseFile>OSMFEULA.txt</PackageLicenseFile>
@@ -13,12 +13,9 @@
     <PackageReference Include="NuGetizer" Version="1.4.6" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CloudActors.Abstractions.CodeAnalysis\CloudActors.Abstractions.CodeAnalysis.csproj" />
-    <ProjectReference Include="..\CloudActors.Abstractions.CodeFix\CloudActors.Abstractions.CodeFix.csproj" />
-    <ProjectReference Include="..\CloudActors.Abstractions\CloudActors.Abstractions.csproj" />
+    <ProjectReference Include="..\CloudActors.Abstractions.Package\CloudActors.Abstractions.Package.msbuildproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\osmfeula.txt" Link="osmfeula.txt" PackagePath="OSMFEULA.txt" />
-    <None Include="..\SKILL.md" Link="SKILL.md" PackagePath="skills/cloudactors/SKILL.md" CopyToOutputDirectory="Never" />
   </ItemGroup>
 </Project>
