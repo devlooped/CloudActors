@@ -72,7 +72,7 @@ record struct ActorMemberModel(string Name, string TypeName) : IEquatable<ActorM
     };
 }
 
-record struct GrainOperationModel(string Name, string Type, bool IsAsync) : IEquatable<GrainOperationModel>;
+record struct GrainOperationModel(string Name, string Type, bool IsAsync, string? ReturnTypeFullName = null) : IEquatable<GrainOperationModel>;
 
 // ──────────────────────────────────────────────
 // Actor message model
@@ -113,21 +113,6 @@ record struct ActorMessageModel(
 {
     public readonly string FileName => FullName.Replace('+', '.');
 }
-
-// ──────────────────────────────────────────────
-// Actor ID bus overload model
-// ──────────────────────────────────────────────
-
-/// <summary>
-/// String-only model for typed-ID bus overload generation.
-/// </summary>
-record struct ActorIdBusOverloadModel(
-    string ActorName,
-    string ActorFullName,
-    /// <summary>The type name to use as the bus method parameter (e.g. "MyActor.MyActorId" or "ProductId").</summary>
-    string BusIdTypeName,
-    /// <summary>The interpolation expression for the ID (e.g. "{id.Id}" or "{id}").</summary>
-    string IdInterpolation) : IEquatable<ActorIdBusOverloadModel>;
 
 // ──────────────────────────────────────────────
 // Event-sourced model
@@ -204,19 +189,46 @@ static class ModelExtractors
         // Extract grain operations
         var queries = actor.GetMembers().OfType<IMethodSymbol>()
             .Where(m => m.Parameters.Length == 1 && m.Parameters[0].Type.IsActorQuery())
-            .Select(m => new GrainOperationModel(m.Name, m.Parameters[0].Type.ToDisplayString(FullName),
-                m.ReturnType.ToDisplayString(FullName).StartsWith("System.Threading.Tasks.Task")))
+            .Select(m =>
+            {
+                var paramType = m.Parameters[0].Type;
+                var queryIface = paramType.AllInterfaces.FirstOrDefault(i =>
+                    i.IsGenericType &&
+                    i.ContainingNamespace?.ToDisplayString() == "Devlooped.CloudActors" &&
+                    i.Name == "IActorQuery");
+                return new GrainOperationModel(
+                    m.Name,
+                    paramType.ToDisplayString(FullName),
+                    m.ReturnType.ToDisplayString(FullName).StartsWith("System.Threading.Tasks.Task"),
+                    queryIface?.TypeArguments[0].ToDisplayString(FullName));
+            })
             .ToImmutableArray();
 
         var commands = actor.GetMembers().OfType<IMethodSymbol>()
             .Where(m => m.Parameters.Length == 1 && m.Parameters[0].Type.IsActorCommand())
-            .Select(m => new GrainOperationModel(m.Name, m.Parameters[0].Type.ToDisplayString(FullName),
-                m.ReturnType.ToDisplayString(FullName).StartsWith("System.Threading.Tasks.Task")))
+            .Select(m =>
+            {
+                var paramType = m.Parameters[0].Type;
+                var cmdIface = paramType.AllInterfaces.FirstOrDefault(i =>
+                    i.IsGenericType &&
+                    i.ContainingNamespace?.ToDisplayString() == "Devlooped.CloudActors" &&
+                    i.Name == "IActorCommand");
+                return new GrainOperationModel(
+                    m.Name,
+                    paramType.ToDisplayString(FullName),
+                    m.ReturnType.ToDisplayString(FullName).StartsWith("System.Threading.Tasks.Task"),
+                    cmdIface?.TypeArguments[0].ToDisplayString(FullName));
+            })
             .ToImmutableArray();
 
+        // Exclude IActorCommand<T> types: they implement IActorCommand too (non-generic), but belong in commands only.
         var voidCommands = actor.GetMembers().OfType<IMethodSymbol>()
-            .Where(m => m.Parameters.Length == 1 && m.Parameters[0].Type.IsActorVoidCommand())
-            .Select(m => new GrainOperationModel(m.Name, m.Parameters[0].Type.ToDisplayString(FullName),
+            .Where(m => m.Parameters.Length == 1
+                && m.Parameters[0].Type.IsActorVoidCommand()
+                && !m.Parameters[0].Type.IsActorCommand())
+            .Select(m => new GrainOperationModel(
+                m.Name,
+                m.Parameters[0].Type.ToDisplayString(FullName),
                 m.ReturnType.ToDisplayString(FullName).StartsWith("System.Threading.Tasks.Task")))
             .ToImmutableArray();
 
@@ -270,9 +282,6 @@ static class ModelExtractors
             return (null, false, false);
 
         var idType = ctor.Parameters[0].Type;
-
-        if (idType.SpecialType == SpecialType.System_String)
-            return (null, false, false);
 
         var idTypeName = idType.ToDisplayString(FullName);
         var isPrimitive = IsPrimitiveType(idType);

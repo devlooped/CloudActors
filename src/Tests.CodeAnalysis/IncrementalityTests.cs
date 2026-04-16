@@ -35,6 +35,8 @@ public class IncrementalityTests
             [IgnoreDataMember]
             public string Id => id;
             public string? Name { get; set; }
+
+            public void Execute(Rename command) => Name = command.NewName;
         }
 
         public partial record Rename(string NewName) : IActorCommand;
@@ -135,6 +137,49 @@ public class IncrementalityTests
         driver = driver.RunGenerators(compilation);
         var result = driver.GetRunResult().Results[0];
         AssertStepOutputReason(result, TrackingNames.BusOverloads, IncrementalStepRunReason.Cached);
+    }
+
+    [Fact]
+    public void ActorBusOverloadGenerator_FirstActorAdded_EmitsBaseClass()
+    {
+        var compilation = CreateCompilation("public class Foo {}");
+        var driver = CreateDriver(new ActorBusOverloadGenerator());
+
+        driver = driver.RunGenerators(compilation);
+        Assert.Empty(driver.GetRunResult().Results[0].GeneratedSources);
+
+        compilation = compilation.AddSyntaxTrees(
+            CSharpSyntaxTree.ParseText(ActorWithCommand,
+                CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest),
+                path: "Customer.cs"));
+
+        driver = driver.RunGenerators(compilation);
+        var sources = driver.GetRunResult().Results[0].GeneratedSources;
+
+        Assert.Contains(sources, s => s.HintName == "ActorBusExtensions.g.cs");
+        Assert.Contains(sources, s => s.HintName == "Customer.Bus.g.cs");
+    }
+
+    [Fact]
+    public void ActorBusOverloadGenerator_LastActorRemoved_RemovesBaseClass()
+    {
+        var compilation = CreateCompilation(ActorWithCommand);
+        var driver = CreateDriver(new ActorBusOverloadGenerator());
+
+        driver = driver.RunGenerators(compilation);
+        var sourcesBefore = driver.GetRunResult().Results[0].GeneratedSources;
+        Assert.Contains(sourcesBefore, s => s.HintName == "ActorBusExtensions.g.cs");
+
+        var actorTree = compilation.SyntaxTrees.First(t => t.GetText().ToString().Contains("Customer"));
+        compilation = compilation.ReplaceSyntaxTree(actorTree,
+            CSharpSyntaxTree.ParseText("public class Foo {}",
+                CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest),
+                path: actorTree.FilePath));
+
+        driver = driver.RunGenerators(compilation);
+        var sourcesAfter = driver.GetRunResult().Results[0].GeneratedSources;
+
+        Assert.Empty(sourcesAfter);
     }
 
     #endregion
@@ -332,7 +377,7 @@ public class IncrementalityTests
     }
 
     [Fact]
-    public void ActorBusOverloadGenerator_NoMessages_NoOutput()
+    public void ActorBusOverloadGenerator_NoHandlers_NoOutput()
     {
         var compilation = CreateCompilation("public class Foo {}");
         var driver = CreateDriver(new ActorBusOverloadGenerator());
