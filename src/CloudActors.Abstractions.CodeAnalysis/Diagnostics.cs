@@ -39,4 +39,13 @@ static class Diagnostics
         "Build",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
+
+    /// <summary>DCA005: Actor state types must be serializable.</summary>
+    public static DiagnosticDescriptor MustBeSerializable { get; } = new(
+        "DCA005",
+        "Actor state types must be serializable",
+        "Make '{0}' partial or add [GenerateSerializer] as required for types used in actor state.",
+        "Build",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
 }

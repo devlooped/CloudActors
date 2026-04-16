@@ -27,6 +27,7 @@ static class TrackingNames
 
     // ActorStateGenerator
     public const string StateModels = nameof(StateModels);
+    public const string StateSerializableTypes = nameof(StateSerializableTypes);
 
     // EventSourcedGenerator
     public const string EventSourcedModels = nameof(EventSourcedModels);

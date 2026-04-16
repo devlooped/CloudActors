@@ -57,11 +57,9 @@ class ActorIdFactoryGenerator : IIncrementalGenerator
             using Microsoft.Extensions.DependencyInjection;
             using Devlooped.CloudActors;
 
-            /// <summary>Extension methods for adding Cloud Actors services to the dependency injection container.</summary>
             [EditorBrowsable(EditorBrowsableState.Never)]
-            public static partial class CloudActorsGeneratedExtensions
+            internal static partial class CloudActorsGeneratedExtensions
             {
-                /// <summary>Adds the <see cref="IActorBus"/> service and actor activation logic.</summary>
                 public static IServiceCollection AddCloudActors(this IServiceCollection services)
                     => services.AddCloudActors(GeneratedActorIdFactory.Instance);               
             }

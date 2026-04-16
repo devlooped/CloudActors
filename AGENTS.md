@@ -256,6 +256,7 @@ ID format stored in Orleans: `"{actortype}/{id}"` (e.g. `"account/42"`, `"produc
 | `DCA002` | Error | Do not manually add `[GenerateSerializer]` — it is added automatically |
 | `DCA003` | Error | Message types may only implement one of `IActorCommand`, `IActorCommand<T>`, `IActorQuery<T>` |
 | `DCA004` | Error | `<ProduceReferenceAssembly>true</ProduceReferenceAssembly>` is not supported in actor projects |
+| `DCA005` | Error | Actor state types must be serializable — make `partial` or add `[GenerateSerializer]` |
 
 ---
 

@@ -36,7 +36,9 @@ record struct ActorModel(
     /// <summary>Whether the ID type implements IParsable or is a StructId.</summary>
     bool IsTypedId,
     /// <summary>Whether the Guid type has CreateVersion7 method (for primitive Guid IDs).</summary>
-    bool HasGuidCreateVersion7) : IEquatable<ActorModel>
+    bool HasGuidCreateVersion7,
+    /// <summary>Partial user-defined types referenced from actor state that need [GenerateSerializer].</summary>
+    EquatableArray<SerializableTypeModel> StateTypes) : IEquatable<ActorModel>
 {
     public string FileName => FullName.Replace('+', '.');
 }
@@ -165,7 +167,7 @@ static class ModelExtractors
     /// Extracts an <see cref="ActorModel"/> from a declared actor symbol.
     /// Must be called inside a pipeline transform lambda where semantic model is available.
     /// </summary>
-    public static ActorModel? ExtractActorModel(INamedTypeSymbol actor, INamedTypeSymbol? iParsable, bool hasGuidCreateVersion7)
+    public static ActorModel? ExtractActorModel(INamedTypeSymbol actor, INamedTypeSymbol? iParsable, bool hasGuidCreateVersion7, Compilation? compilation = null)
     {
         if (actor.ContainingType != null)
             return null;
@@ -219,6 +221,11 @@ static class ModelExtractors
         // Extract ID info
         var (idTypeFullName, isPrimitiveId, isTypedId) = ExtractIdInfo(actor, iParsable);
 
+        // Collect partial user-defined types from state members that need [GenerateSerializer]
+        var stateTypes = compilation != null
+            ? AnalysisExtensions.CollectStateSerializableTypes(actor, ns, compilation)
+            : ImmutableArray<SerializableTypeModel>.Empty;
+
         return new ActorModel(
             Name: actor.Name,
             Namespace: ns,
@@ -235,7 +242,8 @@ static class ModelExtractors
             IdTypeFullName: idTypeFullName,
             IsPrimitiveId: isPrimitiveId,
             IsTypedId: isTypedId,
-            HasGuidCreateVersion7: hasGuidCreateVersion7);
+            HasGuidCreateVersion7: hasGuidCreateVersion7,
+            StateTypes: stateTypes);
     }
 
     static (string? IdTypeFullName, bool IsPrimitive, bool IsTypedId) ExtractIdInfo(

@@ -207,4 +207,277 @@ public class CodeFixers
         await context.RunAsync();
     }
 
+    [Fact]
+    public async Task ReportNonSerializableStateType()
+    {
+        var context = new CSharpAnalyzerTest<ActorStateSerializableAnalyzer, DefaultVerifier>();
+        context.ReferenceAssemblies = ReferenceAssemblies.Net.Net80
+            .AddPackages([new PackageIdentity("Devlooped.CloudActors", "0.4.0")]);
+
+        context.TestCode =
+            /* lang=c#-test */
+            """
+            using Devlooped.CloudActors;
+            using System;
+            using System.Collections.Generic;
+
+            namespace Tests;
+
+            public record {|DCA005:Transaction|}(string Type, decimal Amount, DateTimeOffset Timestamp);
+
+            [Actor]
+            public partial class Wallet
+            {
+                public decimal Balance { get; private set; }
+                public List<Transaction> Transactions { get; private set; } = new();
+            }
+            """;
+
+        await context.RunAsync();
+    }
+
+    [Fact]
+    public async Task ReportNestedNonSerializableStateType()
+    {
+        var context = new CSharpAnalyzerTest<ActorStateSerializableAnalyzer, DefaultVerifier>();
+        context.ReferenceAssemblies = ReferenceAssemblies.Net.Net80
+            .AddPackages([new PackageIdentity("Devlooped.CloudActors", "0.4.0")]);
+
+        context.TestCode =
+            /* lang=c#-test */
+            """
+            using Devlooped.CloudActors;
+            using System;
+            using System.Collections.Generic;
+
+            namespace Tests;
+
+            public record {|DCA005:Money|}(decimal Amount, string Currency);
+            public record {|DCA005:Transaction|}(string Type, Money Value, DateTimeOffset Timestamp);
+
+            [Actor]
+            public partial class Wallet
+            {
+                public List<Transaction> Transactions { get; private set; } = new();
+            }
+            """;
+
+        await context.RunAsync();
+    }
+
+    [Fact]
+    public async Task NoReportOnPartialStateType()
+    {
+        var context = new CSharpAnalyzerTest<ActorStateSerializableAnalyzer, DefaultVerifier>();
+        context.ReferenceAssemblies = ReferenceAssemblies.Net.Net80
+            .AddPackages([new PackageIdentity("Devlooped.CloudActors", "0.4.0")]);
+
+        context.TestCode =
+            /* lang=c#-test */
+            """
+            using Devlooped.CloudActors;
+            using System;
+            using System.Collections.Generic;
+
+            namespace Tests;
+
+            public partial record Transaction(string Type, decimal Amount, DateTimeOffset Timestamp);
+
+            [Actor]
+            public partial class Wallet
+            {
+                public List<Transaction> Transactions { get; private set; } = new();
+            }
+            """;
+
+        await context.RunAsync();
+    }
+
+    [Fact]
+    public async Task NoReportOnGenerateSerializerStateType()
+    {
+        var context = new CSharpAnalyzerTest<ActorStateSerializableAnalyzer, DefaultVerifier>();
+        context.ReferenceAssemblies = ReferenceAssemblies.Net.Net80
+            .AddPackages([
+                new PackageIdentity("Devlooped.CloudActors", "0.4.0"),
+                new PackageIdentity("Microsoft.Orleans.Serialization.Abstractions", "8.2.0"),
+            ]);
+
+        context.TestCode =
+            /* lang=c#-test */
+            """
+            using Devlooped.CloudActors;
+            using Orleans;
+            using System;
+            using System.Collections.Generic;
+
+            namespace Tests;
+
+            [GenerateSerializer]
+            public record Transaction(string Type, decimal Amount, DateTimeOffset Timestamp);
+
+            [Actor]
+            public partial class Wallet
+            {
+                public List<Transaction> Transactions { get; private set; } = new();
+            }
+            """;
+
+        await context.RunAsync();
+    }
+
+    [Fact]
+    public async Task NoReportOnPrimitiveAndSystemTypes()
+    {
+        var context = new CSharpAnalyzerTest<ActorStateSerializableAnalyzer, DefaultVerifier>();
+        context.ReferenceAssemblies = ReferenceAssemblies.Net.Net80
+            .AddPackages([new PackageIdentity("Devlooped.CloudActors", "0.4.0")]);
+
+        context.TestCode =
+            /* lang=c#-test */
+            """
+            using Devlooped.CloudActors;
+            using System;
+            using System.Collections.Generic;
+
+            namespace Tests;
+
+            [Actor]
+            public partial class Account
+            {
+                public string Name { get; private set; }
+                public int Balance { get; private set; }
+                public decimal Amount { get; private set; }
+                public DateTimeOffset Created { get; private set; }
+                public List<string> Tags { get; private set; } = new();
+                public Dictionary<string, int> Metadata { get; private set; } = new();
+            }
+            """;
+
+        await context.RunAsync();
+    }
+
+    [Fact]
+    public async Task NoReportOnEnum()
+    {
+        var context = new CSharpAnalyzerTest<ActorStateSerializableAnalyzer, DefaultVerifier>();
+        context.ReferenceAssemblies = ReferenceAssemblies.Net.Net80
+            .AddPackages([new PackageIdentity("Devlooped.CloudActors", "0.4.0")]);
+
+        context.TestCode =
+            /* lang=c#-test */
+            """
+            using Devlooped.CloudActors;
+
+            namespace Tests;
+
+            public enum AccountStatus { Active, Closed }
+
+            [Actor]
+            public partial class Account
+            {
+                public AccountStatus Status { get; private set; }
+            }
+            """;
+
+        await context.RunAsync();
+    }
+
+    [Fact]
+    public async Task FixStateTypeAddPartial()
+    {
+        var context = new CSharpCodeFixTest<ActorStateSerializableAnalyzer, TypeMustBeSerializable, DefaultVerifier>();
+        context.CodeFixTestBehaviors |= CodeFixTestBehaviors.SkipLocalDiagnosticCheck;
+        context.ReferenceAssemblies = ReferenceAssemblies.Net.Net80
+            .AddPackages([new PackageIdentity("Devlooped.CloudActors", "0.4.0")]);
+        context.CodeActionIndex = 0; // First fix: Add partial modifier
+
+        context.TestCode =
+            /* lang=c#-test */
+            """
+            using Devlooped.CloudActors;
+            using System;
+            using System.Collections.Generic;
+
+            namespace Tests;
+
+            public record {|DCA005:Transaction|}(string Type, decimal Amount, DateTimeOffset Timestamp);
+
+            [Actor]
+            public partial class Wallet
+            {
+                public List<Transaction> Transactions { get; private set; } = new();
+            }
+            """;
+
+        context.FixedCode =
+            /* lang=c#-test */
+            """
+            using Devlooped.CloudActors;
+            using System;
+            using System.Collections.Generic;
+
+            namespace Tests;
+
+            public partial record Transaction(string Type, decimal Amount, DateTimeOffset Timestamp);
+
+            [Actor]
+            public partial class Wallet
+            {
+                public List<Transaction> Transactions { get; private set; } = new();
+            }
+            """;
+
+        await context.RunAsync();
+    }
+
+    [Fact]
+    public async Task FixStateTypeAddGenerateSerializer()
+    {
+        var context = new CSharpCodeFixTest<ActorStateSerializableAnalyzer, TypeMustBeSerializable, DefaultVerifier>();
+        context.CodeFixTestBehaviors |= CodeFixTestBehaviors.SkipLocalDiagnosticCheck;
+        context.ReferenceAssemblies = ReferenceAssemblies.Net.Net80
+            .AddPackages([new PackageIdentity("Devlooped.CloudActors", "0.4.0")]);
+        context.CodeActionIndex = 1; // Second fix: Add [GenerateSerializer] attribute
+
+        context.TestCode =
+            /* lang=c#-test */
+            """
+            using Devlooped.CloudActors;
+            using System;
+            using System.Collections.Generic;
+
+            namespace Tests;
+
+            public record {|DCA005:Transaction|}(string Type, decimal Amount, DateTimeOffset Timestamp);
+
+            [Actor]
+            public partial class Wallet
+            {
+                public List<Transaction> Transactions { get; private set; } = new();
+            }
+            """;
+
+        context.FixedCode =
+            /* lang=c#-test */
+            """
+            using Devlooped.CloudActors;
+            using System;
+            using System.Collections.Generic;
+
+            namespace Tests;
+
+            [Orleans.GenerateSerializer]
+            public record Transaction(string Type, decimal Amount, DateTimeOffset Timestamp);
+
+            [Actor]
+            public partial class Wallet
+            {
+                public List<Transaction> Transactions { get; private set; } = new();
+            }
+            """;
+
+        await context.RunAsync();
+    }
+
 }

@@ -1,6 +1,8 @@
-﻿using System.Collections.Immutable;
+﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Scriban;
 using static Devlooped.CloudActors.AnalysisExtensions;
@@ -18,6 +20,8 @@ class ActorStateGenerator : IIncrementalGenerator
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
+        var config = context.GetOrleansConfig();
+
         var actors = context.SyntaxProvider.CreateSyntaxProvider(
             predicate: static (node, _) =>
                 node is ClassDeclarationSyntax cds &&
@@ -36,7 +40,7 @@ class ActorStateGenerator : IIncrementalGenerator
                     .OfType<IMethodSymbol>()
                     .Any(m => m.IsStatic && m.Parameters.Length == 0) == true;
 
-                return ModelExtractors.ExtractActorModel(symbol, iParsable, hasCreateVersion7);
+                return ModelExtractors.ExtractActorModel(symbol, iParsable, hasCreateVersion7, ctx.SemanticModel.Compilation);
             })
             .Where(static x => x != null)
             .Select(static (x, _) => x!.Value)
@@ -61,5 +65,25 @@ class ActorStateGenerator : IIncrementalGenerator
             var output = template.Render(model, member => member.Name);
             ctx.AddSource($"{actor.FileName}.State.cs", output);
         });
+
+        // Generate [GenerateSerializer] for partial user-defined types found in actor state
+        var stateTypes = actors
+            .SelectMany(static (actor, _) => actor.StateTypes.AsImmutableArray())
+            .Collect()
+            .SelectMany(static (types, _) => types.Distinct().ToImmutableArray())
+            .WithTrackingName(TrackingNames.StateSerializableTypes);
+
+        context.RegisterImplementationSourceOutput(
+            stateTypes.Combine(config).Combine(context.CompilationProvider).Combine(context.ParseOptionsProvider),
+            (ctx, source) =>
+            {
+                var (((type, config), compilation), parseOptions) = source;
+
+                if (config.ProduceReferenceAssembly)
+                    return;
+
+                ctx.GenerateCode(type.Name, type.Namespace, type.FullName, type.IsRecord,
+                    config, compilation, parseOptions as CSharpParseOptions);
+            });
     }
 }
