@@ -1,5 +1,22 @@
 # Changelog
 
+## [v1.0.0-beta](https://github.com/devlooped/CloudActors/tree/v1.0.0-beta) (2026-04-16)
+
+[Full Changelog](https://github.com/devlooped/CloudActors/compare/v1.0.0-alpha...v1.0.0-beta)
+
+:sparkles: Implemented enhancements:
+
+- Enable STJ source-gen for actor state/event serialization [\#219](https://github.com/devlooped/CloudActors/pull/219) (@kzu)
+- Rename and restructure CloudActors packages [\#215](https://github.com/devlooped/CloudActors/pull/215) (@kzu)
+- Implement DCA005 diagnostic for non-serializable actor state types [\#214](https://github.com/devlooped/CloudActors/pull/214) (@kzu)
+
+:twisted_rightwards_arrows: Merged:
+
+- Avoid error during dotnet format from improper analyzer [\#218](https://github.com/devlooped/CloudActors/pull/218) (@kzu)
+- Don't run Cecil/ILRepack in designtime builds [\#217](https://github.com/devlooped/CloudActors/pull/217) (@kzu)
+- Update docs: clarify actor APIs, storage, and conventions [\#210](https://github.com/devlooped/CloudActors/pull/210) (@kzu)
+- Fix improper hosting API call for cloud actors in SKILL.md [\#209](https://github.com/devlooped/CloudActors/pull/209) (@kzu)
+
 ## [v1.0.0-alpha](https://github.com/devlooped/CloudActors/tree/v1.0.0-alpha) (2026-04-15)
 
 [Full Changelog](https://github.com/devlooped/CloudActors/compare/v0.5.0-rc.2...v1.0.0-alpha)
