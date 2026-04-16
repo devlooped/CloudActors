@@ -20,8 +20,9 @@ src/
 ├── CloudActors.Abstractions.CodeAnalysis/  # Source generators + analyzers that run in actor domain projects
 ├── CloudActors.Abstractions.CodeFix/   # Roslyn code fixes for diagnostics
 ├── CloudActors.Abstractions.Package/   # NuGet packaging for Abstractions
-├── CloudActors/                        # Runtime: OrleansActorBus, state factory, DI extensions
-├── CloudActors.CodeAnalysis/           # Source generators that run in Orleans silo projects
+├── CloudActors.Package/                # NuGet meta-package (Devlooped.CloudActors)
+├── CloudActors.Hosting/                # Runtime: OrleansActorBus, state factory, DI extensions
+├── CloudActors.Hosting.CodeAnalysis/           # Source generators that run in Orleans silo projects
 ├── CloudActors.Streamstone/            # Optional Streamstone/Azure Table Storage grain storage provider
 ├── TestApp/                            # End-to-end ASP.NET + Orleans host sample
 ├── TestDomain/                         # Sample actor domain library (used by tests)

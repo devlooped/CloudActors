@@ -1,10 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyName>Devlooped.CloudActors</AssemblyName>
+    <AssemblyName>Devlooped.CloudActors.Hosting</AssemblyName>
     <TargetFramework>net10.0</TargetFramework>
     <PackageId>$(AssemblyName)</PackageId>
-    <Description>Cloud Native Actors Orleans Hosting</Description>
+    <Description>Orleans hosting, runtime integration, and DI extensions for CloudActors.</Description>
     <PackageTags>dotnet orleans actor hosting</PackageTags>
     <PackageLicenseExpression></PackageLicenseExpression>
     <PackageLicenseFile>OSMFEULA.txt</PackageLicenseFile>
@@ -20,7 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\CloudActors.Abstractions\CloudActors.Abstractions.csproj" Pack="false" />
     <ProjectReference Include="..\CloudActors.Abstractions.Package\CloudActors.Abstractions.Package.msbuildproj" ReferenceOutputAssembly="false" />
-    <ProjectReference Include="..\CloudActors.CodeAnalysis\CloudActors.CodeAnalysis.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\CloudActors.Hosting.CodeAnalysis\CloudActors.Hosting.CodeAnalysis.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>

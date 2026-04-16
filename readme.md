@@ -34,7 +34,7 @@ OSMF tier. A single fee covers all of [Devlooped packages](https://www.nuget.org
 ## Overview
 
 Rather than the RPC-style programming offered (and encouraged) out of the 
-box by Orleans, Cloud Actors offers a message-passing style of programming 
+box by Orleans, Cloud Native Actors offers a message-passing style of programming 
 with a uniform API to access actors: Execute and Query. 
 
 These uniform operations receive a message (a.k.a. command or query) and 
@@ -347,7 +347,7 @@ type works out of the box. The most popular choices include:
 - [StronglyTypedId](https://www.nuget.org/packages/StronglyTypedId) — attribute-driven, supports multiple backing types
 - [Vogen](https://www.nuget.org/packages/Vogen) — value-object generator with validation support
 
-CloudActors detects these types automatically: if the actor's first constructor parameter 
+Cloud Native Actors detects these types automatically: if the actor's first constructor parameter 
 implements `IParsable<T>`, it is treated as the typed ID and the generator produces typed 
 `IActorBus` overloads for it — no extra configuration required.
 
