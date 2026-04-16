@@ -172,7 +172,7 @@ static class AnalysisExtensions
         var messageAdditionalTypes = CollectMessageAdditionalTypes(compilation);
 
         // Only return partial, non-actor, non-message types not already covered by message generation
-        return candidates
+        return [.. candidates
             .Where(t => t.IsPartial() && !t.IsActorMessage() && !t.IsActor() &&
                 !messageAdditionalTypes.Contains(t))
             .Select(t => new SerializableTypeModel(
@@ -180,8 +180,7 @@ static class AnalysisExtensions
                 t.ContainingNamespace.IsGlobalNamespace ? "" : t.ContainingNamespace.ToDisplayString(),
                 t.ToDisplayString(FullName),
                 t.IsRecord))
-            .Distinct()
-            .ToImmutableArray();
+            .Distinct()];
     }
 
     /// <summary>

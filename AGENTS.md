@@ -235,6 +235,10 @@ Template: `EventSourced.sbntxt`
 
 Helper that wraps the Orleans Roslyn source generator (`Microsoft.Orleans.CodeGenerator`) to produce the `.orleans.cs` file from generated code. Uses `CodeGeneratorOptions` with `GenerateFieldIds` and `GenerateCompatibilityInvokers` sourced from MSBuild properties.
 
+### JsonContextGenerator
+
+Helper that discovers and invokes the STJ (`System.Text.Json`) source generator via reflection at build time. Uses `AppDomain.CurrentDomain.GetAssemblies()` to find `System.Text.Json.SourceGeneration.JsonSourceGenerator`, creates an instance, and runs it via `CSharpGeneratorDriver`. The generated `ActorJsonContext` (nested in `ActorState`) gets its abstract members implemented by the STJ gen output. Falls back gracefully (no `ActorJsonContext` emitted) if the STJ gen is unavailable.
+
 ---
 
 ## Typed Actor IDs
@@ -269,6 +273,7 @@ An optional event-store-aware `IGrainStorage` implementation backed by [Streamst
 - For regular actors: state is stored as a single JSON entity
 - **Auto-snapshot**: when `StreamstoneOptions.AutoSnapshot = true`, each write also atomically upserts a `"State"` row with the serialized current state. On load, if the snapshot is version-compatible with the assembly, it is used directly (no event replay needed)
 - **Version compatibility**: controlled by `SnapshotVersionCompatibility` (Major or Minor)
+- **STJ source-generated serialization**: The generated `ActorState` class includes a nested `ActorJsonContext : JsonSerializerContext` with `[JsonSerializable]` attributes for the state type, custom state member types, and event types. `StreamstoneStorage` resolves JSON options via `IActorState.JsonOptions`, falling back to `StreamstoneOptions.JsonOptions` when unavailable. The STJ source generator is invoked programmatically at build time via reflection (discovered from loaded build-time assemblies via `StjGenerator.cs`).
 - Register via extension methods on `ISiloBuilder`:
   - `AddStreamstoneActorStorageAsDefault()` — registers as the default grain storage provider
   - `AddStreamstoneActorStorageAsDefault(Action<StreamstoneOptions> configure)` — with configuration

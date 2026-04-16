@@ -38,14 +38,16 @@ record struct ActorModel(
     /// <summary>Whether the Guid type has CreateVersion7 method (for primitive Guid IDs).</summary>
     bool HasGuidCreateVersion7,
     /// <summary>Partial user-defined types referenced from actor state that need [GenerateSerializer].</summary>
-    EquatableArray<SerializableTypeModel> StateTypes) : IEquatable<ActorModel>
+    EquatableArray<SerializableTypeModel> StateTypes,
+    /// <summary>Event type names for event-sourced actors (for [JsonSerializable] generation).</summary>
+    EquatableArray<string> EventTypes) : IEquatable<ActorModel>
 {
     public string FileName => FullName.Replace('+', '.');
 }
 
 record struct ActorMemberModel(string Name, string TypeName) : IEquatable<ActorMemberModel>
 {
-    public string Type => TypeName switch
+    public readonly string Type => TypeName switch
     {
         "System.String" => "string",
         "System.Int32" => "int",
@@ -92,7 +94,7 @@ record struct SerializableTypeModel(
     string FullName,
     bool IsRecord) : IEquatable<SerializableTypeModel>
 {
-    public string FileName => FullName.Replace('+', '.');
+    public readonly string FileName => FullName.Replace('+', '.');
 }
 
 /// <summary>
@@ -109,7 +111,7 @@ record struct ActorMessageModel(
     string? ReturnTypeFullName,
     EquatableArray<SerializableTypeModel> AdditionalTypes) : IEquatable<ActorMessageModel>
 {
-    public string FileName => FullName.Replace('+', '.');
+    public readonly string FileName => FullName.Replace('+', '.');
 }
 
 // ──────────────────────────────────────────────
@@ -226,6 +228,15 @@ static class ModelExtractors
             ? AnalysisExtensions.CollectStateSerializableTypes(actor, ns, compilation)
             : ImmutableArray<SerializableTypeModel>.Empty;
 
+        // Collect event types from partial void Apply(EventType) methods
+        var eventTypes = isEventSourced
+            ? [.. actor.GetMembers()
+                .OfType<IMethodSymbol>()
+                .Where(m => m.Name == "Apply" && m.ReturnsVoid && m.Parameters.Length == 1 && !m.IsAbstract)
+                .Select(m => m.Parameters[0].Type.ToDisplayString(FullName))
+                .Distinct()]
+            : ImmutableArray<string>.Empty;
+
         return new ActorModel(
             Name: actor.Name,
             Namespace: ns,
@@ -243,7 +254,8 @@ static class ModelExtractors
             IsPrimitiveId: isPrimitiveId,
             IsTypedId: isTypedId,
             HasGuidCreateVersion7: hasGuidCreateVersion7,
-            StateTypes: stateTypes);
+            StateTypes: stateTypes,
+            EventTypes: eventTypes);
     }
 
     static (string? IdTypeFullName, bool IsPrimitive, bool IsTypedId) ExtractIdInfo(
@@ -416,6 +428,6 @@ static class ModelExtractors
                 }
             }
         }
-        return events.ToImmutableArray();
+        return [.. events];
     }
 }
