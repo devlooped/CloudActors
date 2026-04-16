@@ -1,6 +1,6 @@
 <Project InitialTargets="SetLocalVersion">
 
-  <Import Project="ILRepack.targets" Condition="'$(IsRoslynComponent)' == 'true'"/>
+  <Import Project="ILRepack.targets" Condition="'$(IsRoslynComponent)' == 'true' and '$(DesignTimeBuild)' != 'true'"/>
 
   <PropertyGroup>
     <ILRepackExcludeFile>$(MSBuildThisFileDirectory)ILRepackExcludes.txt</ILRepackExcludeFile>
@@ -10,7 +10,7 @@
     <ILRepackInclude Include="Orleans.CodeGenerator" />
   </ItemGroup>
 
-  <Target Name="RemoveOrleansGenerator" AfterTargets="ILRepack" Condition="'$(IsRoslynComponent)' == 'true' and '$(ILRepack)' == 'true'">
+  <Target Name="RemoveOrleansGenerator" AfterTargets="ILRepack" Condition="'$(IsRoslynComponent)' == 'true' and '$(ILRepack)' == 'true' and '$(DesignTimeBuild)' != 'true'">
     <Exec Command="dotnet run cecil.cs @(IntermediateAssembly -&gt; '%(FullPath)') Orleans.CodeGenerator.OrleansSerializationSourceGenerator" WorkingDirectory="$(MSBuildThisFileDirectory)" />
   </Target>
 
