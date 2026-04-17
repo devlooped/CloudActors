@@ -1,5 +1,21 @@
 # Changelog
 
+## [v1.0.0-rc](https://github.com/devlooped/CloudActors/tree/v1.0.0-rc) (2026-04-17)
+
+[Full Changelog](https://github.com/devlooped/CloudActors/compare/v1.0.0-beta...v1.0.0-rc)
+
+:sparkles: Implemented enhancements:
+
+- Strongly-typed actor IDs and actor-specific bus overloads [\#221](https://github.com/devlooped/CloudActors/pull/221) (@kzu)
+
+:hammer: Other:
+
+- Improve performance of ActorState by generating JsonContext for it [\#138](https://github.com/devlooped/CloudActors/issues/138)
+
+:twisted_rightwards_arrows: Merged:
+
+- Ignore repo-level skills which are populated by dependencies like Str… [\#220](https://github.com/devlooped/CloudActors/pull/220) (@kzu)
+
 ## [v1.0.0-beta](https://github.com/devlooped/CloudActors/tree/v1.0.0-beta) (2026-04-16)
 
 [Full Changelog](https://github.com/devlooped/CloudActors/compare/v1.0.0-alpha...v1.0.0-beta)
