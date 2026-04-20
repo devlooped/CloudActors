@@ -1,16 +1,12 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 
 namespace Devlooped.CloudActors;
 
-/// <summary>
-/// Creates actor ID values from a string grain key.
-/// </summary>
+/// <summary>Creates actor ID values from a string grain key.</summary>
 public interface IActorIdFactory
 {
-    /// <summary>
-    /// Creates an actor ID value for the given actor type from a string key.
-    /// </summary>
+    /// <summary>Creates an actor ID value for the given actor type from a string key.</summary>
     object Create(Type actorType, string key);
 }
 

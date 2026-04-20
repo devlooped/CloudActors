@@ -26,9 +26,7 @@ static class OrleansGeneratorExtensions
             .Combine(context.ParseOptionsProvider)
             .Select((x, _) => new OrleansGeneratorOptions(x.Left.Left, x.Right as CSharpParseOptions, x.Left.Right));
 
-    /// <summary>
-    /// Gets a string-only <see cref="OrleansConfig"/> suitable for incremental pipeline values.
-    /// </summary>
+    /// <summary>Gets a string-only <see cref="OrleansConfig"/> suitable for incremental pipeline values.</summary>
     public static IncrementalValueProvider<OrleansConfig> GetOrleansConfig(this IncrementalGeneratorInitializationContext context)
         => context.AnalyzerConfigOptionsProvider
             .Select((x, _) => ModelExtractors.ExtractOrleansConfig(x.GlobalOptions))

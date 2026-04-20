@@ -1,4 +1,4 @@
-using Devlooped.CloudActors;
+﻿using Devlooped.CloudActors;
 using System.Threading.Tasks;
 using System.Threading;
 using System;
@@ -134,8 +134,6 @@ public class MyActorGrain : Grain, IGrainWithStringKey
         }
     }
 
-    /// <summary>
-    /// Just like the JournaledGrain, upon activation, we read the state from storage.
-    /// </summary>
+    /// <summary>Just like the JournaledGrain, upon activation, we read the state from storage.</summary>
     public override Task OnActivateAsync(CancellationToken cancellationToken) => storage.ReadStateAsync();
 }

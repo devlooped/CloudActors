@@ -3,9 +3,7 @@ using System.Text.Json;
 
 namespace Devlooped.CloudActors;
 
-/// <summary>
-/// Marker interface for actor state.
-/// </summary>
+/// <summary>Marker interface for actor state.</summary>
 [EditorBrowsable(EditorBrowsableState.Never)]
 public interface IActorState
 {
@@ -16,9 +14,7 @@ public interface IActorState
     JsonSerializerOptions? JsonOptions => null;
 }
 
-/// <summary>
-/// Generic version of the marker interface for state so we can track back its owning actor type.
-/// </summary>
+/// <summary>Generic version of the marker interface for state so we can track back its owning actor type.</summary>
 [EditorBrowsable(EditorBrowsableState.Never)]
 public interface IActorState<TActor> : IActorState
 {

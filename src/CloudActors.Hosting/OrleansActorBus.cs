@@ -8,9 +8,7 @@ using static Devlooped.CloudActors.Telemetry;
 
 namespace Devlooped.CloudActors;
 
-/// <summary>
-/// Implements the <see cref="IActorBus"/> interface over an <see cref="IGrainFactory"/>.
-/// </summary>
+/// <summary>Implements the <see cref="IActorBus"/> interface over an <see cref="IGrainFactory"/>.</summary>
 public class OrleansActorBus(IGrainFactory factory) : IActorBus
 {
     /// <inheritdoc/>
