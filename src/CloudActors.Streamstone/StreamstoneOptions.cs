@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Devlooped.CloudActors;
@@ -45,4 +46,29 @@ public class StreamstoneOptions
 
     /// <summary>The settings to use when serializing and deserializing events, and snapshot if <see cref="AutoSnapshot"/> is true.</summary>
     public JsonSerializerOptions JsonOptions { get; set; } = options;
+
+    /// <summary>
+    /// When <see langword="true"/>, writes from event-sourced actors are queued and persisted in the background, returning
+    /// from <see cref="StreamstoneStorage.WriteStateAsync"/> as soon as the events have been accepted by the actor instead
+    /// of waiting for the underlying Azure Table Storage round-trip to complete. Bursts of writes are coalesced into batched
+    /// <c>Stream.WriteAsync</c> calls. The queue is flushed on grain deactivation. If a write ultimately fails after the
+    /// configured retries, the grain is forcefully deactivated so it reloads from storage on next activation.
+    /// </summary>
+    /// <remarks>
+    /// Only applies to actors implementing <see cref="IEventSourced"/>. Snapshot-only actors continue to write synchronously
+    /// regardless of this flag. Defaults to <see langword="false"/>, preserving the synchronous write semantics.
+    /// </remarks>
+    public bool BackgroundSave { get; set; }
+
+    /// <summary>
+    /// Maximum number of attempts the background writer will perform before giving up and forcing the grain to deactivate.
+    /// Only relevant when <see cref="BackgroundSave"/> is <see langword="true"/>. Defaults to <c>5</c>.
+    /// </summary>
+    public int BackgroundSaveMaxAttempts { get; set; } = 5;
+
+    /// <summary>
+    /// Initial backoff delay between retry attempts in the background writer. Each subsequent retry doubles this delay (capped at 30s).
+    /// Only relevant when <see cref="BackgroundSave"/> is <see langword="true"/>. Defaults to <c>200ms</c>.
+    /// </summary>
+    public TimeSpan BackgroundSaveRetryDelay { get; set; } = TimeSpan.FromMilliseconds(200);
 }

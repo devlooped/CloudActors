@@ -146,6 +146,80 @@ public class StreamstoneTests
         Assert.Contains(dataValues, j => j.Contains("\"Fraud\""));       // Closed event: string enum
         Assert.DoesNotContain(dataValues, j => j.Contains("\"reason\"")); // Not camelCase
     }
+
+    [Fact]
+    public async Task BackgroundSave_DrainsOnFlush()
+    {
+        await CloudStorageAccount.DevelopmentStorageAccount
+            .CreateCloudTableClient()
+            .DeleteTableAsync(nameof(Account));
+
+        var account = new Account("bgs-1");
+        account.Deposit(new Deposit(100));
+        account.Withdraw(new Withdraw(40));
+
+        var storage = new StreamstoneStorage(
+            CloudStorageAccount.DevelopmentStorageAccount,
+            new StreamstoneOptions { BackgroundSave = true });
+
+        var actor = (IActor<Account.ActorState>)account;
+        var grainState = GrainState.Create(actor.GetState());
+        var grainId = GrainId.Parse("account/bgs-1");
+
+        // Returns immediately; events live in the background queue.
+        await storage.WriteStateAsync(nameof(Account), grainId, grainState);
+        // AcceptEvents() was called synchronously inside Submit, so the actor's pending events are gone.
+        Assert.Empty(((IEventSourced)grainState.State).Events);
+
+        // Flush forces the worker to drain.
+        await storage.FlushAsync(nameof(Account), grainId);
+
+        var readState = GrainState.Create<Account.ActorState>(((IActor<Account.ActorState>)new Account("bgs-1")).GetState());
+        await storage.ReadStateAsync(nameof(Account), grainId, readState);
+        actor.SetState(readState.State);
+
+        Assert.Equal(60m, readState.State.Balance);
+    }
+
+    [Fact]
+    public async Task BackgroundSave_CoalescesMultipleWrites()
+    {
+        await CloudStorageAccount.DevelopmentStorageAccount
+            .CreateCloudTableClient()
+            .DeleteTableAsync(nameof(Account));
+
+        var account = new Account("bgs-2");
+        var actor = (IActor<Account.ActorState>)account;
+        var grainState = GrainState.Create(actor.GetState());
+        var grainId = GrainId.Parse("account/bgs-2");
+
+        var storage = new StreamstoneStorage(
+            CloudStorageAccount.DevelopmentStorageAccount,
+            new StreamstoneOptions { BackgroundSave = true });
+
+        // Three sequential writes within the same scheduler — they coalesce in the worker queue.
+        // We must re-snapshot state via actor.GetState() before each write, mirroring what the
+        // generated grain does after each command.
+        account.Deposit(new Deposit(10));
+        grainState.State = actor.GetState();
+        await storage.WriteStateAsync(nameof(Account), grainId, grainState);
+
+        account.Deposit(new Deposit(20));
+        grainState.State = actor.GetState();
+        await storage.WriteStateAsync(nameof(Account), grainId, grainState);
+
+        account.Withdraw(new Withdraw(5));
+        grainState.State = actor.GetState();
+        await storage.WriteStateAsync(nameof(Account), grainId, grainState);
+
+        await storage.FlushAsync(nameof(Account), grainId);
+
+        var readState = GrainState.Create<Account.ActorState>(((IActor<Account.ActorState>)new Account("bgs-2")).GetState());
+        await storage.ReadStateAsync(nameof(Account), grainId, readState);
+        actor.SetState(readState.State);
+
+        Assert.Equal(25m, readState.State.Balance);
+    }
 }
 
 

@@ -3,8 +3,11 @@ using System.ComponentModel;
 using Devlooped;
 using Devlooped.CloudActors;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Orleans.Providers;
+using Orleans.Runtime;
 using Orleans.Runtime.Hosting;
 
 namespace Orleans.Hosting;
@@ -40,7 +43,9 @@ public static class StreamstoneSiloBuilderExtensions
         return services.AddGrainStorage(name, (sp, name) =>
         {
             var snapshot = sp.GetRequiredService<IOptionsMonitor<StreamstoneOptions>>();
-            return new StreamstoneStorage(sp.GetRequiredService<CloudStorageAccount>(), snapshot.Get(name));
+            var logger = sp.GetService<ILogger<StreamstoneStorage>>() ?? NullLogger<StreamstoneStorage>.Instance;
+            var contextAccessor = sp.GetService<IGrainContextAccessor>();
+            return new StreamstoneStorage(sp.GetRequiredService<CloudStorageAccount>(), snapshot.Get(name), logger, contextAccessor);
         });
     }
 }
