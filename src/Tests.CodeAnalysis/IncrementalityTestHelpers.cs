@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -9,17 +9,13 @@ using Microsoft.CodeAnalysis.Testing;
 
 namespace Devlooped.CloudActors;
 
-/// <summary>
-/// Helper methods for incrementality tests following the dotnet/runtime pattern.
-/// </summary>
+/// <summary>Helper methods for incrementality tests following the dotnet/runtime pattern.</summary>
 static class IncrementalityTestHelpers
 {
     static readonly Lazy<ImmutableArray<MetadataReference>> cachedReferences = new(
         () => ReferenceAssemblies.Net.Net90.ResolveAsync(null, default).Result);
 
-    /// <summary>
-    /// Creates a <see cref="CSharpCompilation"/> with CloudActors abstractions and .NET 9.0 references.
-    /// </summary>
+    /// <summary>Creates a <see cref="CSharpCompilation"/> with CloudActors abstractions and .NET 9.0 references.</summary>
     public static CSharpCompilation CreateCompilation(params string[] sources)
     {
         var parseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest);
@@ -40,9 +36,7 @@ static class IncrementalityTestHelpers
         yield return MetadataReference.CreateFromFile(abstractionsAsm.Location);
     }
 
-    /// <summary>
-    /// Creates a <see cref="CSharpGeneratorDriver"/> with step tracking enabled.
-    /// </summary>
+    /// <summary>Creates a <see cref="CSharpGeneratorDriver"/> with step tracking enabled.</summary>
     public static GeneratorDriver CreateDriver(params IIncrementalGenerator[] generators)
     {
         return CSharpGeneratorDriver.Create(
@@ -82,9 +76,7 @@ static class IncrementalityTestHelpers
             $"Available steps: [{string.Join(", ", result.TrackedSteps.Keys)}]");
     }
 
-    /// <summary>
-    /// Asserts that the specified tracked step outputs all have the expected reason.
-    /// </summary>
+    /// <summary>Asserts that the specified tracked step outputs all have the expected reason.</summary>
     public static void AssertStepOutputReason(
         GeneratorRunResult result,
         string stepName,
@@ -103,9 +95,7 @@ static class IncrementalityTestHelpers
         }
     }
 
-    /// <summary>
-    /// Gets the output reasons for a specific tracked step.
-    /// </summary>
+    /// <summary>Gets the output reasons for a specific tracked step.</summary>
     public static IReadOnlyList<IncrementalStepRunReason> GetStepOutputReasons(
         GeneratorRunResult result,
         string stepName)

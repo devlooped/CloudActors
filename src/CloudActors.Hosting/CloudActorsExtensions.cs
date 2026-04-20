@@ -11,9 +11,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 [EditorBrowsable(EditorBrowsableState.Never)]
 public static partial class CloudActorsExtensions
 {
-    /// <summary>
-    /// Adds the <see cref="IActorBus"/> service and actor activation logic. 
-    /// </summary>
+    /// <summary>Adds the <see cref="IActorBus"/> service and actor activation logic. </summary>
     public static IServiceCollection AddCloudActors(this IServiceCollection services, IActorIdFactory? idFactory = default)
     {
         services.TryAddSingleton<IActorBus>(sp => new OrleansActorBus(sp.GetRequiredService<IGrainFactory>()));

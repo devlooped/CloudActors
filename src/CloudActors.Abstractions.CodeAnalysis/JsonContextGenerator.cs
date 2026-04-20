@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
@@ -16,9 +16,7 @@ static class JsonContextGenerator
 {
     static readonly Lazy<Type?> generatorType = new(FindGeneratorType);
 
-    /// <summary>
-    /// Whether the STJ source generator is available in the current build context.
-    /// </summary>
+    /// <summary>Whether the STJ source generator is available in the current build context.</summary>
     public static bool IsAvailable => generatorType.Value != null;
 
     /// <summary>

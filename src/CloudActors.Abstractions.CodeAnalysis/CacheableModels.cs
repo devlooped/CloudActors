@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
@@ -85,9 +85,7 @@ enum ActorMessageKind
     Query
 }
 
-/// <summary>
-/// Minimal model for a type that needs [GenerateSerializer] annotation.
-/// </summary>
+/// <summary>Minimal model for a type that needs [GenerateSerializer] annotation.</summary>
 record struct SerializableTypeModel(
     string Name,
     string Namespace,
@@ -97,9 +95,7 @@ record struct SerializableTypeModel(
     public readonly string FileName => FullName.Replace('+', '.');
 }
 
-/// <summary>
-/// String-only model for an actor message type.
-/// </summary>
+/// <summary>String-only model for an actor message type.</summary>
 record struct ActorMessageModel(
     string Name,
     string Namespace,
@@ -325,9 +321,7 @@ static class ModelExtractors
         return false;
     }
 
-    /// <summary>
-    /// Extracts an <see cref="ActorMessageModel"/> from a declared message symbol.
-    /// </summary>
+    /// <summary>Extracts an <see cref="ActorMessageModel"/> from a declared message symbol.</summary>
     public static ActorMessageModel? ExtractActorMessageModel(
         INamedTypeSymbol type,
         INamedTypeSymbol? voidCommand,
@@ -391,9 +385,7 @@ static class ModelExtractors
             AdditionalTypes: additionalTypes);
     }
 
-    /// <summary>
-    /// Extracts <see cref="OrleansConfig"/> from analyzer config options.
-    /// </summary>
+    /// <summary>Extracts <see cref="OrleansConfig"/> from analyzer config options.</summary>
     public static OrleansConfig ExtractOrleansConfig(Microsoft.CodeAnalysis.Diagnostics.AnalyzerConfigOptions options)
     {
         var isServer = options.TryGetValue("build_property.IsCloudActorsServer", out var sv) &&

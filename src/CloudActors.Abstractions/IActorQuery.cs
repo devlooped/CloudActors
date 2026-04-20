@@ -1,6 +1,4 @@
 ﻿namespace Devlooped.CloudActors;
 
-/// <summary>
-/// Marker interface for actor queries.
-/// </summary>
+/// <summary>Marker interface for actor queries.</summary>
 public interface IActorQuery<out TResult> : IActorMessage { }
