@@ -60,6 +60,31 @@ public class TestAccounts : IAsyncDisposable
     }
 
     [Fact]
+    public async Task HostedJournaledGrain()
+    {
+        await CloudStorageAccount.DevelopmentStorageAccount
+            .CreateCloudTableClient()
+            .DeleteTableAsync(nameof(JournaledAccount));
+
+        using (var cluster = ClusterFixture.CreateCluster())
+        {
+            var bus = cluster.ServiceProvider.GetRequiredService<IActorBus>();
+
+            await bus.ExecuteAsync(JournaledAccount.NewId("j1"), new Deposit(100));
+            await bus.ExecuteAsync(JournaledAccount.NewId("j1"), new Withdraw(40));
+
+            var balance = await bus.QueryAsync(JournaledAccount.NewId("j1"), GetBalance.Default);
+            Assert.Equal(60, balance);
+        }
+
+        using (var cluster = ClusterFixture.CreateCluster())
+        {
+            var bus = cluster.ServiceProvider.GetRequiredService<IActorBus>();
+            Assert.Equal(60, await bus.QueryAsync(JournaledAccount.NewId("j1"), GetBalance.Default));
+        }
+    }
+
+    [Fact]
     public async Task WebAppHosting()
     {
         var siloPort = 11111;

@@ -1,6 +1,7 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Runtime.Serialization;
 using Devlooped.CloudActors;
+using Orleans.EventSourcing;
 using Orleans.Runtime;
 
 namespace Tests;
@@ -54,6 +55,13 @@ public class GrainsGeneration
         Assert.Equal("Foo", attr.StateName);
         Assert.Equal("Bar", attr.StorageName);
     }
+
+    [Fact]
+    public void JournaledActorGeneratesJournaledGrain()
+    {
+        Assert.Equal(typeof(JournaledGrain<JournaledActor.ActorState, object>), typeof(JournaledActorGrain).BaseType);
+        Assert.False(typeof(IEventSourced).IsAssignableFrom(typeof(JournaledActor.ActorState)));
+    }
 }
 
 [Actor]
@@ -83,3 +91,23 @@ public partial class ActorWithStateAndStorageProvider(string id)
     [IgnoreDataMember]
     public string Id => id;
 }
+
+[Actor]
+[Journaled]
+public partial class JournaledActor(string id) : IEventSourced
+{
+    [IgnoreDataMember]
+    public string Id => id;
+
+    public decimal Balance { get; private set; }
+
+    public void Deposit(AddFunds _) => Raise(new JournaledDeposited(10));
+
+    public decimal Query(GetBalance _) => Balance;
+
+    partial void Apply(JournaledDeposited e) => Balance += e.Amount;
+}
+
+public partial record AddFunds() : IActorCommand;
+public partial record GetBalance() : IActorQuery<decimal>;
+public partial record JournaledDeposited(decimal Amount);

@@ -9,6 +9,7 @@ supporting Cloud Native Actors on Azure Table Storage.
 
 * Supports plain CLR objects as grain state
 * Supports event sourced actors
+* Supports journaled CloudActors actors via Orleans `CustomStorage`
 * Supports automatic snapshots for faster state reading 
 
 See [Streamstone](https://github.com/yevhen/Streamstone) for more details.
@@ -31,6 +32,8 @@ builder.UseOrleans(silo =>
 builder.Services.AddCloudActors(); // 👈 registers grains, serializers, etc.
 ```
 
+For `[Actor]` + `[Journaled]` actors using the default `CustomStorage` backend, the same registration also activates the Orleans EventSourcing custom log-consistency provider through generated host-side registration code.
+
 Alternatively, you can register the provider under a specific name instead of the default:
 
 ```csharp
@@ -43,6 +46,8 @@ And actors can then opt in to the named provider explicitly:
 [Actor(nameof(Account), "streamstone")]
 public partial class Account : IEventSourced
 ```
+
+The same named provider also applies to `[Journaled(ProviderName = "streamstone")]` actors. When the host references both `Devlooped.CloudActors.Streamstone` and Orleans EventSourcing, Streamstone generates a registrar that wires `AddCustomStorageBasedLogConsistencyProvider("streamstone")` automatically when `AddStreamstoneActorStorage("streamstone")` runs.
 
 ### Storage
 

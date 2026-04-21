@@ -22,15 +22,19 @@ public static class StreamstoneSiloBuilderExtensions
 
     /// <summary>Adds Streamstone actor storage provider as the default grain storage provider and provides a configuration action.</summary>
     public static ISiloBuilder AddStreamstoneActorStorageAsDefault(this ISiloBuilder builder, Action<StreamstoneOptions> configure)
-        => builder.ConfigureServices(services => services.AddStreamstoneActorStorage(ProviderConstants.DEFAULT_STORAGE_PROVIDER_NAME, configure));
+        => builder.AddStreamstoneActorStorage(ProviderConstants.DEFAULT_STORAGE_PROVIDER_NAME, configure);
 
     /// <summary>Adds a named Streamstone actor storage provider.</summary>
     public static ISiloBuilder AddStreamstoneActorStorage(this ISiloBuilder builder, string name)
-        => builder.ConfigureServices(services => services.AddStreamstoneActorStorage(name, null));
+        => builder.AddStreamstoneActorStorage(name, (Action<StreamstoneOptions>?)null);
 
     /// <summary>Adds a named Streamstone actor storage provider and provides a configuration action.</summary>
-    public static ISiloBuilder AddStreamstoneActorStorage(this ISiloBuilder builder, string name, Action<StreamstoneOptions> configure)
-        => builder.ConfigureServices(services => services.AddStreamstoneActorStorage(name, configure));
+    public static ISiloBuilder AddStreamstoneActorStorage(this ISiloBuilder builder, string name, Action<StreamstoneOptions>? configure)
+    {
+        builder.ConfigureServices(services => services.AddStreamstoneActorStorage(name, configure));
+        builder.AddCustomStorageBasedLogConsistencyProvider(name);
+        return builder;
+    }
 
     internal static IServiceCollection AddStreamstoneActorStorage(
         this IServiceCollection services,

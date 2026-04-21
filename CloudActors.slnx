@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CloudActors.Streamstone.CodeAnalysis/CloudActors.Streamstone.CodeAnalysis.csproj" />
+  </Folder>
   <Project Path="src/CloudActors.Abstractions.CodeAnalysis/CloudActors.Abstractions.CodeAnalysis.csproj" />
   <Project Path="src/CloudActors.Abstractions.CodeFix/CloudActors.Abstractions.CodeFix.csproj" />
   <Project Path="src/CloudActors.Abstractions.Package/CloudActors.Abstractions.Package.msbuildproj" Type="13b669be-bb05-4ddf-9536-439f39a36129" />

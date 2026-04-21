@@ -8,6 +8,8 @@ CloudActors is an opinionated, simplified actor library for .NET built on Micros
 
 The library makes Orleans grains completely transparent to the developer: actors are plain C# classes annotated with `[Actor]`, and all Orleans plumbing (grain definition, serialization, activation, state persistence) is handled by Roslyn source generators.
 
+`[Actor]` is the default snapshot-backed model. Event-sourced actors can additionally opt into generated `JournaledGrain` wrappers via `[Journaled]`, while keeping the actor itself as a POCO.
+
 Orleans version is centralized in `src/Directory.props` as `$(OrleansVersion)`. Currently targeting **Orleans 10.1.0** and **net10.0**.
 
 ---
@@ -22,8 +24,9 @@ src/
 ├── CloudActors.Abstractions.Package/   # NuGet packaging for Abstractions
 ├── CloudActors.Package/                # NuGet meta-package (Devlooped.CloudActors)
 ├── CloudActors.Hosting/                # Runtime: OrleansActorBus, state factory, DI extensions
-├── CloudActors.Hosting.CodeAnalysis/           # Source generators that run in Orleans silo projects
+├── CloudActors.Hosting.CodeAnalysis/   # Source generators that run in Orleans silo projects
 ├── CloudActors.Streamstone/            # Optional Streamstone/Azure Table Storage grain storage provider
+├── CloudActors.Streamstone.CodeAnalysis/ # Streamstone-specific journaled storage light-up generators
 ├── TestApp/                            # End-to-end ASP.NET + Orleans host sample
 ├── TestDomain/                         # Sample actor domain library (used by tests)
 ├── Tests/                              # Integration tests (Orleans in-process)
@@ -70,6 +73,14 @@ Actor messages should be `partial record` types (required for source generators 
 `ActorAttribute` flags a class as an actor. Optional parameters:
 - `stateName` — overrides the default state name (defaults to the class name)
 - `storageProvider` — Orleans storage provider name (defaults to the default provider)
+
+### [Journaled] attribute
+
+`JournaledAttribute` is an opt-in for event-sourced actors that should generate a `JournaledGrain<TView, TEvent>` wrapper instead of the default snapshot-backed grain.
+
+- Requires the actor to also be `[Actor]` and list `IEventSourced`
+- `Backend` can target `CustomStorage` (default), `StateStorage`, or `LogStorage`
+- `ProviderName` overrides the Orleans log consistency/storage provider name when needed
 
 ### IEventSourced
 
@@ -157,7 +168,8 @@ Emits OpenTelemetry spans (using `ActivitySource`) and metrics (using `Meter`) f
 | Package | Generators | Runs in |
 |---------|-----------|---------|
 | `CloudActors.Abstractions.CodeAnalysis` | `ActorStateGenerator`, `ActorMessageGenerator`, `ActorBusOverloadGenerator`, `ActorPrimitiveIdGenerator`, `EventSourcedGenerator`, `CloudActorsAttributeGenerator` | Actor domain class library |
-| `CloudActors.CodeAnalysis` | `ActorGrainGenerator`, `ActorIdFactoryGenerator`, `ActorsAssemblyGenerator` | Orleans silo / host project |
+| `CloudActors.Hosting.CodeAnalysis` | `ActorGrainGenerator`, `ActorIdFactoryGenerator`, `ActorsAssemblyGenerator` | Orleans silo / host project |
+| `CloudActors.Streamstone.CodeAnalysis` | `StreamstoneCustomStorageGenerator` | Orleans silo / host project referencing Streamstone |
 
 ### Incremental pipeline conventions
 
@@ -174,6 +186,8 @@ Generates, for each actor:
 - A nested `ActorState` record with all **writable instance properties** and **mutable instance fields** (static, const, readonly, and get-only are excluded)
 - Explicit `IActor<ActorState>` implementation: `GetState()` and `SetState(ActorState)` methods
 
+For journaled actors, `ActorState` remains the persisted view (`TView`) only. It does **not** implement the standard `IEventSourced` forwarding bridge used by snapshot-backed actors.
+
 Template: `ActorState.sbntxt`
 
 ### ActorGrainGenerator (`CloudActors.CodeAnalysis`)
@@ -187,7 +201,13 @@ For each actor, generates:
 - After each command, calls `GetState()` and writes via `WriteStateAsync()`
 - Also runs the Orleans code generator (`OrleansGenerator.GenerateCode`) to produce the `.orleans.cs` file
 
-Template: `ActorGrain.sbntxt`
+For `[Journaled]` actors, the generator instead emits a `JournaledGrain<ActorState, object>` wrapper that:
+- uses `ActorState` as the Orleans `TView`
+- instantiates a transient POCO actor from the current view for commands and queries
+- collects actor-raised events, forwards them through `RaiseEvents(...)`, and calls `ConfirmEvents()`
+- replays journaled events in `TransitionState` by rehydrating a transient actor and copying its updated state back to `ActorState`
+
+Template: `StandardGrain.sbntxt`
 
 ### ActorsAssemblyGenerator (`CloudActors.CodeAnalysis`)
 
@@ -273,6 +293,7 @@ ID format stored in Orleans: `"{actortype}/{id}"` (e.g. `"account/42"`, `"produc
 | `DCA003` | Error | Message types may only implement one of `IActorCommand`, `IActorCommand<T>`, `IActorQuery<T>` |
 | `DCA004` | Error | `<ProduceReferenceAssembly>true</ProduceReferenceAssembly>` is not supported in actor projects |
 | `DCA005` | Error | Actor state types must be serializable — make `partial` or add `[GenerateSerializer]` |
+| `DCA006` | Error | `[Journaled]` may only be used on `[Actor]` types implementing `IEventSourced` |
 
 ---
 
@@ -286,6 +307,7 @@ An optional event-store-aware `IGrainStorage` implementation backed by [Streamst
 - **Version compatibility**: controlled by `SnapshotVersionCompatibility` (Major or Minor)
 - **Background save** (`StreamstoneOptions.BackgroundSave`, default `false`): when enabled, `WriteStateAsync` for `IEventSourced` actors is fire-and-forget. Events are snapshotted and `AcceptEvents()` is called synchronously on the grain scheduler; the actual `Stream.WriteAsync` is performed by a per-grain `BatchWorker` (ported from Orleans' `JournaledGrain`/`PrimaryBasedLogViewAdaptor` in `BatchWorker.cs`). Bursts of writes coalesce into a single Streamstone batch (one snapshot row per batch). Knobs: `BackgroundSaveMaxAttempts` (default `5`) and `BackgroundSaveRetryDelay` (default `200ms`, capped exponential backoff). On terminal failure the worker logs and force-deactivates the grain via `IGrainContext.Deactivate` (resolved through `IGrainContextAccessor`); next activation rebuilds from durable storage. Non-event-sourced actors keep the synchronous behavior even when the option is on. Use `StreamstoneStorage.FlushAsync(stateName, grainId)` to await durability from tests or grain code; the worker also auto-flushes on grain deactivation via `IGrainContext.ObservableLifecycle`.
 - **STJ source-generated serialization**: The generated `ActorState` class includes a nested `ActorJsonContext : JsonSerializerContext` with `[JsonSerializable]` attributes for the state type, custom state member types, and event types. `StreamstoneStorage` resolves JSON options via `IActorState.JsonOptions`, falling back to `StreamstoneOptions.JsonOptions` when unavailable. The STJ source generator is invoked programmatically at build time via reflection (discovered from loaded build-time assemblies via `StjGenerator.cs`).
+- **Journaled actors**: `[Journaled]` actors always get a generated host-side `ICustomStorageInterface<ActorState, object>` partial (in the silo project via `CloudActors.Streamstone.CodeAnalysis`). `AddStreamstoneActorStorageAsDefault()` / `AddStreamstoneActorStorage(name)` directly call `AddCustomStorageBasedLogConsistencyProvider(name)`, so both the grain storage and log consistency provider are wired together with a single call. Actors using `[Journaled("StateStorage")]` or `[Journaled("LogStorage")]` still get the generated partial, but the interface is dead code since those providers never call `ICustomStorageInterface`.
 - Register via extension methods on `ISiloBuilder`:
   - `AddStreamstoneActorStorageAsDefault()` — registers as the default grain storage provider
   - `AddStreamstoneActorStorageAsDefault(Action<StreamstoneOptions> configure)` — with configuration
@@ -336,3 +358,6 @@ Test projects:
 - `Tests/` — integration tests (Orleans in-process silo)
 - `Tests.CodeAnalysis/` — incremental source-generator incrementality tests
 - `Tests.CodeFix/` — Roslyn code-fix tests
+
+If during a build you detect a file lock, kill the locking process: it's typically 
+a lock on the analyzer assemblies from VS/VSCode.

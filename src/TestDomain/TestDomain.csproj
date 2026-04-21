@@ -6,6 +6,8 @@
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <!--<ProduceReferenceAssembly>true</ProduceReferenceAssembly>-->
     <NoWarn>RS1036</NoWarn>
+    <!-- Ensure we generate proper STJ serialization code -->
+    <WarningsAsErrors>SYSLIB1030;$(WarningsAsErrors)</WarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>

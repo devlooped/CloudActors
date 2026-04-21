@@ -55,6 +55,8 @@ In addition, this library makes the grains completely transparent to the develop
 need to take a dependency on Orleans. In other words: the developer writes his business logic as 
 a plain CLR object (POCO).
 
+`[Actor]` keeps the default snapshot-backed grain generation. Event-sourced actors can additionally opt into generated journaled grains with `[Journaled]`, still without inheriting from Orleans types.
+
 The central abstraction of the library is the actor bus:
 
 ```csharp
@@ -305,6 +307,46 @@ partial void OnRaised<T>(T @event) where T : notnull;
 
 > [!NOTE]
 > Note how there's no dynamic dispatch here 💯.
+
+## Journaled Actors
+
+When an event-sourced actor needs Orleans journaling semantics, add `[Journaled]` alongside `[Actor]`:
+
+```csharp
+[Actor]
+[Journaled]
+public partial class Account(string id) : IEventSourced
+{
+    public string Id { get; } = id;
+    public decimal Balance { get; private set; }
+
+    public void Execute(Deposit command) => Raise(new Deposited(command.Amount));
+
+    partial void Apply(Deposited @event) => Balance += @event.Amount;
+}
+```
+
+CloudActors keeps the actor itself as a POCO and generates a `JournaledGrain<Account.ActorState, object>` wrapper behind the scenes. The generated nested `ActorState` becomes the Orleans `TView`, while commands and queries still execute through transient instances of the actor class.
+
+`[Journaled]` defaults to whichever backend is configured for JournaledGrainOptions.DefaultLogConsistencyProvider, such as: 
+
+```csharp
+silo.Configure<JournaledGrainOptions>(options =>
+{
+    options.DefaultLogConsistencyProvider = "StateStorage";     // or "LogStorage", "CustomStorage", or your own name
+});
+```
+
+When the host references `Devlooped.CloudActors.Streamstone`, a custom storage implementation is provided automatically for 
+the grains, and calling `AddStreamstoneActorStorageAsDefault()` or `AddStreamstoneActorStorage("name")` will connect that 
+custom log-consistency provider accordingly in Orleans. Orleans-native alternatives are still available in this case by 
+passing custom provider names to the attribute (i.e. `[Journaled("StateStorage")]` or `[Journaled("LogStorage")]`) and 
+registering them as usual in the silo configuration:
+
+```csharp
+silo.AddStateStorageLogConsistencyProvider("StateStorage");
+silo.AddLogStorageLogConsistencyProvider("LogStorage");
+```
 
 An important corollary of this project is that the design of a library and particularly 
 its implementation details, will vary greatly if it can assume source generators will 

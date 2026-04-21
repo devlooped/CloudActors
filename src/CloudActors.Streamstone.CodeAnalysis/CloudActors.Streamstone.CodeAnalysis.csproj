@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>Devlooped.CloudActors.Streamstone.CodeAnalysis</AssemblyName>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <PackFolder>analyzers/dotnet/roslyn4.8/cs</PackFolder>
+    <PackageScribanIncludeSource>true</PackageScribanIncludeSource>
+    <PolySharpIncludeRuntimeSupportedAttributes>true</PolySharpIncludeRuntimeSupportedAttributes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\CloudActors.Abstractions.CodeAnalysis\AnalysisExtensions.cs" Link="AnalysisExtensions.cs" />
+    <Compile Include="..\CloudActors.Abstractions.CodeAnalysis\EquatableArray.cs" Link="EquatableArray.cs" />
+    <Compile Include="..\CloudActors.Abstractions.CodeAnalysis\TrackingNames.cs" Link="TrackingNames.cs" />
+    <Compile Include="..\CloudActors.Abstractions.CodeAnalysis\CacheableModels.cs" Link="CacheableModels.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NuGetizer" Version="1.4.7" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Pack="false" Version="4.8.0" />
+    <PackageReference Include="PolySharp" PrivateAssets="All" Version="1.15.0" />
+    <PackageReference Include="Scriban" Version="7.1.0" Pack="false" IncludeAssets="build" />
+    <PackageReference Include="System.Collections.Immutable" Version="8.0.0" PrivateAssets="all" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.3" PrivateAssets="all" />
+    <PackageReference Include="ThisAssembly.AssemblyInfo" Version="2.1.2" PrivateAssets="all" />
+    <PackageReference Include="ThisAssembly.Resources" Version="2.1.2" PrivateAssets="all" Pack="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="@(None -&gt; WithMetadataValue('Extension', '.sbntxt'))" Kind="text" />
+  </ItemGroup>
+
+</Project>

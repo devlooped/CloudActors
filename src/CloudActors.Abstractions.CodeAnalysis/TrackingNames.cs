@@ -27,6 +27,9 @@ static class TrackingNames
     // EventSourcedGenerator
     public const string EventSourcedModels = nameof(EventSourcedModels);
 
+    // JournaledAnalyzer / actor modeling
+    public const string JournaledModels = nameof(JournaledModels);
+
     // ActorGrainGenerator
     public const string GrainModels = nameof(GrainModels);
 

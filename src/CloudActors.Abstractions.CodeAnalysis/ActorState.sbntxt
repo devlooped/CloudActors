@@ -24,7 +24,7 @@ partial class {{ Name }} : IActor<{{ Name }}.ActorState>
         {{~ for member in Members ~}}
         state.{{ member.Name }} = {{ member.Name }};
         {{~ end ~}}
-        {{~if EventSourced ~}}
+        {{~if EventSourced && !Journaled ~}}
         state.__actor = this;
         {{~ end ~}}
         return state;
@@ -36,7 +36,7 @@ partial class {{ Name }} : IActor<{{ Name }}.ActorState>
         {{~ for member in Members ~}}
         {{ member.Name }} = state.{{ member.Name }};
         {{~ end ~}}
-        {{~if EventSourced ~}}
+        {{~if EventSourced && !Journaled ~}}
         state.__actor = this;
         {{~ end ~}}
         return state;
@@ -72,7 +72,7 @@ partial class {{ Name }} : IActor<{{ Name }}.ActorState>
         {{~ end ~}}
     }
 
-    {{~if EventSourced ~}}
+    {{~if EventSourced && !Journaled ~}}
     partial class ActorState : IEventSourced 
     {
         internal IEventSourced? __actor;
