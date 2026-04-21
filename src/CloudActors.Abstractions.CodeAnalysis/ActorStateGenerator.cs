@@ -75,6 +75,7 @@ class ActorStateGenerator : IIncrementalGenerator
                 StateTypes = stateTypes,
                 EventTypes = eventTypes,
                 EventSourced = actor.IsEventSourced,
+                Journaled = actor.IsJournaled,
                 HasJsonContext = hasJsonContext,
                 Version = ThisAssembly.Info.InformationalVersion
             };
@@ -109,6 +110,7 @@ class ActorStateGenerator : IIncrementalGenerator
                     StateTypes = stateTypes,
                     EventTypes = eventTypes,
                     EventSourced = actor.IsEventSourced,
+                    Journaled = actor.IsJournaled,
                     HasJsonContext = false,
                     Version = ThisAssembly.Info.InformationalVersion
                 };

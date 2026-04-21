@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <PackageReference Include="NuGetizer" Version="1.4.7" />
+    <PackageReference Include="Microsoft.Orleans.EventSourcing" Version="$(OrleansVersion)" />
     <PackageReference Include="Microsoft.Orleans.Server" Version="$(OrleansVersion)" />
     <PackageReference Include="ThisAssembly.AssemblyInfo" Version="2.1.2" PrivateAssets="all" />
   </ItemGroup>

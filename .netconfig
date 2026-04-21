@@ -11,13 +11,15 @@
 	skip
 [file "src/nuget.config"]
 	url = https://github.com/devlooped/oss/blob/main/src/nuget.config
-    	skip
+    skip
 [file "src/kzu.snk"]
 	url = https://github.com/devlooped/oss/blob/main/src/kzu.snk
-    	skip
+    skip
 [file "Directory.Build.rsp"]
 	url = https://github.com/devlooped/oss/blob/main/Directory.Build.rsp
-    	skip
+	weak
+	sha = 0f7f7f7e8a29de9b535676f75fe7c67e629a5e8c
+	etag = 0ccae83fc51f400bfd7058170bfec7aba11455e24a46a0d7e6a358da6486e255
 [file ".editorconfig"]
 	url = https://github.com/devlooped/oss/blob/main/.editorconfig
 	sha = a62c45934ac2952f2f5d54d8aea4a7ebc1babaff

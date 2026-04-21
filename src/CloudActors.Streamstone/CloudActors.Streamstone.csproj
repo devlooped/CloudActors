@@ -22,6 +22,7 @@
     <ProjectReference Include="..\CloudActors.Abstractions\CloudActors.Abstractions.csproj" Pack="false" />
     <ProjectReference Include="..\CloudActors.Hosting\CloudActors.Hosting.csproj" />
     <ProjectReference Include="..\CloudActors.Abstractions.Package\CloudActors.Abstractions.Package.msbuildproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\CloudActors.Streamstone.CodeAnalysis\CloudActors.Streamstone.CodeAnalysis.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>

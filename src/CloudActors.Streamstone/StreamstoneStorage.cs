@@ -67,41 +67,18 @@ public class StreamstoneStorage : IGrainStorage
 
         if (grainState.State is IEventSourced state)
         {
-            var partition = new Partition(table, rowId);
-            var stream = await Stream.TryOpenAsync(partition);
-            if (!stream.Found)
-            {
-                grainState.ETag = "0";
-                return;
-            }
+            var result = await StreamstoneJournaledStorage.ReadStateAsync(
+                name => GetTable(storage, name),
+                options,
+                stateName,
+                grainId,
+                jsonOptions,
+                () => grainState.State!,
+                (current, events) => ((IEventSourced)current!).LoadEvents(events));
 
-            if (options.AutoSnapshot)
-            {
-                // See if we can quickly load from most recent snapshot.
-                var result = await table.GetEntityIfExistsAsync<EventEntity>(rowId, "State");
-                if (result.HasValue && result.Value is EventEntity entity &&
-                    typeof(T).Assembly.GetName() is { } asm &&
-                    IsCompatible(asm.Version ?? UnknownVersion, entity.DataVersion) &&
-                    entity.Data is string data &&
-                    JsonSerializer.Deserialize<T>(data, jsonOptions) is { } instance)
-                {
-                    // Since auto-snapshotting is performed automatically and atomically on 
-                    // every write, we don't need to replay any further events.
-                    grainState.State = instance;
-                    grainState.ETag = entity.Version.ToString();
-                    grainState.RecordExists = true;
-                    return;
-                }
-            }
-
-            var entities = await Stream.ReadAsync<EventEntity>(partition);
-            if (entities == null || !entities.HasEvents)
-                return;
-
-            // TODO: should we always re-create the state instance?
-            state.LoadEvents(entities.Events.Select(e => ToDomainEvent(e, jsonOptions)));
-            grainState.ETag = stream.Stream.Version.ToString();
-            grainState.RecordExists = true;
+            grainState.State = result.Value;
+            grainState.ETag = result.Key.ToString();
+            grainState.RecordExists = result.Key > 0;
         }
         else
         {
@@ -156,38 +133,23 @@ public class StreamstoneStorage : IGrainStorage
             if (state.Events.Count == 0)
                 return;
 
-            var partition = new Partition(table, grainId.Key.ToString());
-            var result = await Stream.TryOpenAsync(partition);
-            var stream = result.Found ? result.Stream : new Stream(partition);
+            var version = int.TryParse(grainState.ETag, out var parsed) ? parsed : 0;
+            var newVersion = await StreamstoneJournaledStorage.AppendEventsAsync(
+                name => GetTable(storage, name),
+                options,
+                stateName,
+                grainId,
+                jsonOptions,
+                version,
+                state.Events,
+                grainState.State!);
 
-            // Atomically write events + header
-            try
-            {
-                var includes = options.AutoSnapshot ?
-                    [
-                        new EventEntity
-                        {
-                            PartitionKey = table.Name,
-                            RowKey = "State",
-                            Data = JsonSerializer.Serialize(grainState.State, jsonOptions),
-                            DataVersion = asm.Version?.ToString(2) ?? UnknownVersionString,
-                            Type = $"{type.FullName ?? typeof(T).Name}, {asm.Name}",
-                            Version = stream.Version + state.Events.Count
-                        }
-                    ] : Array.Empty<ITableEntity>();
+            if (newVersion is null)
+                throw new InconsistentStateException("The grain state could not be updated due to a concurrency conflict.");
 
-                await Stream.WriteAsync(partition,
-                    int.TryParse(grainState.ETag, out var version) ? version : 0,
-                    [.. state.Events.Select((e, i) => ToEventData(e, stream.Version + i, jsonOptions, includes))]);
-
-                grainState.ETag = (stream.Version + state.Events.Count).ToString();
-                grainState.RecordExists = true;
-                state.AcceptEvents();
-            }
-            catch (ConcurrencyConflictException ce)
-            {
-                throw new InconsistentStateException(ce.Message);
-            }
+            grainState.ETag = newVersion.Value.ToString();
+            grainState.RecordExists = true;
+            state.AcceptEvents();
         }
         else
         {

@@ -48,4 +48,13 @@ static class Diagnostics
         "Build",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
+
+    /// <summary>DCA006: Journaled actors must also be event sourced actors.</summary>
+    public static DiagnosticDescriptor JournaledRequiresEventSourced { get; } = new(
+        "DCA006",
+        "Journaled actors must implement IEventSourced",
+        "'{0}' uses [Journaled] and must also be annotated with [Actor] and implement IEventSourced.",
+        "Build",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
 }

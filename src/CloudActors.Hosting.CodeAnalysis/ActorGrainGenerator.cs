@@ -10,7 +10,8 @@ namespace Devlooped.CloudActors;
 [Generator(LanguageNames.CSharp)]
 class ActorGrainGenerator : IIncrementalGenerator
 {
-    static readonly Template template = Template.Parse(ThisAssembly.Resources.ActorGrain.Text);
+    static readonly Template template = Template.Parse(ThisAssembly.Resources.StandardGrain.Text);
+    static readonly Template journaledTemplate = Template.Parse(ThisAssembly.Resources.JournaledGrain.Text);
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -54,6 +55,8 @@ class ActorGrainGenerator : IIncrementalGenerator
                         actor.Name,
                         actor.StateName,
                         actor.StorageProvider,
+                        actor.IsJournaled,
+                        actor.JournaledProviderName,
                         Version = ThisAssembly.Info.InformationalVersion,
                         Queries = actor.Queries.AsImmutableArray().Select(q => new { q.Name, q.Type, q.IsAsync }).ToArray(),
                         Commands = actor.Commands.AsImmutableArray().Select(c => new { c.Name, c.Type, c.IsAsync }).ToArray(),
@@ -61,9 +64,15 @@ class ActorGrainGenerator : IIncrementalGenerator
                         QueryAsync = actor.Queries.AsImmutableArray().Any(q => q.IsAsync),
                         ExecuteAsync = actor.Commands.AsImmutableArray().Any(),
                         ExecuteVoidAsync = actor.VoidCommands.AsImmutableArray().Any(),
+                        ResolvedStateName = actor.StateName ?? actor.Name,
+                        ResolvedJournaledProviderName = actor.JournaledProviderName ?? "Default",
+                        NeedsStorageProviderAttribute = actor.IsJournaled && actor.JournaledProviderName is "StateStorage" or "LogStorage" && !string.IsNullOrEmpty(actor.StorageProvider),
+                        StorageProviderName = actor.StorageProvider ?? "",
+                        NeedsLogConsistencyProviderAttribute = actor.IsJournaled && !string.IsNullOrEmpty(actor.JournaledProviderName),
+                        LogConsistencyProviderName = actor.JournaledProviderName ?? "Default",
                     };
 
-                    var output = template.Render(model, member => member.Name);
+                    var output = (actor.IsJournaled ? journaledTemplate : template).Render(model, member => member.Name);
                     var orleans = OrleansGenerator.GenerateCode(compilation, parseOptions as CSharpParseOptions, config, output, actor.Name, ctx.CancellationToken);
 
                     ctx.AddSource($"{actor.FileName}.cs", output);

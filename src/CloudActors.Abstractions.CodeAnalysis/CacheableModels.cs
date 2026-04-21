@@ -22,6 +22,8 @@ record struct ActorModel(
     string FullName,
     string? StateName,
     string? StorageProvider,
+    bool IsJournaled,
+    string? JournaledProviderName,
     bool IsEventSourced,
     bool IsPartial,
     EquatableArray<ActorMemberModel> Properties,
@@ -166,6 +168,15 @@ static class ModelExtractors
         if (attribute.ConstructorArguments.Length == 2 && !attribute.ConstructorArguments[1].IsNull)
             storage = attribute.ConstructorArguments[1].Value?.ToString();
 
+        var journaled = actor.GetAttributes().FirstOrDefault(x => x.IsJournaled());
+        var isJournaled = journaled != null;
+        var journaledProvider = default(string);
+        if (journaled is not null)
+        {
+            if (journaled.ConstructorArguments.Length >= 1 && !journaled.ConstructorArguments[0].IsNull)
+                journaledProvider = journaled.ConstructorArguments[0].Value?.ToString();
+        }
+
         var ns = actor.ContainingNamespace.IsGlobalNamespace ? "" : actor.ContainingNamespace.ToDisplayString();
         var isEventSourced = actor.AllInterfaces.Any(x => x.ToDisplayString(FullName) == "Devlooped.CloudActors.IEventSourced");
 
@@ -251,6 +262,8 @@ static class ModelExtractors
             FullName: actor.ToDisplayString(FullName),
             StateName: state,
             StorageProvider: storage,
+            IsJournaled: isJournaled,
+            JournaledProviderName: journaledProvider,
             IsEventSourced: isEventSourced,
             IsPartial: actor.IsPartial(),
             Properties: props,

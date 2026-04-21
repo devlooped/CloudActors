@@ -72,6 +72,11 @@ static class AnalysisExtensions
     public static bool IsActor(this AttributeData attr) =>
         attr.AttributeClass?.ToDisplayString(FullName) == "Devlooped.CloudActors.ActorAttribute";
 
+    public static bool IsJournaled(this ITypeSymbol type) => type.GetAttributes().Any(a => a.IsJournaled());
+
+    public static bool IsJournaled(this AttributeData attr) =>
+        attr.AttributeClass?.ToDisplayString(FullName) == "Devlooped.CloudActors.JournaledAttribute";
+
     public static bool IsPartial(this ITypeSymbol node) => node.DeclaringSyntaxReferences.Any(
         r => r.GetSyntax() is TypeDeclarationSyntax { Modifiers: { } modifiers } &&
             modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword)));
