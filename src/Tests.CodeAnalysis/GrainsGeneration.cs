@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Runtime.Serialization;
+using System.Threading.Tasks;
 using Devlooped.CloudActors;
 using Orleans.EventSourcing;
 using Orleans.Runtime;
@@ -62,6 +63,24 @@ public class GrainsGeneration
         Assert.Equal(typeof(JournaledGrain<JournaledActor.ActorState, object>), typeof(JournaledActorGrain).BaseType);
         Assert.False(typeof(IEventSourced).IsAssignableFrom(typeof(JournaledActor.ActorState)));
     }
+
+    [Fact]
+    public void EventSourcedActorGetsConfirmEventsBridge()
+    {
+        Assert.Contains(typeof(IConfirmableEvents), typeof(JournaledActor).GetInterfaces());
+        Assert.NotNull(typeof(JournaledActor).GetMethod("ConfirmEvents", BindingFlags.Instance | BindingFlags.NonPublic));
+        Assert.Contains(typeof(IConfirmableEvents), typeof(StandardEventSourcedActor.ActorState).GetInterfaces());
+        Assert.Null(typeof(ActorWithNoArgs).GetMethod("ConfirmEvents", BindingFlags.Instance | BindingFlags.NonPublic));
+    }
+
+    [Fact]
+    public void JournaledAttributeSupportsBackgroundSave()
+    {
+        var attribute = typeof(BackgroundSaveJournaledActor).GetCustomAttribute<JournaledAttribute>();
+        Assert.NotNull(attribute);
+        Assert.True(attribute!.BackgroundSave);
+        Assert.Equal(typeof(JournaledGrain<BackgroundSaveJournaledActor.ActorState, object>), typeof(BackgroundSaveJournaledActorGrain).BaseType);
+    }
 }
 
 [Actor]
@@ -108,6 +127,41 @@ public partial class JournaledActor(string id) : IEventSourced
     partial void Apply(JournaledDeposited e) => Balance += e.Amount;
 }
 
+[Actor]
+public partial class StandardEventSourcedActor(string id) : IEventSourced
+{
+    [IgnoreDataMember]
+    public string Id => id;
+
+    public decimal Balance { get; private set; }
+
+    public void Deposit(AddFunds _) => Raise(new StandardEventSourcedDeposited(10));
+
+    partial void Apply(StandardEventSourcedDeposited e) => Balance += e.Amount;
+}
+
+[Actor]
+[Journaled(backgroundSave: true)]
+public partial class BackgroundSaveJournaledActor(string id) : IEventSourced
+{
+    [IgnoreDataMember]
+    public string Id => id;
+
+    public decimal Balance { get; private set; }
+
+    public async Task Deposit(AddFunds _)
+    {
+        Raise(new BackgroundSaveJournaledDeposited(10));
+        await ConfirmEvents();
+    }
+
+    public decimal Query(GetBalance _) => Balance;
+
+    partial void Apply(BackgroundSaveJournaledDeposited e) => Balance += e.Amount;
+}
+
 public partial record AddFunds() : IActorCommand;
 public partial record GetBalance() : IActorQuery<decimal>;
 public partial record JournaledDeposited(decimal Amount);
+public partial record StandardEventSourcedDeposited(decimal Amount);
+public partial record BackgroundSaveJournaledDeposited(decimal Amount);

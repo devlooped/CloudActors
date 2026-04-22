@@ -77,6 +77,9 @@ public class StreamstoneStorage : IGrainStorage
                 (current, events) => ((IEventSourced)current!).LoadEvents(events));
 
             grainState.State = result.Value;
+            if (grainState.State is IConfirmableEvents confirmable)
+                confirmable.ConfirmEventsCallback = () => options.BackgroundSave ? FlushAsync(stateName, grainId) : Task.CompletedTask;
+
             grainState.ETag = result.Key.ToString();
             grainState.RecordExists = result.Key > 0;
         }

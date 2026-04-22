@@ -220,6 +220,66 @@ public class StreamstoneTests
 
         Assert.Equal(25m, readState.State.Balance);
     }
+
+    [Fact]
+    public async Task BackgroundSave_ConfirmEventsFlushesPendingWriter()
+    {
+        await CloudStorageAccount.DevelopmentStorageAccount
+            .CreateCloudTableClient()
+            .DeleteTableAsync(nameof(ConfirmableAccount));
+
+        var account = new ConfirmableAccount("bgs-confirm-1");
+        var actor = (IActor<ConfirmableAccount.ActorState>)account;
+        var grainId = GrainId.Parse("confirmableaccount/bgs-confirm-1");
+        var storage = new StreamstoneStorage(
+            CloudStorageAccount.DevelopmentStorageAccount,
+            new StreamstoneOptions { BackgroundSave = true });
+
+        var grainState = GrainState.Create(actor.GetState());
+        await storage.ReadStateAsync(nameof(ConfirmableAccount), grainId, grainState);
+        actor.SetState(grainState.State);
+
+        account.Deposit(new Deposit(100));
+        grainState.State = actor.GetState();
+        await storage.WriteStateAsync(nameof(ConfirmableAccount), grainId, grainState);
+
+        await account.WaitForConfirmation();
+
+        var readState = GrainState.Create<ConfirmableAccount.ActorState>(((IActor<ConfirmableAccount.ActorState>)new ConfirmableAccount("bgs-confirm-1")).GetState());
+        await storage.ReadStateAsync(nameof(ConfirmableAccount), grainId, readState);
+
+        Assert.Equal(100m, readState.State.Balance);
+    }
+
+    [Fact]
+    public async Task ConfirmEvents_NoOpsWhenBackgroundSaveDisabled()
+    {
+        await CloudStorageAccount.DevelopmentStorageAccount
+            .CreateCloudTableClient()
+            .DeleteTableAsync(nameof(ConfirmableAccount));
+
+        var account = new ConfirmableAccount("bgs-confirm-2");
+        var actor = (IActor<ConfirmableAccount.ActorState>)account;
+        var grainId = GrainId.Parse("confirmableaccount/bgs-confirm-2");
+        var storage = new StreamstoneStorage(
+            CloudStorageAccount.DevelopmentStorageAccount,
+            new StreamstoneOptions { BackgroundSave = false });
+
+        var grainState = GrainState.Create(actor.GetState());
+        await storage.ReadStateAsync(nameof(ConfirmableAccount), grainId, grainState);
+        actor.SetState(grainState.State);
+
+        account.Deposit(new Deposit(50));
+        grainState.State = actor.GetState();
+        await storage.WriteStateAsync(nameof(ConfirmableAccount), grainId, grainState);
+
+        await account.WaitForConfirmation();
+
+        var readState = GrainState.Create<ConfirmableAccount.ActorState>(((IActor<ConfirmableAccount.ActorState>)new ConfirmableAccount("bgs-confirm-2")).GetState());
+        await storage.ReadStateAsync(nameof(ConfirmableAccount), grainId, readState);
+
+        Assert.Equal(50m, readState.State.Balance);
+    }
 }
 
 
@@ -256,4 +316,20 @@ class GrainState<T>(T state) : IGrainState<T>
 
     public bool RecordExists { get; set; }
 }
+
+[Actor]
+public partial class ConfirmableAccount(string id) : IEventSourced
+{
+    public string Id => id;
+
+    public decimal Balance { get; private set; }
+
+    public void Deposit(Deposit command) => Raise(new ConfirmableDeposited(command.Amount));
+
+    public Task WaitForConfirmation() => ConfirmEvents();
+
+    partial void Apply(ConfirmableDeposited e) => Balance += e.Amount;
+}
+
+public partial record ConfirmableDeposited(decimal Amount);
 

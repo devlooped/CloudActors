@@ -38,7 +38,12 @@ public partial class {{ Name }}Grain : JournaledGrain<{{ Name }}.ActorState, obj
             ServiceProvider,
             typeof({{ Name }}),
             IdFactory.Create(typeof({{ Name }}), this.GetPrimaryKeyString()));
+
         ((IActor<{{ Name }}.ActorState>)actor).SetState(state);
+
+        if (actor is IConfirmableEvents confirmable)
+            confirmable.ConfirmEventsCallback = ConfirmEvents;
+
         return actor;
     }
 
@@ -81,7 +86,9 @@ public partial class {{ Name }}Grain : JournaledGrain<{{ Name }}.ActorState, obj
                 if (((IEventSourced)actor).Events is { Count: > 0 } events)
                 {
                     RaiseEvents(events);
+                    {{~ if !JournaledBackgroundSave ~}}
                     await ConfirmEvents();
+                    {{~ end ~}}
                 }
                 return (TResult)(object)result;
             }
@@ -107,7 +114,9 @@ public partial class {{ Name }}Grain : JournaledGrain<{{ Name }}.ActorState, obj
                 if (((IEventSourced)actor).Events is { Count: > 0 } events)
                 {
                     RaiseEvents(events);
+                    {{~ if !JournaledBackgroundSave ~}}
                     await ConfirmEvents();
+                    {{~ end ~}}
                 }
                 break;
             }

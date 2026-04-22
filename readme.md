@@ -298,7 +298,9 @@ public partial class Account : IEventSourced  // 👈 interface is *not* impleme
 When `IEventSourced` is inherited without being implemented, the generator provides the full
 wiring: `Raise<T>(event)` / `Raise<T>()` methods that apply the event and record it in the 
 pending events list, a type-switched `Apply(object)` dispatcher, and `partial void` declarations
-for each event type raised. There is also an optional hook for post-raise callbacks:
+for each event type raised. Event-sourced actors also get a generated protected `ConfirmEvents()`
+helper, which is a safe no-op unless the selected hosting/runtime path wires a persistence
+confirmation callback. There is also an optional hook for post-raise callbacks:
 
 ```csharp
 // Invoked after every Raise<T>(event) call — implement to react to raised events.
@@ -327,6 +329,11 @@ public partial class Account(string id) : IEventSourced
 ```
 
 CloudActors keeps the actor itself as a POCO and generates a `JournaledGrain<Account.ActorState, object>` wrapper behind the scenes. The generated nested `ActorState` becomes the Orleans `TView`, while commands and queries still execute through transient instances of the actor class.
+
+By default, generated journaled grains still auto-`await ConfirmEvents()` after forwarding pending
+events at the end of each command. If you want Orleans-style manual confirmation semantics instead,
+opt into `[Journaled(backgroundSave: true)]` and call `await ConfirmEvents();` explicitly inside the
+actor whenever you want to wait for durability.
 
 `[Journaled]` defaults to whichever backend is configured for JournaledGrainOptions.DefaultLogConsistencyProvider, such as: 
 

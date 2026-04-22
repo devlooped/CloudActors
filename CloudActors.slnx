@@ -1,18 +1,16 @@
 <Solution>
-  <Folder Name="/src/">
-    <Project Path="src/CloudActors.Streamstone.CodeAnalysis/CloudActors.Streamstone.CodeAnalysis.csproj" />
-  </Folder>
   <Project Path="src/CloudActors.Abstractions.CodeAnalysis/CloudActors.Abstractions.CodeAnalysis.csproj" />
   <Project Path="src/CloudActors.Abstractions.CodeFix/CloudActors.Abstractions.CodeFix.csproj" />
   <Project Path="src/CloudActors.Abstractions.Package/CloudActors.Abstractions.Package.msbuildproj" Type="13b669be-bb05-4ddf-9536-439f39a36129" />
-  <Project Path="src/CloudActors.Package/CloudActors.Package.msbuildproj" Type="13b669be-bb05-4ddf-9536-439f39a36129" />
   <Project Path="src/CloudActors.Abstractions/CloudActors.Abstractions.csproj" />
   <Project Path="src/CloudActors.Hosting.CodeAnalysis/CloudActors.Hosting.CodeAnalysis.csproj" />
-  <Project Path="src/CloudActors.Streamstone/CloudActors.Streamstone.csproj" />
   <Project Path="src/CloudActors.Hosting/CloudActors.Hosting.csproj" />
+  <Project Path="src/CloudActors.Package/CloudActors.Package.msbuildproj" Type="13b669be-bb05-4ddf-9536-439f39a36129" />
+  <Project Path="src/CloudActors.Streamstone.CodeAnalysis/CloudActors.Streamstone.CodeAnalysis.csproj" />
+  <Project Path="src/CloudActors.Streamstone/CloudActors.Streamstone.csproj" />
   <Project Path="src/TestApp/TestApp.csproj" Id="457888dc-4899-458c-b5ca-44f01d88be72" />
   <Project Path="src/TestDomain/TestDomain.csproj" />
-  <Project Path="src/Tests/Tests.csproj" />
   <Project Path="src/Tests.CodeAnalysis/Tests.CodeAnalysis.csproj" />
   <Project Path="src/Tests.CodeFix/Tests.CodeFix.csproj" />
+  <Project Path="src/Tests/Tests.csproj" />
 </Solution>

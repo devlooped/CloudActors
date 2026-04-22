@@ -24,6 +24,7 @@ record struct ActorModel(
     string? StorageProvider,
     bool IsJournaled,
     string? JournaledProviderName,
+    bool JournaledBackgroundSave,
     bool IsEventSourced,
     bool IsPartial,
     EquatableArray<ActorMemberModel> Properties,
@@ -171,10 +172,19 @@ static class ModelExtractors
         var journaled = actor.GetAttributes().FirstOrDefault(x => x.IsJournaled());
         var isJournaled = journaled != null;
         var journaledProvider = default(string);
+        var journaledBackgroundSave = false;
         if (journaled is not null)
         {
-            if (journaled.ConstructorArguments.Length >= 1 && !journaled.ConstructorArguments[0].IsNull)
-                journaledProvider = journaled.ConstructorArguments[0].Value?.ToString();
+            foreach (var argument in journaled.ConstructorArguments)
+            {
+                if (argument.IsNull || argument.Value is null || argument.Type is null)
+                    continue;
+
+                if (argument.Type.SpecialType == SpecialType.System_String)
+                    journaledProvider = argument.Value.ToString();
+                else if (argument.Type.SpecialType == SpecialType.System_Boolean)
+                    journaledBackgroundSave = (bool)argument.Value;
+            }
         }
 
         var ns = actor.ContainingNamespace.IsGlobalNamespace ? "" : actor.ContainingNamespace.ToDisplayString();
@@ -264,6 +274,7 @@ static class ModelExtractors
             StorageProvider: storage,
             IsJournaled: isJournaled,
             JournaledProviderName: journaledProvider,
+            JournaledBackgroundSave: journaledBackgroundSave,
             IsEventSourced: isEventSourced,
             IsPartial: actor.IsPartial(),
             Properties: props,

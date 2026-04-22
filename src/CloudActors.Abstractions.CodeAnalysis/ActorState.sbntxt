@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.CodeDom.Compiler;
+using System.Threading.Tasks;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Orleans;
@@ -26,6 +27,11 @@ partial class {{ Name }} : IActor<{{ Name }}.ActorState>
         {{~ end ~}}
         {{~if EventSourced && !Journaled ~}}
         state.__actor = this;
+        var confirmable = this as IConfirmableEvents;
+        if (confirmable != null)
+            state.__confirmEvents = confirmable.ConfirmEventsCallback;
+        if (state.__confirmEvents != null && confirmable != null)
+            confirmable.ConfirmEventsCallback = state.__confirmEvents;
         {{~ end ~}}
         return state;
     }
@@ -38,6 +44,11 @@ partial class {{ Name }} : IActor<{{ Name }}.ActorState>
         {{~ end ~}}
         {{~if EventSourced && !Journaled ~}}
         state.__actor = this;
+        var confirmable = this as IConfirmableEvents;
+        if (confirmable != null)
+            state.__confirmEvents = confirmable.ConfirmEventsCallback;
+        if (state.__confirmEvents != null && confirmable != null)
+            confirmable.ConfirmEventsCallback = state.__confirmEvents;
         {{~ end ~}}
         return state;
     }
@@ -73,15 +84,27 @@ partial class {{ Name }} : IActor<{{ Name }}.ActorState>
     }
 
     {{~if EventSourced && !Journaled ~}}
-    partial class ActorState : IEventSourced 
+    partial class ActorState : IEventSourced, IConfirmableEvents
     {
         internal IEventSourced? __actor;
+        internal Func<Task>? __confirmEvents;
 
         IReadOnlyList<object> IEventSourced.Events => __actor?.Events ?? [];
 
         void IEventSourced.AcceptEvents() => __actor?.AcceptEvents();
 
         void IEventSourced.LoadEvents(IEnumerable<object> history) => __actor?.LoadEvents(history);
+
+        Func<Task>? IConfirmableEvents.ConfirmEventsCallback
+        {
+            get => __actor is IConfirmableEvents confirmable ? confirmable.ConfirmEventsCallback : __confirmEvents;
+            set
+            {
+                __confirmEvents = value;
+                if (__actor is IConfirmableEvents confirmable)
+                    confirmable.ConfirmEventsCallback = value;
+            }
+        }
     }
     {{~end~}}
 }

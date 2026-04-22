@@ -79,14 +79,15 @@ Actor messages should be `partial record` types (required for source generators 
 `JournaledAttribute` is an opt-in for event-sourced actors that should generate a `JournaledGrain<TView, TEvent>` wrapper instead of the default snapshot-backed grain.
 
 - Requires the actor to also be `[Actor]` and list `IEventSourced`
-- `Backend` can target `CustomStorage` (default), `StateStorage`, or `LogStorage`
 - `ProviderName` overrides the Orleans log consistency/storage provider name when needed
+- `BackgroundSave` switches journaled actors from the default auto-`await ConfirmEvents()` behavior to manual confirmation mode (`[Journaled(backgroundSave: true)]`)
 
 ### IEventSourced
 
 Interface implemented by actors that use event sourcing. The implementation is **code-generated**; actors only need to list it in the base type list without implementing it. The generator provides:
 - `Raise<T>(event)` — records an event and calls the matching `partial void Apply(TEvent)` method
 - `Events`, `AcceptEvents()`, `LoadEvents()` — managed by the storage provider
+- `ConfirmEvents()` — a generated protected helper available on every event-sourced actor. It is a safe no-op unless the hosting runtime/provider wires a confirmation callback.
 
 ### IActorIdFactory
 
@@ -204,7 +205,8 @@ For each actor, generates:
 For `[Journaled]` actors, the generator instead emits a `JournaledGrain<ActorState, object>` wrapper that:
 - uses `ActorState` as the Orleans `TView`
 - instantiates a transient POCO actor from the current view for commands and queries
-- collects actor-raised events, forwards them through `RaiseEvents(...)`, and calls `ConfirmEvents()`
+- wires generated `IConfirmableEvents.ConfirmEventsCallback` on the actor so `await ConfirmEvents()` can be used inside actor code
+- forwards actor-raised events through `RaiseEvents(...)` and, unless `[Journaled(backgroundSave: true)]` is set, auto-awaits `ConfirmEvents()` at the end of the command
 - replays journaled events in `TransitionState` by rehydrating a transient actor and copying its updated state back to `ActorState`
 
 Template: `StandardGrain.sbntxt`
@@ -306,6 +308,7 @@ An optional event-store-aware `IGrainStorage` implementation backed by [Streamst
 - **Auto-snapshot**: when `StreamstoneOptions.AutoSnapshot = true`, each write also atomically upserts a `"State"` row with the serialized current state. On load, if the snapshot is version-compatible with the assembly, it is used directly (no event replay needed)
 - **Version compatibility**: controlled by `SnapshotVersionCompatibility` (Major or Minor)
 - **Background save** (`StreamstoneOptions.BackgroundSave`, default `false`): when enabled, `WriteStateAsync` for `IEventSourced` actors is fire-and-forget. Events are snapshotted and `AcceptEvents()` is called synchronously on the grain scheduler; the actual `Stream.WriteAsync` is performed by a per-grain `BatchWorker` (ported from Orleans' `JournaledGrain`/`PrimaryBasedLogViewAdaptor` in `BatchWorker.cs`). Bursts of writes coalesce into a single Streamstone batch (one snapshot row per batch). Knobs: `BackgroundSaveMaxAttempts` (default `5`) and `BackgroundSaveRetryDelay` (default `200ms`, capped exponential backoff). On terminal failure the worker logs and force-deactivates the grain via `IGrainContext.Deactivate` (resolved through `IGrainContextAccessor`); next activation rebuilds from durable storage. Non-event-sourced actors keep the synchronous behavior even when the option is on. Use `StreamstoneStorage.FlushAsync(stateName, grainId)` to await durability from tests or grain code; the worker also auto-flushes on grain deactivation via `IGrainContext.ObservableLifecycle`.
+- **Actor-level confirmation bridge**: every generated `IEventSourced` actor now implements a public-but-hidden `IConfirmableEvents` interface. Standard snapshot-backed actors use it as a no-op unless a provider wires it; Streamstone wires it to `FlushAsync(...)` when `BackgroundSave` is enabled.
 - **STJ source-generated serialization**: The generated `ActorState` class includes a nested `ActorJsonContext : JsonSerializerContext` with `[JsonSerializable]` attributes for the state type, custom state member types, and event types. `StreamstoneStorage` resolves JSON options via `IActorState.JsonOptions`, falling back to `StreamstoneOptions.JsonOptions` when unavailable. The STJ source generator is invoked programmatically at build time via reflection (discovered from loaded build-time assemblies via `StjGenerator.cs`).
 - **Journaled actors**: `[Journaled]` actors always get a generated host-side `ICustomStorageInterface<ActorState, object>` partial (in the silo project via `CloudActors.Streamstone.CodeAnalysis`). `AddStreamstoneActorStorageAsDefault()` / `AddStreamstoneActorStorage(name)` directly call `AddCustomStorageBasedLogConsistencyProvider(name)`, so both the grain storage and log consistency provider are wired together with a single call. Actors using `[Journaled("StateStorage")]` or `[Journaled("LogStorage")]` still get the generated partial, but the interface is dead code since those providers never call `ICustomStorageInterface`.
 - Register via extension methods on `ISiloBuilder`:
