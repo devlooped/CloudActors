@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
+using System.Threading.Tasks;
 using Devlooped.CloudActors;
 using Moq;
 
@@ -26,9 +27,13 @@ public partial record StateStorageDeposited(decimal Amount);
 
 public partial record StateStorageWithdrawn(decimal Amount);
 
+public partial record BackgroundSaveStateStorageDeposited(decimal Amount);
+
 public partial record LogStorageDeposited(decimal Amount);
 
 public partial record LogStorageWithdrawn(decimal Amount);
+
+public partial record ConfirmTwice(decimal FirstAmount, decimal SecondAmount) : IActorCommand;
 
 public partial record Close(CloseReason Reason = CloseReason.Customer) : IActorCommand<decimal>;
 
@@ -194,6 +199,29 @@ public partial class LogStorageJournaledAccount(string id) : IEventSourced
 
     partial void Apply(LogStorageDeposited e) => Balance += e.Amount;
     partial void Apply(LogStorageWithdrawn e) => Balance -= e.Amount;
+}
+
+[Actor]
+[Journaled("StateStorage", backgroundSave: true)]
+public partial class BackgroundSaveStateStorageJournaledAccount(string id) : IEventSourced
+{
+    [IgnoreDataMember]
+    public string Id => id;
+
+    public decimal Balance { get; private set; }
+
+    public async Task ConfirmTwice(ConfirmTwice command)
+    {
+        Raise(new BackgroundSaveStateStorageDeposited(command.FirstAmount));
+        await ConfirmEvents();
+
+        Raise(new BackgroundSaveStateStorageDeposited(command.SecondAmount));
+        await ConfirmEvents();
+    }
+
+    public decimal Query(GetBalance _) => Balance;
+
+    partial void Apply(BackgroundSaveStateStorageDeposited e) => Balance += e.Amount;
 }
 
 [Actor]

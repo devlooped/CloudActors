@@ -54,6 +54,16 @@ public class JournaledOobStorageTests(MemoryClusterFixture fixture)
     }
 
     [Fact]
+    public async Task StateStorage_BackgroundSaveActorCanConfirmMidCommand()
+    {
+        await Bus.ExecuteAsync(BackgroundSaveStateStorageJournaledAccount.NewId("ss-bg1"), new ConfirmTwice(100, 25));
+
+        await Cluster.Client.GetGrain<IManagementGrain>(0).ForceActivationCollection(TimeSpan.Zero);
+
+        Assert.Equal(125, await Bus.QueryAsync(BackgroundSaveStateStorageJournaledAccount.NewId("ss-bg1"), GetBalance.Default));
+    }
+
+    [Fact]
     public async Task LogStorage_RoundTrip()
     {
         await Bus.ExecuteAsync(LogStorageJournaledAccount.NewId("ls1"), new Deposit(100));

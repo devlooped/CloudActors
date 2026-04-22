@@ -84,6 +84,9 @@ class ActorStateFactory(IPersistentStateFactory factory, IActorIdFactory idFacto
                     // Don't overwrite state that may already have initial values from actor constructor.
                     if (persistence.RecordExists)
                         Actor.SetState(persistence.State);
+                    else if (persistence.State is IConfirmableEvents stateConfirmable &&
+                        Actor is IConfirmableEvents actorConfirmable)
+                        actorConfirmable.ConfirmEventsCallback = stateConfirmable.ConfirmEventsCallback;
                 }, TaskContinuationOptions.OnlyOnRanToCompletion);
 
         public Task WriteStateAsync()

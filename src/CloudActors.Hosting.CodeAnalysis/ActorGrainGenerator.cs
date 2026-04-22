@@ -57,6 +57,7 @@ class ActorGrainGenerator : IIncrementalGenerator
                         actor.StorageProvider,
                         actor.IsJournaled,
                         actor.JournaledProviderName,
+                        actor.JournaledBackgroundSave,
                         Version = ThisAssembly.Info.InformationalVersion,
                         Queries = actor.Queries.AsImmutableArray().Select(q => new { q.Name, q.Type, q.IsAsync }).ToArray(),
                         Commands = actor.Commands.AsImmutableArray().Select(c => new { c.Name, c.Type, c.IsAsync }).ToArray(),

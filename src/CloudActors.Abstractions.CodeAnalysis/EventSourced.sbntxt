@@ -5,6 +5,7 @@
 using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
 using Devlooped.CloudActors;
 
@@ -14,14 +15,27 @@ namespace {{ Namespace }};
 
 [GeneratedCode("Devlooped.CloudActors", "{{ Version }}")]
 [CompilerGenerated]
-partial class {{ Name }}
+partial class {{ Name }} : IConfirmableEvents
 {
     /// <summary>List of uncommitted events that have been raised/applied so far.</summary>
     List<object>? events;
+    Func<Task>? confirmEvents;
 
     IReadOnlyList<object> IEventSourced.Events => events ??= new List<object>();
 
     void IEventSourced.AcceptEvents() => events?.Clear();
+
+    Func<Task>? IConfirmableEvents.ConfirmEventsCallback
+    {
+        get => confirmEvents;
+        set => confirmEvents = value;
+    }
+
+    /// <summary>
+    /// Waits for runtime/provider-specific confirmation of previously published events.
+    /// Unless the hosting runtime wires a callback, this method completes immediately.
+    /// </summary>
+    protected Task ConfirmEvents() => confirmEvents?.Invoke() ?? Task.CompletedTask;
 
     void IEventSourced.LoadEvents(IEnumerable<object> history)
     {
