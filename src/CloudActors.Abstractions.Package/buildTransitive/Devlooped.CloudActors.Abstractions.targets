@@ -6,12 +6,13 @@
   <!--
     Copies SKILL.md from this package to .agents/skills/cloudactors/ in the consuming repo root.
     Uses InitializeSourceControlInformation (SourceLink) to locate the repo root.
-    Falls back to $(SolutionDir) if no git root can be determined.
-    Silently skips if neither source can be determined.
+    Falls back to SolutionDir if the git root cannot be determined.
+    Falls back to the directory containing the nearest AGENTS.md file found above the project file.
+    Silently skips if the base directory cannot be determined.
     Opt-out: set <CloudActorsSkill>false</CloudActorsSkill> in your project or Directory.Build.props.
   -->
   <Target Name="CopyCloudActorsSkill"
-          AfterTargets="Build"
+          BeforeTargets="PrepareForBuild"
           DependsOnTargets="InitializeSourceControlInformation"
           Condition="'$(CloudActorsSkill)' != 'false'">
 
@@ -21,9 +22,14 @@
 
     <PropertyGroup>
       <_CloudActorsSkillRepoRoot>@(_CloudActorsSkillSourceRoot)</_CloudActorsSkillRepoRoot>
-      <!-- Fall back to solution directory if no git root was found -->
       <_CloudActorsSkillRepoRoot Condition="'$(_CloudActorsSkillRepoRoot)' == '' and '$(SolutionDir)' != '' and '$(SolutionDir)' != '*Undefined*'">$(SolutionDir)</_CloudActorsSkillRepoRoot>
+      <_CloudActorsSkillAgentsMd Condition="'$(_CloudActorsSkillRepoRoot)' == ''">$([MSBuild]::GetPathOfFileAbove('AGENTS.md', '$(MSBuildProjectDirectory)'))</_CloudActorsSkillAgentsMd>
+      <_CloudActorsSkillRepoRoot Condition="'$(_CloudActorsSkillRepoRoot)' == '' and '$(_CloudActorsSkillAgentsMd)' != ''">$([System.IO.Path]::GetDirectoryName('$(_CloudActorsSkillAgentsMd)'))\</_CloudActorsSkillRepoRoot>
     </PropertyGroup>
+
+    <MakeDir Directories="$(_CloudActorsSkillRepoRoot).agents\skills\cloudactors"
+             Condition="'$(_CloudActorsSkillRepoRoot)' != '' and Exists('$(MSBuildThisFileDirectory)..\skills\cloudactors\SKILL.md')"
+             ContinueOnError="true" />
 
     <Copy SourceFiles="$(MSBuildThisFileDirectory)..\skills\cloudactors\SKILL.md"
           DestinationFiles="$(_CloudActorsSkillRepoRoot).agents\skills\cloudactors\SKILL.md"
