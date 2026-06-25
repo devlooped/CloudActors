@@ -73,8 +73,8 @@
 	skip
 [file ".gitignore"]
 	url = https://github.com/devlooped/oss/blob/main/.gitignore
-	sha = c76f0cc3e225e39e79420587d94852e12cdcb32a
-	etag = 09b499201361a59fad0036e925f4008cdd7bdc6723ba37ff18cc509e6024b2bf
+	sha = ff61659751374b95c7a8a0477c908a8119f756f0
+	etag = e5865f083db45081a7b4eaa518018971b34e6ef93f917ac510dea96d27f792b3
 	weak
 [file "_config.yml"]
 	url = https://github.com/devlooped/oss/blob/main/_config.yml
@@ -93,13 +93,13 @@
 	weak
 [file "src/Directory.Build.props"]
 	url = https://github.com/devlooped/oss/blob/main/src/Directory.Build.props
-	sha = a1f5d11d1821959a141567ed24f9ea43205edd13
-	etag = b2b90c6d617db9712cc8be2031b767d3ba951015717984f52b4872cc39f93e72
+	sha = 6e2438919e108aeb75106dc0737c45f5e55d5f42
+	etag = f1d6384abf18d8d891ce5e835a10c73fe029c42151374be96d7e4af43d189c65
 	weak
 [file "src/Directory.Build.targets"]
 	url = https://github.com/devlooped/oss/blob/main/src/Directory.Build.targets
-	sha = 083a37bd9307ec820bac6ee3c7384083151d36d8
-	etag = 907682e5632a2ba430357e6e042a4ca33cb8c94a3a215d3091aa03f5958a4877
+	sha = dcd5f0a9a00a5b0c23d41a71dcc66ea41dc5f75d
+	etag = 2cca66d8a1adbae24dc2efee53a55fa09949242eb35b86c5fd66425da18c6107
 	weak
 [file ".github/workflows/triage.yml"]
 	url = https://github.com/devlooped/oss/blob/main/.github/workflows/triage.yml
