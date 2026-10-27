@@ -3,10 +3,14 @@ obj
 out
 artifacts
 pack
+agent-tools
+terminals
 TestResults
 results
 BenchmarkDotNet.Artifacts
+mcps
 /app
+/temp
 .vs
 .vscode
 .genaiscript
@@ -43,3 +47,5 @@ _site
 .sass-cache
 Gemfile.lock
 package-lock.json
+
+/.github/.labels
